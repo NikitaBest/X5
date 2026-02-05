@@ -1,0 +1,35 @@
+.page-header {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: clamp(8px, 2.5vw, 12px);
+  width: 100%;
+  padding: 0;
+  margin-bottom: 24px;
+  min-height: 53px;
+}
+
+.header-glass-card {
+  flex: 1;
+  padding: 12px clamp(12px, 3vw, 20px);
+  min-height: 53px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.page-header .header-title {
+  font-size: clamp(13px, 4vw, 16px) !important;
+  font-weight: 700;
+  line-height: 1.5;
+  color: var(--color-fg-primary);
+  margin: 0;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
+}
+

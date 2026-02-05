@@ -1,0 +1,141 @@
+.home-page {
+  gap: 16px;
+  text-align: center;
+  flex: 1;
+  justify-content: flex-start;
+  align-items: center;
+  padding-bottom: 16px;
+}
+
+.welcome-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  margin-top: 151px;
+  margin-bottom: 0;
+}
+
+.welcome-content p {
+  margin: 0;
+}
+
+.welcome-content .text-secondary {
+  margin-top: 4px;
+}
+
+.welcome-icon {
+  width: 140px;
+  height: 140px;
+  margin: 0 auto 4px;
+  display: block;
+}
+
+/* Анимация подмигивания для первого шага - только правый глаз */
+.wink-eye-right {
+  transform-origin: center;
+  animation: wink 3s ease-in-out infinite;
+}
+
+@keyframes wink {
+  0%, 90%, 100% {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+  92%, 98% {
+    transform: scaleY(0.1);
+    opacity: 0.8;
+  }
+}
+
+/* Анимация блеска для щита - по контуру */
+.shield-shine-outline {
+  stroke-dasharray: 200;
+  stroke-dashoffset: 200;
+  animation: shine-outline 3s ease-in-out infinite;
+}
+
+@keyframes shine-outline {
+  0% {
+    stroke-dashoffset: 200;
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  80% {
+    opacity: 1;
+  }
+  100% {
+    stroke-dashoffset: -200;
+    opacity: 0;
+  }
+}
+
+/* Анимация пульсации для объектива камеры */
+.camera-lens {
+  transform-origin: center;
+  animation: camera-pulse 2s ease-in-out infinite;
+}
+
+@keyframes camera-pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.8;
+  }
+}
+
+.welcome-dots {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 28px;
+}
+
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background-color: #c4d0d8;
+}
+
+.dot-active {
+  background-color: #00c3dd;
+}
+
+.dot-disabled {
+  opacity: 0.6;
+}
+
+.legal-text {
+  margin-top: 14px;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.4;
+  color: var(--color-fg-secondary);
+  max-width: 343px;
+  text-align: center;
+}
+
+.welcome-footer {
+  margin-top: auto;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.welcome-heading {
+  font-weight: 600;
+  font-size: 28px;
+  line-height: 32px; /* 114% */
+  text-align: center;
+  letter-spacing: -0.01em;
+  color: #2a3a45;
+}
+

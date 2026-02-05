@@ -1,0 +1,50 @@
+.number-input-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.number-input {
+  width: 100%;
+  padding: clamp(12px, 3.5vw, 16px) clamp(40px, 10vw, 50px) clamp(12px, 3.5vw, 16px) clamp(12px, 3.5vw, 16px);
+  border: 1.5px solid #e5e5e5;
+  border-radius: var(--radius-md);
+  font-size: clamp(14px, 4vw, 16px);
+  font-weight: 400;
+  font-family: inherit;
+  background-color: transparent;
+  color: var(--color-fg-primary);
+  min-height: var(--tap-min-size);
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+  text-align: left;
+}
+
+.number-input:focus {
+  outline: none;
+  border-color: #07c3dc;
+}
+
+.number-input::placeholder {
+  color: #9EB5C3;
+}
+
+.number-input-unit {
+  position: absolute;
+  right: clamp(12px, 3.5vw, 16px);
+  top: 50%;
+  transform: translateY(-50%);
+  color: #9EB5C3;
+  font-size: clamp(12px, 3.5vw, 14px);
+  font-weight: 400;
+  pointer-events: none;
+}
+
+/* Тёмная тема */
+:root[data-theme='dark'] .number-input {
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+:root[data-theme='dark'] .number-input:focus {
+  border-color: #07c3dc;
+}
+

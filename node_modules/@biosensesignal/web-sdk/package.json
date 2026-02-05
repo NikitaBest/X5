@@ -1,0 +1,28 @@
+{
+  "name": "@biosensesignal/web-sdk",
+  "version": "5.11.1-1",
+  "license": "UNLICENSED",
+  "main": "dist/main.js",
+  "files": [
+    "dist/**/*"
+  ],
+  "scripts": {
+    "prebuild": "rimraf dist && rimraf biosensesignal-web-sdk-v5.11.1-1.tgz",
+    "build": "cross-env NODE_ENV=production NODE_OPTIONS='--max-old-space-size=16384' webpack --progress && npm pack",
+    "build-yarn": "cross-env NODE_ENV=production NODE_OPTIONS='--max-old-space-size=16384' webpack --progress && yarn pack"
+  },
+  "devDependencies": {
+    "@biosensesignal/wasm": "5.11.1-1",
+    "filemanager-webpack-plugin": "^6.1.7",
+    "glob": "^10.3.10"
+  },
+  "dependencies": {
+    "@segment/analytics-next": "^1.70.0",
+    "@types/dom-mediacapture-transform": "^0.1.4",
+    "@types/dom-webcodecs": "^0.1.5",
+    "ismobilejs": "^1.1.1",
+    "pako": "^2.1.0",
+    "tslib": "^2.6.3",
+    "ua-parser-js": "^1.0.2"
+  }
+}

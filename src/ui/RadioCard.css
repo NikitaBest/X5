@@ -1,0 +1,85 @@
+.radio-card {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  background-color: transparent;
+  border: 1.5px solid #e5e5e5;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+  min-height: var(--tap-min-size);
+}
+
+.radio-card:hover {
+  border-color: #07c3dc;
+}
+
+.radio-card-selected {
+  border-color: #07c3dc;
+  background-color: rgba(7, 195, 220, 0.05);
+}
+
+.radio-card-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  color: #9EB5C3;
+}
+
+.radio-card-selected .radio-card-icon {
+  color: #07c3dc;
+}
+
+.radio-card-label {
+  flex: 1;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.5;
+  color: #9EB5C3;
+  text-align: left;
+}
+
+.radio-card-selected .radio-card-label {
+  color: #07c3dc;
+}
+
+.radio-card-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+.radio-card-indicator-empty {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid #c4d0d8;
+  background-color: transparent;
+}
+
+/* Тёмная тема */
+:root[data-theme='dark'] .radio-card {
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+:root[data-theme='dark'] .radio-card:hover {
+  border-color: #07c3dc;
+}
+
+:root[data-theme='dark'] .radio-card-selected {
+  background-color: rgba(7, 195, 220, 0.1);
+}
+
+:root[data-theme='dark'] .radio-card-indicator-empty {
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
