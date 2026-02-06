@@ -16,7 +16,6 @@
 .progress-bar-line {
   display: flex;
   align-items: center;
-  justify-content: center;
   width: 100%;
   position: relative;
 }
@@ -24,6 +23,11 @@
 .progress-bar-segment {
   display: flex;
   align-items: center;
+  flex: 1;
+}
+
+.progress-bar-segment:last-child {
+  flex: 0 0 auto;
 }
 
 .progress-bar-circle {
@@ -47,14 +51,16 @@
 
 .progress-bar-circle-upcoming {
   background: transparent;
-  border: 2px solid #e5e5e5;
+  border: 2px solid #8E9094;
 }
 
 .progress-bar-connector {
-  width: 60px;
-  height: 2px;
+  flex: 1;
+  height: 1px;
+  border-radius: 999px;
   transition: all 0.3s ease;
   margin: 0 4px;
+  min-width: 0;
 }
 
 .progress-bar-connector-completed {
@@ -62,15 +68,15 @@
 }
 
 .progress-bar-connector-upcoming {
-  background: #e5e5e5;
+  background: #8E9094;
 }
 
 /* Тёмная тема */
 :root[data-theme='dark'] .progress-bar-circle-upcoming {
-  border-color: rgba(255, 255, 255, 0.2);
+  border-color: #8E9094;
 }
 
 :root[data-theme='dark'] .progress-bar-connector-upcoming {
-  background: rgba(255, 255, 255, 0.2);
+  background: #8E9094;
 }
 
