@@ -71,12 +71,19 @@ function Welcome() {
 
   const handleGoalToggle = (value) => {
     setSelectedGoals((prev) => {
+      // если цель уже выбрана — снимаем выбор
       if (prev.includes(value)) {
         return prev.filter((goal) => goal !== value)
-      } else if (prev.length < 2) {
+      }
+
+      // если выбрано меньше 2 целей — просто добавляем
+      if (prev.length < 2) {
         return [...prev, value]
       }
-      return prev
+
+      // если уже выбраны 2 цели и пользователь выбирает третью —
+      // заменяем последнюю выбранную новой (сохраняем первую)
+      return [prev[0], value]
     })
   }
 
