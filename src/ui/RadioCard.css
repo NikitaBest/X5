@@ -14,12 +14,12 @@
 }
 
 .radio-card:hover {
-  border-color: #07c3dc;
+  border-color: #5DAF2E;
 }
 
 .radio-card-selected {
-  border-color: #07c3dc;
-  background-color: rgba(7, 195, 220, 0.05);
+  border-color: #5DAF2E;
+  background-color: rgba(93, 175, 46, 0.05);
 }
 
 .radio-card-icon {
@@ -33,7 +33,7 @@
 }
 
 .radio-card-selected .radio-card-icon {
-  color: #07c3dc;
+  color: #5DAF2E;
 }
 
 .radio-card-label {
@@ -46,7 +46,7 @@
 }
 
 .radio-card-selected .radio-card-label {
-  color: #07c3dc;
+  color: #5DAF2E;
 }
 
 .radio-card-indicator {
@@ -72,11 +72,11 @@
 }
 
 :root[data-theme='dark'] .radio-card:hover {
-  border-color: #07c3dc;
+  border-color: #5DAF2E;
 }
 
 :root[data-theme='dark'] .radio-card-selected {
-  background-color: rgba(7, 195, 220, 0.1);
+  background-color: rgba(93, 175, 46, 0.1);
 }
 
 :root[data-theme='dark'] .radio-card-indicator-empty {

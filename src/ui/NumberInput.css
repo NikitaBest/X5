@@ -21,7 +21,7 @@
 
 .number-input:focus {
   outline: none;
-  border-color: #07c3dc;
+  border-color: #5DAF2E;
 }
 
 .number-input::placeholder {
@@ -45,6 +45,6 @@
 }
 
 :root[data-theme='dark'] .number-input:focus {
-  border-color: #07c3dc;
+  border-color: #5DAF2E;
 }
 

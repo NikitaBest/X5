@@ -20,7 +20,7 @@
 
 .date-input:focus {
   outline: none;
-  border-color: #07c3dc;
+  border-color: #5DAF2E;
 }
 
 .date-input::placeholder {
@@ -49,6 +49,6 @@
 }
 
 :root[data-theme='dark'] .date-input:focus {
-  border-color: #07c3dc;
+  border-color: #5DAF2E;
 }
 

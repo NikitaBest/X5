@@ -66,8 +66,8 @@ function PrioritySelection() {
   const [selectedPriority, setSelectedPriority] = useState('stress')
 
   const handleNext = () => {
-    // Переход на страницу настройки алгоритмов
-    navigate('/algorithm-settings')
+    // Переход сразу на страницу подготовки (страница настроек алгоритмов скрыта)
+    navigate('/preparation')
   }
 
   return (

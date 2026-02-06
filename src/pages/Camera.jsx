@@ -616,7 +616,7 @@ function Camera() {
                 {scanProgress > 0 && (
                   <path
                     d={ovalPath}
-                    stroke="#07C3DC"
+                    stroke="#5DAF2E"
                     strokeWidth="12"
                     strokeLinecap="round"
                     strokeLinejoin="round"

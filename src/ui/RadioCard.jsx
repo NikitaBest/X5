@@ -18,7 +18,7 @@ function RadioCard({
       <div className="radio-card-indicator">
         {selected ? (
           <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="10" cy="10" r="9" fill="#07c3dc" stroke="#07c3dc" strokeWidth="2"/>
+            <circle cx="10" cy="10" r="9" fill="#5DAF2E" stroke="#5DAF2E" strokeWidth="2"/>
             <path d="M6 10L9 13L14 7" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
         ) : (

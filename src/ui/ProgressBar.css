@@ -1,0 +1,76 @@
+.progress-bar-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  margin-bottom: 24px;
+}
+
+.progress-bar-text {
+  font-size: clamp(12px, 3vw, 14px);
+  font-weight: 400;
+  color: var(--color-fg-secondary);
+  text-align: center;
+}
+
+.progress-bar-line {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  position: relative;
+}
+
+.progress-bar-segment {
+  display: flex;
+  align-items: center;
+}
+
+.progress-bar-circle {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+}
+
+.progress-bar-circle-completed {
+  background: #5DAF2E;
+  border: 2px solid #5DAF2E;
+}
+
+.progress-bar-circle-current {
+  background: transparent;
+  border: 2px solid #5DAF2E;
+  box-shadow: 0 0 0 4px rgba(93, 175, 46, 0.1);
+}
+
+.progress-bar-circle-upcoming {
+  background: transparent;
+  border: 2px solid #e5e5e5;
+}
+
+.progress-bar-connector {
+  width: 60px;
+  height: 2px;
+  transition: all 0.3s ease;
+  margin: 0 4px;
+}
+
+.progress-bar-connector-completed {
+  background: #5DAF2E;
+}
+
+.progress-bar-connector-upcoming {
+  background: #e5e5e5;
+}
+
+/* Тёмная тема */
+:root[data-theme='dark'] .progress-bar-circle-upcoming {
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+:root[data-theme='dark'] .progress-bar-connector-upcoming {
+  background: rgba(255, 255, 255, 0.2);
+}
+

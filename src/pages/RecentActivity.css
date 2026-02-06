@@ -1,4 +1,4 @@
-.welcome-page {
+.recent-activity-page {
   display: flex;
   flex-direction: column;
   gap: 24px;
@@ -8,14 +8,14 @@
   padding-bottom: 16px;
 }
 
-.welcome-content {
+.recent-activity-content {
   display: flex;
   flex-direction: column;
   gap: 16px;
   width: 100%;
 }
 
-.welcome-heading {
+.recent-activity-title {
   font-size: clamp(20px, 5vw, 24px);
   font-weight: 700;
   line-height: 1.3;
@@ -24,7 +24,7 @@
   text-align: left;
 }
 
-.welcome-subtitle {
+.recent-activity-subtitle {
   font-size: clamp(14px, 4vw, 16px);
   font-weight: 400;
   line-height: 1.5;
@@ -33,7 +33,7 @@
   text-align: left;
 }
 
-.welcome-goals {
+.recent-activity-options {
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -41,7 +41,7 @@
   margin-top: 8px;
 }
 
-.welcome-footer {
+.recent-activity-footer {
   margin-top: auto;
   width: 100%;
   display: flex;
@@ -50,26 +50,3 @@
   gap: 12px;
 }
 
-.welcome-success-message {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px 16px;
-  background-color: rgba(93, 175, 46, 0.1);
-  border-radius: 12px;
-  border: 1px solid rgba(93, 175, 46, 0.2);
-  width: 100%;
-  max-width: 343px;
-}
-
-.welcome-success-message svg {
-  flex-shrink: 0;
-}
-
-.welcome-success-message span {
-  font-size: clamp(14px, 4vw, 16px);
-  font-weight: 400;
-  line-height: 1.5;
-  color: #5DAF2E;
-  flex: 1;
-}

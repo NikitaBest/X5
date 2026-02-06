@@ -241,7 +241,7 @@ function AlgorithmSettings() {
           {gender && (
             <div className="settings-note">
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M13.3333 4L6 11.3333L2.66667 8" stroke="#07c3dc" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+                <path d="M13.3333 4L6 11.3333L2.66667 8" stroke="#5DAF2E" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
               </svg>
               <span>Учтено в базовых параметрах</span>
             </div>
@@ -266,7 +266,7 @@ function AlgorithmSettings() {
           {isValidDate && age !== null && (
             <div className="settings-note">
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M13.3333 4L6 11.3333L2.66667 8" stroke="#07c3dc" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+                <path d="M13.3333 4L6 11.3333L2.66667 8" stroke="#5DAF2E" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
               </svg>
               <span>
                 Возраст: {age} {getAgeWord(age)}
@@ -302,7 +302,7 @@ function AlgorithmSettings() {
           {height && weight && (
             <div className="settings-note">
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M13.3333 4L6 11.3333L2.66667 8" stroke="#07c3dc" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+                <path d="M13.3333 4L6 11.3333L2.66667 8" stroke="#5DAF2E" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
               </svg>
               <span>Учтём ваши параметры</span>
             </div>
@@ -332,7 +332,7 @@ function AlgorithmSettings() {
           {smokingStatus === 'no' && (
             <div className="settings-note">
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M13.3333 4L6 11.3333L2.66667 8" stroke="#07c3dc" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+                <path d="M13.3333 4L6 11.3333L2.66667 8" stroke="#5DAF2E" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
               </svg>
               <span>Риски снижены</span>
             </div>
@@ -340,7 +340,7 @@ function AlgorithmSettings() {
           {smokingStatus === 'yes' && (
             <div className="settings-note">
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M13.3333 4L6 11.3333L2.66667 8" stroke="#07c3dc" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+                <path d="M13.3333 4L6 11.3333L2.66667 8" stroke="#5DAF2E" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
               </svg>
               <span>Риски повышены</span>
             </div>
