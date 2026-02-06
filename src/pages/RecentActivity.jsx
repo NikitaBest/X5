@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useUserData } from '../contexts/UserDataContext.jsx'
 import Page from '../layout/Page.jsx'
 import Header from '../layout/Header.jsx'
 import ProgressBar from '../ui/ProgressBar.jsx'
@@ -56,9 +57,12 @@ const ACTIVITY_OPTIONS = [
 
 function RecentActivity() {
   const navigate = useNavigate()
+  const { updateUserData } = useUserData()
   const [selectedActivity, setSelectedActivity] = useState('none')
 
   const handleNext = () => {
+    // сохраняем выбранную активность в контекст пользователя
+    updateUserData({ recentActivity: selectedActivity })
     navigate('/preparation')
   }
 

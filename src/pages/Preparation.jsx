@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import Page from '../layout/Page.jsx'
 import Header from '../layout/Header.jsx'
+import ProgressBar from '../ui/ProgressBar.jsx'
 import PrimaryButton from '../components/PrimaryButton.jsx'
 import './Preparation.css'
 
@@ -14,6 +15,7 @@ function Preparation() {
   return (
     <Page className="preparation-page">
       <Header title="Подготовка" />
+      <ProgressBar currentStep={3} totalSteps={3} />
       
       <div className="preparation-content">
         <h2 className="preparation-title">Как пройти сканирование</h2>

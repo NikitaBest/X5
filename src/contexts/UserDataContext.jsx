@@ -9,6 +9,8 @@ export function UserDataProvider({ children }) {
     weight: null,
     height: null,
     smokingStatus: null,
+    goals: [],
+    recentActivity: null,
   })
 
   const updateUserData = useCallback((data) => {
@@ -25,6 +27,8 @@ export function UserDataProvider({ children }) {
       weight: null,
       height: null,
       smokingStatus: null,
+      goals: [],
+      recentActivity: null,
     })
   }, [])
 

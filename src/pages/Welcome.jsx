@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import { useState } from 'react'
+import { useUserData } from '../contexts/UserDataContext.jsx'
 import PrimaryButton from '../components/PrimaryButton.jsx'
 import Page from '../layout/Page.jsx'
 import Header from '../layout/Header.jsx'
@@ -60,6 +61,7 @@ const GOAL_OPTIONS = [
 
 function Welcome() {
   const navigate = useNavigate()
+  const { updateUserData } = useUserData()
   const [selectedGoals, setSelectedGoals] = useState([])
 
   const handleGoalToggle = (value) => {
@@ -74,6 +76,8 @@ function Welcome() {
   }
 
   const handleNext = () => {
+    // сохраняем выбранные цели в контекст пользователя
+    updateUserData({ goals: selectedGoals })
     navigate('/recent-activity')
   }
 
