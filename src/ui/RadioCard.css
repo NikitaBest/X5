@@ -26,14 +26,16 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 24px;
-  height: 24px;
+  width: 48px;
+  height: 48px;
   flex-shrink: 0;
-  color: #9EB5C3;
+  color: #8E9094;
+  --radio-icon-bg: #F5F5F5;
 }
 
 .radio-card-selected .radio-card-icon {
-  color: #5DAF2E;
+  color: #9EDA7D;
+  --radio-icon-bg: #EDF6E8;
 }
 
 .radio-card-label {
