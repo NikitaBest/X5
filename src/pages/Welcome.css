@@ -1,7 +1,7 @@
 .welcome-page {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 8px;
   flex: 1;
   justify-content: flex-start;
   align-items: stretch;
@@ -15,8 +15,8 @@
   width: 100%;
 }
 
-.welcome-heading {
-  font-size: clamp(20px, 5vw, 24px);
+.welcome-page .welcome-heading {
+  font-size: 20px;
   font-weight: 700;
   line-height: 1.3;
   color: var(--color-fg-primary);
@@ -24,8 +24,8 @@
   text-align: left;
 }
 
-.welcome-subtitle {
-  font-size: clamp(14px, 4vw, 16px);
+.welcome-page .welcome-subtitle {
+  font-size: 12px;
   font-weight: 400;
   line-height: 1.5;
   color: var(--color-fg-secondary);
