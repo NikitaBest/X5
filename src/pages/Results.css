@@ -142,11 +142,11 @@
 
 .results-button.secondary {
   background: transparent;
-  border: 1px solid var(--border-color, rgba(255, 255, 255, 0.2));
-  color: var(--text-primary, #ffffff);
+  border: 1px solid var(--border-color, rgba(0, 0, 0, 0.2));
+  color: var(--color-fg-primary, #111111);
 }
 
 .results-button.secondary:hover {
-  background: var(--card-bg, rgba(255, 255, 255, 0.05));
+  background: var(--color-bg-accent-soft, rgba(0, 0, 0, 0.05));
 }
 
