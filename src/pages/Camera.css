@@ -52,7 +52,7 @@
   width: 48px;
   height: 48px;
   border: 4px solid rgba(255, 255, 255, 0.1);
-  border-top-color: #5DAF2E;
+  border-top-color: #07c3dc;
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }
@@ -60,6 +60,12 @@
 @keyframes spin {
   to {
     transform: rotate(360deg);
+  }
+}
+
+@keyframes dash {
+  to {
+    stroke-dashoffset: -30;
   }
 }
 
@@ -115,6 +121,10 @@
   transition: color 0.3s ease;
 }
 
+.face-oval-default {
+  color: #D3E8F4;
+}
+
 .face-oval-warning {
   color: #FFCB3D;
 }
@@ -124,7 +134,7 @@
 }
 
 .face-oval-scanning {
-  color: #5DAF2E;
+  color: #07C3DC;
 }
 
 .camera-cancel-button {
@@ -186,7 +196,7 @@
 }
 
 .camera-instruction-percent {
-  color: #5DAF2E;
+  color: #07c3dc;
   font-size: clamp(18px, 4.5vw, 24px);
   font-weight: 600;
   line-height: 1.2;

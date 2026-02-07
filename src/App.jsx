@@ -7,6 +7,7 @@ import PrioritySelection from './pages/PrioritySelection.jsx'
 // import AlgorithmSettings from './pages/AlgorithmSettings.jsx'
 import Preparation from './pages/Preparation.jsx'
 import Camera from './pages/Camera.jsx'
+import Results from './pages/Results.jsx'
 import './App.css'
 
 function App() {
@@ -21,6 +22,7 @@ function App() {
             {/* <Route path="/algorithm-settings" element={<AlgorithmSettings />} /> */}
             <Route path="/preparation" element={<Preparation />} />
             <Route path="/camera" element={<Camera />} />
+            <Route path="/results" element={<Results />} />
           </Route>
         </Routes>
       </BrowserRouter>
