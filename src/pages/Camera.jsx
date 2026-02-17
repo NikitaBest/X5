@@ -1098,6 +1098,12 @@ function Camera() {
   // Сдвигаем рисунок так, чтобы стык пути попадал в "пробел"
   const dashOffset = dashLen + gapLen * 0.5
   
+  // Толщина пунктирного "кольца": рисуем в 2 раза толще и маской убираем внутреннюю половину,
+  // чтобы внешний край был закругленным, а внутренний — ровным (как на референсе).
+  const dashStroke = 6
+  const outerAlignedStroke = dashStroke * 2
+  const progressMaskStroke = outerAlignedStroke + 2
+
   // Плавный прогресс (маска раскрывается непрерывно), но видимыми остаются только пунктиры
   const progressFraction = Math.max(0, Math.min(1, scanProgress / 100))
   const progressOffset = circumference - circumference * progressFraction
@@ -1138,6 +1144,11 @@ function Camera() {
                     d="M 149 6 A 143 198.5 0 1 1 149 403 A 143 198.5 0 1 1 149 6"
                   />
                 </defs>
+                {/* Маска для "outer aligned" обводки: прячем внутреннюю часть овала */}
+                <mask id="outer-oval-mask" maskUnits="userSpaceOnUse" x="0" y="0" width="298" height="409">
+                  <rect x="0" y="0" width="298" height="409" fill="white" />
+                  <ellipse cx="149" cy="204.5" rx="143" ry="198.5" fill="black" />
+                </mask>
                 {/* Индикатор ожидания (анимированные пунктиры) убран по дизайну */}
                 {/* Синий прогресс-бар показывается ТОЛЬКО когда SDK реально обрабатывает данные */}
                 {showProgressBar && scanProgress > 0 && (
@@ -1147,7 +1158,7 @@ function Camera() {
                       <path
                         d={ovalPath}
                         stroke="white"
-                        strokeWidth="10"
+                        strokeWidth={progressMaskStroke}
                         strokeLinecap="round"
                         strokeLinejoin="round"
                         fill="none"
@@ -1162,32 +1173,36 @@ function Camera() {
 
                     {/* Пунктирный прогресс, обрезанный маской */}
                     <g mask="url(#progress-mask)">
-                      <path
-                        d={ovalPath}
-                        stroke="#95DB6D"
-                        strokeWidth="8"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        fill="none"
-                        strokeDasharray={dashArray}
-                        strokeDashoffset={dashOffset}
-                      />
+                      <g mask="url(#outer-oval-mask)">
+                        <path
+                          d={ovalPath}
+                          stroke="#95DB6D"
+                          strokeWidth={outerAlignedStroke}
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          fill="none"
+                          strokeDasharray={dashArray}
+                          strokeDashoffset={dashOffset}
+                        />
+                      </g>
                     </g>
                   </>
                 )}
                 {/* Базовый пунктирный овал рисуем тем же путем, что и прогресс,
                     чтобы пунктиры совпадали и не появлялась "линия" между ними. */}
-                <path
-                  d={ovalPath}
-                  stroke="currentColor"
-                  strokeWidth="8"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  fill="none"
-                  strokeDasharray={dashArray}
-                  strokeDashoffset={dashOffset}
-                  opacity={scanProgress > 0 ? 0.3 : 1}
-                />
+                <g mask="url(#outer-oval-mask)">
+                  <path
+                    d={ovalPath}
+                    stroke="currentColor"
+                    strokeWidth={outerAlignedStroke}
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    fill="none"
+                    strokeDasharray={dashArray}
+                    strokeDashoffset={dashOffset}
+                    opacity={scanProgress > 0 ? 0.3 : 1}
+                  />
+                </g>
               </svg>
             </div>
             {isMeasuring ? (
