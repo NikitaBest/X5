@@ -201,6 +201,29 @@
   margin-top: 20px;
 }
 
+.camera-scan-percent {
+  position: absolute;
+  top: calc(50% + min(204px, 30vh));
+  left: 50%;
+  transform: translate(-50%, 20px);
+  z-index: 10;
+  /* Градиентный текст */
+  background: linear-gradient(90deg, #95DB6D 0%, #83D3D3 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  font-size: clamp(18px, 4.5vw, 24px);
+  font-weight: 600;
+  line-height: 1.2;
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  text-align: center;
+}
+
 .camera-instruction-percent {
   color: #07c3dc;
   font-size: clamp(18px, 4.5vw, 24px);

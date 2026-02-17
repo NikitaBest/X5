@@ -1124,68 +1124,66 @@ function Camera() {
                     d="M 149 6 A 143 198.5 0 1 1 149 403 A 143 198.5 0 1 1 149 6"
                   />
                 </defs>
-                <mask id="mask0_138_3429" style={{maskType: 'alpha'}} maskUnits="userSpaceOnUse" x="0" y="0" width="298" height="409">
-                  <ellipse cx="149" cy="204.5" rx="143" ry="198.5" stroke="black" strokeWidth="12" strokeLinecap="round" strokeLinejoin="round"/>
-                </mask>
-                <g mask="url(#mask0_138_3429)">
-                  <ellipse cx="149.5" cy="204.5" rx="154.5" ry="210.5" fill="#D3E8F4"/>
-                </g>
-                {/* Индикатор ожидания - показывается когда измерение запущено, но SDK еще не обрабатывает данные */}
-                {showWaitingIndicator && (
-                  <path
-                    d={ovalPath}
-                    stroke="#FFCB3D"
-                    strokeWidth="12"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    fill="none"
-                    strokeDasharray="20 10"
-                    style={{
-                      animation: 'dash 1s linear infinite',
-                      opacity: 0.6,
-                    }}
-                  />
-                )}
+                {/* Индикатор ожидания (анимированные пунктиры) убран по дизайну */}
                 {/* Синий прогресс-бар показывается ТОЛЬКО когда SDK реально обрабатывает данные */}
                 {showProgressBar && scanProgress > 0 && (
-                  <path
-                    d={ovalPath}
-                    stroke="#07C3DC"
-                    strokeWidth="12"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    fill="none"
-                    strokeDasharray={circumference}
-                    strokeDashoffset={progressOffset}
-                    style={{
-                      transition: 'stroke-dashoffset 0.1s linear',
-                    }}
-                  />
+                  <>
+                    {/* Маска "длины" прогресса */}
+                    <mask id="progress-mask" maskUnits="userSpaceOnUse" x="0" y="0" width="298" height="409">
+                      <path
+                        d={ovalPath}
+                        stroke="white"
+                        strokeWidth="10"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        fill="none"
+                        strokeDasharray={circumference}
+                        strokeDashoffset={progressOffset}
+                        style={{
+                          transition: 'stroke-dashoffset 0.1s linear',
+                        }}
+                      />
+                    </mask>
+
+                    {/* Пунктирный прогресс, обрезанный маской */}
+                    <g mask="url(#progress-mask)">
+                      <path
+                        d={ovalPath}
+                        stroke="#07C3DC"
+                        strokeWidth="8"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        fill="none"
+                        strokeDasharray="26 18"
+                        strokeDashoffset="8"
+                      />
+                    </g>
+                  </>
                 )}
-                <ellipse 
-                  cx="149" 
-                  cy="204.5" 
-                  rx="143" 
-                  ry="198.5" 
-                  stroke="currentColor" 
-                  strokeWidth="12" 
-                  strokeLinecap="round" 
+                {/* Базовый пунктирный овал рисуем тем же путем, что и прогресс,
+                    чтобы пунктиры совпадали и не появлялась "линия" между ними. */}
+                <path
+                  d={ovalPath}
+                  stroke="currentColor"
+                  strokeWidth="8"
+                  strokeLinecap="round"
                   strokeLinejoin="round"
                   fill="none"
+                  strokeDasharray="26 18"
+                  strokeDashoffset="8"
                   opacity={scanProgress > 0 ? 0.3 : 1}
                 />
               </svg>
             </div>
-            <div className="camera-instruction-container">
-              {scanProgress > 0 && isProcessingFrames ? (
-                <>
-                  <p className="camera-instruction-percent">{Math.round(scanProgress)}%</p>
-                  <p className="camera-instruction-text">{instructionText}</p>
-                </>
-              ) : (
+            {isProcessingFrames && scanProgress > 0 ? (
+              <div className="camera-scan-percent" aria-live="polite">
+                {Math.round(scanProgress)}%
+              </div>
+            ) : (
+              <div className="camera-instruction-container">
                 <p className="camera-instruction-text">{instructionText}</p>
-              )}
-            </div>
+              </div>
+            )}
             <button className="camera-cancel-button" onClick={handleCancelClick} type="button">
               <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M15 5L5 15M5 5L15 15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
