@@ -29,6 +29,12 @@
   object-fit: cover;
 }
 
+.camera-video-unmirror {
+  /* В некоторых браузерах/WebView фронтальная камера отображается "зеркально".
+     Этот класс делает превью удобным (без зеркалирования), не влияя на поток данных SDK. */
+  transform: scaleX(-1);
+}
+
 .camera-video.hidden {
   display: none;
 }

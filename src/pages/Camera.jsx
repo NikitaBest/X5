@@ -27,6 +27,7 @@ function Camera() {
   const [instructionText, setInstructionText] = useState('Поместите лицо в овал и не двигайтесь')
   const [isFaceDetected, setIsFaceDetected] = useState(false)
   const [isFaceValid, setIsFaceValid] = useState(false)
+  const [isFrontCamera, setIsFrontCamera] = useState(false)
   const [showCancelModal, setShowCancelModal] = useState(false)
   const [scanProgress, setScanProgress] = useState(0)
   // scanStage удален - используем только instructionText, основанный на реальных состояниях SDK
@@ -746,21 +747,50 @@ function Camera() {
           logger.info('Запрос доступа к камере')
           const cameraStartTime = Date.now()
         stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: 'environment' },
+          // Для сканирования лица обычно нужна фронтальная камера.
+          // В некоторых WebView значение может игнорироваться — ниже дополнительно
+          // определяем фактическую камеру по settings видеотрека.
+          video: { facingMode: { ideal: 'user' } },
           audio: false,
         })
           logger.perf('Camera access granted', cameraStartTime)
           logger.info('Доступ к камере получен')
 
-          // Получаем ID камеры
-          const devices = await navigator.mediaDevices.enumerateDevices()
-          const videoDevices = devices.filter((device) => device.kind === 'videoinput')
-          if (videoDevices.length > 0) {
-            cameraIdRef.current = videoDevices[0].deviceId
-            logger.debug('Камера выбрана', { 
-              deviceId: cameraIdRef.current,
-              totalDevices: videoDevices.length 
+          // Определяем фактическую камеру по settings трека (чтобы избежать рассинхронизации
+          // между полученным stream и cameraDeviceId, который передаем в SDK).
+          try {
+            const track = stream.getVideoTracks?.()[0]
+            const settings = track?.getSettings?.() || {}
+
+            if (settings.deviceId) {
+              cameraIdRef.current = settings.deviceId
+            }
+
+            if (settings.facingMode) {
+              setIsFrontCamera(settings.facingMode === 'user')
+            }
+
+            logger.debug('Параметры видеотрека', {
+              deviceId: settings.deviceId,
+              facingMode: settings.facingMode,
+              width: settings.width,
+              height: settings.height,
             })
+          } catch (e) {
+            logger.warn('Не удалось определить settings видеотрека', e)
+          }
+
+          // Fallback: если deviceId недоступен, попробуем выбрать камеру через enumerateDevices
+          if (!cameraIdRef.current) {
+            const devices = await navigator.mediaDevices.enumerateDevices()
+            const videoDevices = devices.filter((device) => device.kind === 'videoinput')
+            if (videoDevices.length > 0) {
+              cameraIdRef.current = videoDevices[0].deviceId
+              logger.debug('Fallback выбор камеры (первое устройство)', {
+                deviceId: cameraIdRef.current,
+                totalDevices: videoDevices.length,
+              })
+            }
           }
 
         if (videoRef.current) {
@@ -1073,7 +1103,7 @@ function Camera() {
           autoPlay
           playsInline
           muted
-          className={`camera-video ${error ? 'hidden' : ''}`}
+          className={`camera-video camera-video-unmirror ${error ? 'hidden' : ''}`.trim()}
         />
         {!error && !isLoading && (
           <>
