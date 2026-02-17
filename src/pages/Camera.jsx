@@ -1086,7 +1086,21 @@ function Camera() {
   const b = 198.5
   const circumference = Math.PI * (3 * (a + b) - Math.sqrt((3 * a + b) * (a + 3 * b)))
   const ovalPath = `M 149 6 A ${a} ${b} 0 1 1 149 403 A ${a} ${b} 0 1 1 149 6`
-  const progressOffset = circumference - (circumference * scanProgress) / 100
+  
+  // Пунктир: ровно 20 штрихов по периметру
+  const totalDashes = 20
+  const dashCycle = circumference / totalDashes // (dash + gap)
+  const dashLen = dashCycle * 0.62
+  const gapLen = dashCycle - dashLen
+  const dashArray = `${dashLen} ${gapLen}`
+  
+  // Сдвигаем рисунок так, чтобы стык пути попадал в "пробел"
+  const dashOffset = dashLen + gapLen * 0.5
+  
+  // Прогресс шагаем по штрихам (без "полупунктира")
+  const completedDashes = Math.max(0, Math.min(totalDashes, Math.floor((scanProgress / 100) * totalDashes)))
+  const steppedFraction = completedDashes / totalDashes
+  const progressOffset = circumference - circumference * steppedFraction
 
   return (
     <div className="camera-page">
@@ -1140,7 +1154,8 @@ function Camera() {
                         strokeDasharray={circumference}
                         strokeDashoffset={progressOffset}
                         style={{
-                          transition: 'stroke-dashoffset 0.1s linear',
+                          // шаговый прогресс по штрихам
+                          transition: 'stroke-dashoffset 0.12s ease-out',
                         }}
                       />
                     </mask>
@@ -1149,13 +1164,13 @@ function Camera() {
                     <g mask="url(#progress-mask)">
                       <path
                         d={ovalPath}
-                        stroke="#07C3DC"
+                        stroke="#95DB6D"
                         strokeWidth="8"
                         strokeLinecap="round"
                         strokeLinejoin="round"
                         fill="none"
-                        strokeDasharray="26 18"
-                        strokeDashoffset="8"
+                        strokeDasharray={dashArray}
+                        strokeDashoffset={dashOffset}
                       />
                     </g>
                   </>
@@ -1169,8 +1184,8 @@ function Camera() {
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   fill="none"
-                  strokeDasharray="26 18"
-                  strokeDashoffset="8"
+                  strokeDasharray={dashArray}
+                  strokeDashoffset={dashOffset}
                   opacity={scanProgress > 0 ? 0.3 : 1}
                 />
               </svg>
