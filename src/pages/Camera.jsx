@@ -14,6 +14,359 @@ import Page from '../layout/Page.jsx'
 import Modal from '../ui/Modal.jsx'
 import './Camera.css'
 
+// Карта оповещений SDK (основные коды из "Список оповещений.MD")
+// Используется только для красивого логирования в консоль.
+const SDK_ALERTS = {
+  8: {
+    code: 8,
+    name: 'DEVICE_CODE_MINIMUM_OS_VERSION_ERROR',
+    domain: 'DEVICE',
+    cause: 'Версия операционной системы ниже минимально поддерживаемой.',
+    solution: 'Обновите операционную систему устройства или используйте другое устройство.',
+  },
+  17: {
+    code: 17,
+    name: 'DEVICE_CODE_CLOCK_SKEW_ERROR',
+    domain: 'DEVICE',
+    cause: 'Обнаружено серьёзное искажение времени на устройстве.',
+    solution: 'Проверьте дату, время и часовой пояс. Рекомендуется включить автонастройку времени.',
+  },
+  18: {
+    code: 18,
+    name: 'DEVICE_CODE_MINIMUM_BROWSER_VERSION_ERROR',
+    domain: 'DEVICE',
+    cause: 'Версия браузера ниже минимально поддерживаемой.',
+    solution: 'Обновите браузер или используйте другой браузер.',
+  },
+  1001: {
+    code: 1001,
+    name: 'CAMERA_CODE_NO_CAMERA_ERROR',
+    domain: 'CAMERA',
+    cause: 'Устройство не имеет камеры с требуемыми характеристиками (как минимум 640x480 @ 30fps).',
+    solution: 'Используйте устройство с поддерживаемой камерой и убедитесь, что камера работает корректно.',
+  },
+  1002: {
+    code: 1002,
+    name: 'CAMERA_CODE_CAMERA_OPEN_ERROR',
+    domain: 'CAMERA',
+    cause: 'Не удалось запустить камеру.',
+    solution: 'Проверьте, что камера не занята другим приложением и работает корректно, затем попробуйте снова.',
+  },
+  1005: {
+    code: 1005,
+    name: 'CAMERA_CODE_CAMERA_MISSING_PERMISSIONS_ERROR',
+    domain: 'CAMERA',
+    cause: 'Приложению не предоставлено разрешение на использование камеры.',
+    solution: 'Разрешите доступ к камере в настройках браузера/устройства.',
+  },
+  1501: {
+    code: 1501,
+    name: 'CAMERA_CODE_UNEXPECTED_IMAGE_DIMENSIONS_WARNING',
+    domain: 'CAMERA',
+    cause: 'Фактическое разрешение камеры отличается от запрошенного.',
+    solution: 'Попросите пользователя повторить измерение; при повторении проблемы возможно устройство не поддерживает VGA.',
+  },
+  2002: {
+    code: 2002,
+    name: 'LICENSE_CODE_ACTIVATION_LIMIT_REACHED_ERROR',
+    domain: 'LICENSE',
+    cause: 'Достигнут лимит устройств для данной лицензии.',
+    solution: 'Свяжитесь с отделом продаж для увеличения количества разрешённых устройств.',
+  },
+  2003: {
+    code: 2003,
+    name: 'LICENSE_CODE_METER_ATTRIBUTE_USES_LIMIT_REACHED_ERROR',
+    domain: 'LICENSE',
+    cause: 'Лимит измерений по лицензии исчерпан.',
+    solution: 'Свяжитесь с отделом продаж для увеличения количества доступных измерений.',
+  },
+  2004: {
+    code: 2004,
+    name: 'LICENSE_CODE_AUTHENTICATION_FAILED_ERROR',
+    domain: 'LICENSE',
+    cause: 'SDK не смог аутентифицировать лицензию (расхождение времени, сеть, неверный токен).',
+    solution: 'Проверьте интернет, корректность времени на устройстве и свободное место, затем попробуйте снова.',
+  },
+  2007: {
+    code: 2007,
+    name: 'LICENSE_CODE_INVALID_LICENSE_KEY_ERROR',
+    domain: 'LICENSE',
+    cause: 'Недействительный лицензионный ключ.',
+    solution: 'Используйте корректный ключ, предоставленный поддержкой BiosenseSignal.',
+  },
+  2010: {
+    code: 2010,
+    name: 'LICENSE_CODE_REVOKED_LICENSE_ERROR',
+    domain: 'LICENSE',
+    cause: 'Лицензия отозвана.',
+    solution: 'Свяжитесь со службой поддержки клиентов.',
+  },
+  2016: {
+    code: 2016,
+    name: 'LICENSE_CODE_INTERNAL_ERROR_9',
+    domain: 'LICENSE',
+    cause: 'Ошибка SSL при аутентификации ответа сервера лицензий.',
+    solution: 'Проверьте время, интернет‑подключение, попробуйте другую сеть или повторите позже.',
+  },
+  2017: {
+    code: 2017,
+    name: 'LICENSE_CODE_LICENSE_EXPIRED_ERROR',
+    domain: 'LICENSE',
+    cause: 'Срок действия лицензии истёк.',
+    solution: 'Свяжитесь со службой поддержки клиентов для продления лицензии.',
+  },
+  2018: {
+    code: 2018,
+    name: 'LICENSE_CODE_LICENSE_SUSPENDED_ERROR',
+    domain: 'LICENSE',
+    cause: 'Лицензия приостановлена.',
+    solution: 'Свяжитесь со службой поддержки клиентов.',
+  },
+  2024: {
+    code: 2024,
+    name: 'LICENSE_CODE_NETWORK_ISSUES_ERROR',
+    domain: 'DEVICE',
+    cause: 'Нет подключения к интернету.',
+    solution: 'Проверьте интернет‑подключение и повторите попытку.',
+  },
+  2025: {
+    code: 2025,
+    name: 'LICENSE_CODE_SSL_HANDSHAKE_ERROR',
+    domain: 'DEVICE',
+    cause: 'Проблема безопасности SSL‑сертификата.',
+    solution: 'Проверьте время на устройстве, интернет и сеть; при необходимости попробуйте другую сеть.',
+  },
+  2032: {
+    code: 2032,
+    name: 'LICENSE_CODE_INPUT_LICENSE_KEY_EMPTY_ERROR',
+    domain: 'LICENSE',
+    cause: 'Лицензионный ключ не передан в SDK.',
+    solution: 'Запустите SDK с действительным лицензионным ключом.',
+  },
+  2034: {
+    code: 2034,
+    name: 'LICENSE_CODE_INPUT_PRODUCT_ID_ILLEGAL_ERROR',
+    domain: 'LICENSE',
+    cause: 'Указан недопустимый productId.',
+    solution: 'Передавайте корректный productId или null, согласно настройке лицензии.',
+  },
+  2035: {
+    code: 2035,
+    name: 'LICENSE_CODE_CANNOT_OPEN_FILE_FOR_READ_ERROR',
+    domain: 'LICENSE',
+    cause: 'SDK не может прочитать необходимые данные из файловой системы.',
+    solution: 'Попросите пользователя переустановить/восстановить приложение.',
+  },
+  2036: {
+    code: 2036,
+    name: 'LICENSE_CODE_MONTHLY_USAGE_TRACKING_REQUIRES_SYNC_ERROR',
+    domain: 'LICENSE',
+    cause: 'SDK не смог аутентифицироваться на сервере лицензий для отслеживания использования.',
+    solution: 'Проверьте интернет‑подключение и повторите попытку.',
+  },
+  2037: {
+    code: 2037,
+    name: 'LICENSE_CODE_SSL_HANDSHAKE_DEVICE_DATE_ERROR',
+    domain: 'LICENSE',
+    cause: 'Проблема с SSL‑сертификатом из‑за некорректной даты на устройстве.',
+    solution: 'Проверьте дату и время на устройстве и интернет‑подключение.',
+  },
+  2038: {
+    code: 2038,
+    name: 'LICENSE_CODE_SSL_HANDSHAKE_CERTIFICATE_EXPIRED_ERROR',
+    domain: 'LICENSE',
+    cause: 'Срок действия SSL‑сертификата истёк.',
+    solution: 'Проверьте время и сеть; при повторении проблемы свяжитесь с поддержкой.',
+  },
+  2039: {
+    code: 2039,
+    name: 'LICENSE_CODE_MIN_SDK_ERROR',
+    domain: 'LICENSE',
+    cause: 'Версия SDK слишком старая для этой лицензии.',
+    solution: 'Обновите SDK до поддерживаемой версии.',
+  },
+  2042: {
+    code: 2042,
+    name: 'LICENSE_CODE_NETWORK_TIMEOUT_ERROR',
+    domain: 'LICENSE',
+    cause: 'Таймаут сетевого запроса к серверу лицензий.',
+    solution: 'Проверьте качество интернет‑соединения, перезапустите приложение или попробуйте позже.',
+  },
+  3003: {
+    code: 3003,
+    name: 'MEASUREMENT_CODE_MISDETECTION_DURATION_EXCEEDS_LIMIT_ERROR',
+    domain: 'MEASUREMENT',
+    cause: 'Лицо несколько раз не распознавалось более 0,5 секунд.',
+    solution: 'Попросите пользователя сидеть ровно, не двигаться и держать лицо в овале.',
+  },
+  3004: {
+    code: 3004,
+    name: 'MEASUREMENT_CODE_INVALID_RECENT_DETECTION_RATE_ERROR',
+    domain: 'MEASUREMENT',
+    cause: 'Обнаружено много потерь кадров (низкий FPS или плохой свет).',
+    solution: 'Закройте тяжёлые приложения, улучшите освещение и повторите измерение.',
+  },
+  3006: {
+    code: 3006,
+    name: 'MEASUREMENT_CODE_LICENSE_ACTIVATION_FAILED_ERROR',
+    domain: 'MEASUREMENT',
+    cause: 'Сбой активации лицензии во время измерения.',
+    solution: 'Проверьте интернет и настройки прокси; при повторении обратитесь в поддержку.',
+  },
+  3008: {
+    code: 3008,
+    name: 'MEASUREMENT_CODE_INVALID_MEASUREMENT_AVERAGE_DETECTION_RATE_ERROR',
+    domain: 'MEASUREMENT',
+    cause: 'Средняя частота обнаружения лиц/кадров значительно ниже ожидаемой.',
+    solution: 'Освободите ресурсы устройства, улучшите освещение, при необходимости используйте другое устройство.',
+  },
+  3009: {
+    code: 3009,
+    name: 'MEASUREMENT_CODE_TOO_MANY_FRAMES_INORDER_ERROR',
+    domain: 'MEASUREMENT',
+    cause: 'Получено много кадров с неправильным порядком временных меток.',
+    solution: 'Попросите пользователя повторить измерение.',
+  },
+  3500: {
+    code: 3500,
+    name: 'MEASUREMENT_CODE_MISDETECTION_DURATION_EXCEEDS_LIMIT_WARNING',
+    domain: 'MEASUREMENT',
+    cause: 'Лицо не обнаруживалось более 0,5 секунд.',
+    solution: 'Напомните пользователю держать лицо в овале и не двигаться.',
+  },
+  3505: {
+    code: 3505,
+    name: 'MEASUREMENT_CODE_INVALID_RECENT_FPS_RATE_WARNING',
+    domain: 'MEASUREMENT',
+    cause: 'Частота кадров камеры упала и может повлиять на качество измерений.',
+    solution: 'Снизьте нагрузку на устройство и следуйте рекомендациям по измерению.',
+  },
+  3506: {
+    code: 3506,
+    name: 'MEASUREMENT_CODE_MEASUREMENT_MISPLACED_FRAME_WARNING',
+    domain: 'MEASUREMENT',
+    cause: 'Получен кадр с некорректным порядком временных меток.',
+    solution: 'Обычно достаточно повторить измерение; предупреждение не является критичным.',
+  },
+  4505: {
+    code: 4505,
+    name: 'VITAL_SIGN_CODE_BLOOD_PRESSURE_PROCESSING_FAILED_WARNING',
+    domain: 'VITAL_SIGNS',
+    cause: 'Не удалось рассчитать артериальное давление в этом измерении.',
+    solution: 'Будут показаны остальные показатели; при повторении проблемы переустановите приложение.',
+  },
+  4506: {
+    code: 4506,
+    name: 'VITAL_SIGN_CODE_MEASURING_WITH_NO_ENABLED_VITAL_SIGNS_WARNING',
+    domain: 'VITAL_SIGNS',
+    cause: 'В рамках текущего измерения не включены жизненно важные показатели.',
+    solution: 'Проверьте конфигурацию лицензии и интернет‑подключение, затем выполните новое измерение.',
+  },
+  6004: {
+    code: 6004,
+    name: 'SESSION_CODE_ILLEGAL_START_CALL_ERROR',
+    domain: 'SESSION',
+    cause: 'start() был вызван, когда сессия не готова к измерению.',
+    solution: 'Вызывайте start() только после перехода сессии в состояние ACTIVE.',
+  },
+  6005: {
+    code: 6005,
+    name: 'SESSION_CODE_ILLEGAL_STOP_CALL_ERROR',
+    domain: 'SESSION',
+    cause: 'stop() был вызван, когда сессия не находилась в состоянии MEASURING.',
+    solution: 'Вызывайте stop() только во время активного измерения.',
+  },
+  7002: {
+    code: 7002,
+    name: 'INITIALIZATION_CODE_INVALID_PROCESSING_TIME_ERROR',
+    domain: 'INITIALIZATION',
+    cause: 'Указано недопустимое время измерения (processingTime).',
+    solution: 'Используйте время в диапазоне 20–180 секунд.',
+  },
+  7005: {
+    code: 7005,
+    name: 'INITIALIZATION_CODE_INVALID_LICENSE_FORMAT',
+    domain: 'INITIALIZATION',
+    cause: 'Лицензионный ключ пустой или имеет неверный формат.',
+    solution: 'Проверьте, что ключ соответствует формату и не содержит лишних символов.',
+  },
+  7006: {
+    code: 7006,
+    name: 'INITIALIZATION_CODE_SDK_LOAD_FAILURE',
+    domain: 'INITIALIZATION',
+    cause: 'Не удалось загрузить алгоритмический двоичный файл SDK (a.wasm.gz).',
+    solution: 'Убедитесь, что a.wasm.gz доступен и не блокируется сервером или браузером.',
+  },
+  7007: {
+    code: 7007,
+    name: 'INITIALIZATION_CODE_UNSUPPORTED_USER_WEIGHT',
+    domain: 'INITIALIZATION',
+    cause: 'Указан вес вне поддерживаемого диапазона 40–200 кг.',
+    solution: 'Укажите вес в пределах диапазона или не указывайте его.',
+  },
+  7008: {
+    code: 7008,
+    name: 'INITIALIZATION_CODE_UNSUPPORTED_USER_AGE',
+    domain: 'INITIALIZATION',
+    cause: 'Указан возраст вне поддерживаемого диапазона 18–110 лет.',
+    solution: 'Укажите возраст в пределах диапазона или не указывайте его.',
+  },
+  7009: {
+    code: 7009,
+    name: 'INITIALIZATION_CODE_CONCURRENT_SESSIONS_ERROR',
+    domain: 'INITIALIZATION',
+    cause: 'Попытка создать новую сессию до завершения предыдущей.',
+    solution: 'Завершите предыдущую сессию перед созданием новой.',
+  },
+  7012: {
+    code: 7012,
+    name: 'INITIALIZATION_CODE_UNSUPPORTED_USER_HEIGHT',
+    domain: 'INITIALIZATION',
+    cause: 'Указан рост вне поддерживаемого диапазона 130–230 см.',
+    solution: 'Укажите рост в пределах диапазона или не указывайте его.',
+  },
+  7013: {
+    code: 7013,
+    name: 'INITIALIZATION_CODE_MEMORY_ALLOCATION_ERROR',
+    domain: 'INITIALIZATION',
+    cause: 'Сбой выделения памяти (известная проблема WebKit/Emscripten на старых iOS).',
+    solution: 'Рекомендуется закрыть вкладку/браузер и повторить измерение в новой вкладке.',
+  },
+  7014: {
+    code: 7014,
+    name: 'INITIALIZATION_CODE_INITIAL_MEMORY_ALLOCATION_ERROR',
+    domain: 'INITIALIZATION',
+    cause: 'Не удалось выделить память при старте SDK.',
+    solution: 'Закройте лишние приложения и вкладки, подождите и попробуйте снова; при повторении проблема в слабом устройстве.',
+  },
+  7015: {
+    code: 7015,
+    name: 'INITIALIZATION_CODE_BROWSER_NOT_SUPPORTING_SHARED_ARRAY_BUFFER_ERROR',
+    domain: 'INITIALIZATION',
+    cause: 'Браузер не поддерживает SharedArrayBuffer.',
+    solution: 'Обновите браузер или используйте устройство/браузер с поддержкой SharedArrayBuffer.',
+  },
+  7501: {
+    code: 7501,
+    name: 'INITIALIZATION_MEMORY_USAGE_WARNING',
+    domain: 'INITIALIZATION',
+    cause: 'SDK повторно запускается в той же вкладке, что может приводить к утечкам памяти на iOS 17 и ниже.',
+    solution: 'Рекомендуется запускать измерения в новой вкладке или перезапустить браузер.',
+  },
+}
+
+// Короткие сообщения для пользователя при предупреждениях SDK (показываем на экране)
+function getUserMessageForAlert(alertInfo) {
+  if (!alertInfo || !alertInfo.solution) return null
+  const messages = {
+    3500: 'Держите лицо в овале и не двигайтесь — лицо не обнаруживалось более 0,5 сек.',
+    3505: 'Держите лицо в овале. Снижена частота кадров — закройте другие приложения.',
+    3506: 'Получен кадр не по порядку. Держите лицо в овале и не двигайтесь.',
+    1501: 'Разрешение камеры отличается от ожидаемого. Попробуйте ещё раз.',
+  }
+  return messages[alertInfo.code] || alertInfo.solution
+}
+
 function Camera() {
   const navigate = useNavigate()
   const { userData } = useUserData()
@@ -46,8 +399,11 @@ function Camera() {
   const lastValidImageTimeRef = useRef(null) // Время последнего валидного изображения
   const measurementCompletedRef = useRef(false) // Флаг завершения измерения - не запускать автоматически
   const lastImageValidityRef = useRef(null) // Последний статус валидности для логирования
+  const lastInstructionValidityRef = useRef(null) // Обновляем текст инструкции только при смене статуса (не каждый кадр)
   const lastLogTimeRef = useRef(0) // Время последнего лога для ограничения частоты
   const measurementStartTimeRef = useRef(null) // Ref для хранения времени начала измерения (избегаем проблем с замыканием)
+  const sessionStateRef = useRef(SessionState.INIT) // Актуальное состояние сессии для проверки внутри таймера
+  const hasAutoStartScheduledRef = useRef(false)   // Не планировать start() дважды за один ACTIVE
 
   // scanStages удален - используем только тексты, основанные на реальных состояниях SDK
 
@@ -55,7 +411,7 @@ function Camera() {
   // ВАЖНО: Прогресс обновляется ТОЛЬКО когда SDK реально обрабатывает данные (isProcessingFrames === true)
   // Прогресс рассчитывается на основе времени с начала измерения, но только когда SDK работает
   useEffect(() => {
-    // Если SDK не обрабатывает данные, сбрасываем прогресс
+    // Если SDK не обрабатывает данные и измерение остановлено, сбрасываем прогресс
     if (!isProcessingFrames && !isMeasuring) {
       setScanProgress(0)
       measurementPausedTimeRef.current = null
@@ -64,11 +420,9 @@ function Camera() {
       return
     }
     
-    // Обновляем прогресс только когда SDK обрабатывает данные
-    // ВАЖНО: isProcessingFrames - это главный индикатор, что SDK работает
-    // isMeasuring может быть false из-за замыкания, но если isProcessingFrames=true, значит SDK работает
-    // Используем ref для получения актуального времени начала измерения
-    if (isMeasuring && measurementStartTimeRef.current) {
+    // Обновляем прогресс только когда SDK обрабатывает данные (isProcessingFrames === true)
+    // Это гарантирует, что "сканирование" видно только во время реальной обработки
+    if (isProcessingFrames && measurementStartTimeRef.current) {
       // Плавное обновление прогресса между вызовами onVitalSign
       const updateProgress = () => {
         const elapsed = Date.now() - measurementStartTimeRef.current - totalPausedTimeRef.current
@@ -197,6 +551,25 @@ function Camera() {
   const onError = useCallback((errorData) => {
     logger.error('SDK Error - получена ошибка от SDK', errorData)
     
+    // Дополнительное логирование по карте оповещений SDK
+    if (errorData.code) {
+      const alertInfo = SDK_ALERTS[errorData.code]
+      if (alertInfo) {
+        logger.error('SDK Alert details', {
+          code: alertInfo.code,
+          name: alertInfo.name,
+          domain: alertInfo.domain,
+          cause: alertInfo.cause,
+          solution: alertInfo.solution,
+        })
+      } else {
+        logger.error('SDK Alert (unknown code)', {
+          code: errorData.code,
+          domain: errorData.domain,
+        })
+      }
+    }
+    
     // Более детальная обработка ошибок
     let errorMessage = 'Неизвестная ошибка'
     let isCritical = false
@@ -315,9 +688,32 @@ function Camera() {
     }
   }, [])
 
-  // Callback для обработки предупреждений
+  // Callback для обработки предупреждений — показываем пользователю, что делать
   const onWarning = useCallback((warningData) => {
     logger.warn('SDK Warning - получено предупреждение от SDK', warningData)
+
+    if (warningData.code) {
+      const alertInfo = SDK_ALERTS[warningData.code]
+      if (alertInfo) {
+        logger.warn('SDK Warning details', {
+          code: alertInfo.code,
+          name: alertInfo.name,
+          domain: alertInfo.domain,
+          cause: alertInfo.cause,
+          solution: alertInfo.solution,
+        })
+        // Показываем пользователю понятную подсказку на экране (не только в консоли)
+        const userMessage = getUserMessageForAlert(alertInfo)
+        if (userMessage) {
+          setInstructionText(userMessage)
+        }
+      } else {
+        logger.warn('SDK Warning (unknown code)', {
+          code: warningData.code,
+          domain: warningData.domain,
+        })
+      }
+    }
   }, [])
 
   // Callback для активации устройства
@@ -359,8 +755,10 @@ function Camera() {
     console.groupEnd()
     
     setSessionState(state)
-    
+    sessionStateRef.current = state
+
     if (state === SessionState.ACTIVE) {
+      hasAutoStartScheduledRef.current = false // разрешаем запланировать автостарт при следующем ACTIVE
       logger.info('✅ Сессия ACTIVE - SDK готов', {
         hasMeasurementError
       })
@@ -373,6 +771,8 @@ function Camera() {
         setInstructionText('Поместите лицо в овал. Измерение начнется через несколько секунд...')
       }
     } else if (state === SessionState.MEASURING) {
+      hasAutoStartScheduledRef.current = false
+      lastInstructionValidityRef.current = null // чтобы первая подсказка от onImageData точно показалась
       logger.info('🔄 Сессия MEASURING - анализ начат', {
         note: 'Ожидаем onVitalSign для подтверждения обработки данных (обычно через ~8 секунд)'
       })
@@ -413,67 +813,56 @@ function Camera() {
   // Это позволяет показать пользователю, правильно ли он позиционирует лицо
   // Но SDK обрабатывает данные ТОЛЬКО во время измерения (MEASURING)
   
-  // Запуск измерения: если лицо валидно - запускаем сразу, иначе через 3 секунды
-  // НО не запускаем автоматически после ошибки измерения
+  // Запуск измерения.
+  // ВАЖНО: согласно документации SDK, валидация кадров (ImageValidity / onImageData)
+  // происходит "во время измерения" (during the measurement). То есть SDK
+  // начинает проверять лицо и возвращать статусы только ПОСЛЕ вызова start().
+  // Поэтому мы не можем ждать ImageValidity.VALID до старта – иначе измерение
+  // никогда не начнется. Мы запускаем измерение автоматически после перехода
+  // сессии в ACTIVE, а уже во время измерения используем onImageData для
+  // подсказок и контроля прогресса.
   const startTimerRef = useRef(null)
   
   useEffect(() => {
-    // Очищаем предыдущий таймер, если он есть
-    if (startTimerRef.current) {
-      clearTimeout(startTimerRef.current)
-      startTimerRef.current = null
-    }
-    
     // Если была ошибка измерения или измерение завершено, не запускаем автоматически
     if (hasMeasurementError || measurementCompletedRef.current) {
-      logger.debug('Пропуск автоматического запуска измерения', {
-        hasMeasurementError,
-        measurementCompleted: measurementCompletedRef.current,
-        reason: hasMeasurementError ? 'была ошибка измерения' : 'измерение завершено'
-      })
       return
     }
-    
-    if (sessionState === SessionState.ACTIVE && !isMeasuring && sessionRef.current) {
-      // Если лицо валидно - запускаем измерение сразу (через небольшую задержку для стабилизации)
-      if (isFaceValid) {
-        logger.debug('⏱️ Запуск измерения через 500мс (лицо валидно)')
-        startTimerRef.current = setTimeout(() => {
-          if (sessionState === SessionState.ACTIVE && !isMeasuring && isFaceValid && sessionRef.current && !hasMeasurementError) {
-            try {
-              logger.session('▶️ start() - запуск измерения')
-              sessionRef.current.start()
-            } catch (err) {
-              logger.error('❌ Ошибка запуска измерения', err)
-              setError('Не удалось начать измерение')
-            }
-          }
-        }, 500) // Небольшая задержка для стабилизации
-      } else {
-        // Если лицо не валидно - даем время пользователю правильно расположить лицо
-        // Запускаем измерение через 3 секунды в любом случае, чтобы SDK начал вызывать onImageData
-        logger.debug('⏱️ Запуск измерения через 3 сек (лицо не валидно)')
-        startTimerRef.current = setTimeout(() => {
-          if (sessionState === SessionState.ACTIVE && !isMeasuring && sessionRef.current && !hasMeasurementError) {
-            try {
-              logger.session('▶️ start() - запуск измерения (таймаут)')
-              sessionRef.current.start()
-            } catch (err) {
-              logger.error('❌ Ошибка запуска измерения', err)
-              setError('Не удалось начать измерение')
-            }
-          }
-        }, 3000) // Задержка 3 секунды для подготовки пользователя
-      }
 
-      return () => {
-        if (startTimerRef.current) {
-          clearTimeout(startTimerRef.current)
-          startTimerRef.current = null
+    // Автостарт измерения после перехода сессии в ACTIVE — только один раз за фазу ACTIVE.
+    // Проверки внутри таймера делаем по refs, чтобы не зависеть от устаревшего замыкания.
+    if (
+      sessionState === SessionState.ACTIVE &&
+      !isMeasuring &&
+      sessionRef.current &&
+      !hasAutoStartScheduledRef.current
+    ) {
+      hasAutoStartScheduledRef.current = true
+      logger.debug('⏱️ Автозапуск измерения через 2 секунды после перехода в ACTIVE')
+      startTimerRef.current = setTimeout(() => {
+        if (
+          sessionStateRef.current === SessionState.ACTIVE &&
+          sessionRef.current
+        ) {
+          try {
+            logger.session('▶️ start() - автозапуск измерения после ACTIVE')
+            sessionRef.current.start()
+          } catch (err) {
+            logger.error('❌ Ошибка запуска измерения', err)
+            setError('Не удалось начать измерение')
+          }
         }
+        hasAutoStartScheduledRef.current = false
+      }, 2000)
+    }
+
+    return () => {
+      if (startTimerRef.current) {
+        clearTimeout(startTimerRef.current)
+        startTimerRef.current = null
       }
     }
-  }, [sessionState, isMeasuring, isFaceValid, hasMeasurementError])
+  }, [sessionState, isMeasuring, hasMeasurementError])
   
   // Перезапуск измерения после ошибки, когда лицо снова становится валидным
   useEffect(() => {
@@ -540,6 +929,12 @@ function Camera() {
     // Обновляем состояние обнаружения лица
     setIsFaceDetected(faceDetected)
     setIsFaceValid(faceValid)
+
+    // Текст инструкции обновляем только при смене ImageValidity, чтобы не мигал (onImageData вызывается каждый кадр)
+    const instructionValidityChanged = lastInstructionValidityRef.current !== imageValidity
+    if (instructionValidityChanged) {
+      lastInstructionValidityRef.current = imageValidity
+    }
     
     // Если лицо валидно
     if (faceValid) {
@@ -558,23 +953,17 @@ function Camera() {
       
       // ВАЖНО: SDK обрабатывает кадры ТОЛЬКО во время измерения (MEASURING)
       // Но onVitalSign - самый надежный индикатор того, что SDK обрабатывает данные
-      if (isProcessingFrames) {
-        // SDK РЕАЛЬНО обрабатывает данные - анализ идет!
-        setInstructionText('Анализ идет. Продолжайте держать лицо в овале')
-      } else if (isMeasuring) {
-        // Измерение запущено (MEASURING), но SDK еще не обрабатывает данные
-        // onVitalSign будет вызван через ~8 секунд
-        setInstructionText('Анализ запущен. Ожидаем начала обработки данных...')
-      } else {
-        // SDK проверяет валидность, но измерение еще не запущено
-        if (shouldLog) {
-          logger.debug('📸 Лицо валидно, но анализ еще не начался')
-        }
-        
-        if (hasMeasurementError) {
-          setInstructionText('Лицо обнаружено. Начинаем новое измерение...')
+      if (instructionValidityChanged) {
+        if (isProcessingFrames) {
+          setInstructionText('Анализ идет. Продолжайте держать лицо в овале')
+        } else if (isMeasuring) {
+          setInstructionText('Анализ запущен. Ожидаем начала обработки данных...')
         } else {
-          setInstructionText('Отлично! Лицо обнаружено, начинаем измерение...')
+          if (hasMeasurementError) {
+            setInstructionText('Лицо обнаружено. Начинаем новое измерение...')
+          } else {
+            setInstructionText('Отлично! Лицо обнаружено, начинаем измерение...')
+          }
         }
       }
     } else {
@@ -625,11 +1014,13 @@ function Camera() {
           break
       }
       
-      // Обновляем текст инструкции
-      if (!isMeasuring || imageValidity === ImageValidity.INVALID_ROI) {
-        setInstructionText(message)
-      } else {
-        setInstructionText(`${message}. SDK не обрабатывает данные, пока лицо не валидно`)
+      // Обновляем текст инструкции только при смене статуса (чтобы подсказка не мигала)
+      if (instructionValidityChanged) {
+        if (!isMeasuring || imageValidity === ImageValidity.INVALID_ROI) {
+          setInstructionText(message)
+        } else {
+          setInstructionText(`${message}. Держите лицо в овале для продолжения.`)
+        }
       }
       
       // ВАЖНО: Если SDK обрабатывал данные, но лицо стало невалидным,
@@ -1038,28 +1429,28 @@ function Camera() {
 
 
   // Определяем цвет овала
-  // ПРАВИЛЬНАЯ ЛОГИКА ЦВЕТА ОВАЛА:
-  // - Желтый (warning): лицо НЕ обнаружено в овале (INVALID_ROI) - нужно поместить лицо
-  // - Зеленый (success): лицо обнаружено и валидно (VALID) - можно начинать анализ
-  // - Синий (default): используется как базовый цвет, но не для индикации состояния
+  // ЛОГИКА ЦВЕТА ОВАЛА (UX поверх ImageValidity SDK):
+  // - Желтый (warning): лицо НЕ обнаружено в овале (INVALID_ROI) — SDK не может начать сканирование.
+  // - Серый (default): лицо распознано в кадре, но сканирование еще не идет (ожидание/подготовка).
+  // - Зеленый (success): SDK реально сканирует (идет обработка данных, isProcessingFrames === true).
   // 
   // ПРАВИЛЬНАЯ ЛОГИКА ПРОГРЕСС-БАРА:
   // - Синий прогресс-бар: ТОЛЬКО когда SDK реально обрабатывает данные (isProcessingFrames === true)
   // - Проценты берутся из scanProgress, который обновляется только когда SDK обрабатывает данные
   
-  // Желтый = лицо НЕ обнаружено (INVALID_ROI)
-  // Зеленый = лицо обнаружено и валидно (VALID)
+  // Желтый = лицо НЕ обнаружено (INVALID_ROI / INVALID_DEVICE_ORIENTATION)
+  // Серый = лицо обнаружено, но анализ еще не идет
+  // Зеленый = идет сканирование (SDK обрабатывает кадры)
   const ovalColorClass = !isFaceDetected
     ? 'face-oval-warning' // Желтый - лицо не обнаружено в овале
-    : isFaceValid
-      ? 'face-oval-success' // Зеленый - лицо обнаружено и валидно
-      : 'face-oval-default' // Синий - лицо обнаружено, но не валидно (TILTED_HEAD, UNEVEN_LIGHT) - временное состояние
+    : isProcessingFrames
+      ? 'face-oval-success' // Зеленый - SDK зафиксировал лицо и обрабатывает данные
+      : 'face-oval-default' // Серый - лицо в кадре/овале, но анализ еще не идет
   
   // Показываем прогресс-бар ТОЛЬКО когда SDK реально обрабатывает данные
   // (isProcessingFrames устанавливается в true когда вызывается onVitalSign)
-  // ВАЖНО: isProcessingFrames - главный индикатор, isMeasuring может быть false из-за замыкания
-  // Показываем прогресс во время сканирования (MEASURING)
-  const showProgressBar = isMeasuring
+  // ВАЖНО: isProcessingFrames - главный индикатор "идет ли анализ"
+  const showProgressBar = isProcessingFrames
   
   // Показываем индикатор ожидания когда измерение запущено, но SDK еще не обрабатывает данные
   // Это помогает пользователю понять, что происходит (ожидание ~8 секунд до первого onVitalSign)
@@ -1205,7 +1596,8 @@ function Camera() {
                 </g>
               </svg>
             </div>
-            {isMeasuring ? (
+            {/* Инструкция показывается всегда, когда пользователю нужно что-то сделать; процент — только когда идёт успешное сканирование */}
+            {isMeasuring && isFaceValid && isProcessingFrames ? (
               <div className="camera-scan-percent" aria-live="polite">
                 {Math.round(scanProgress)}%
               </div>
