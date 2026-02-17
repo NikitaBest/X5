@@ -68,7 +68,7 @@ function Camera() {
     // ВАЖНО: isProcessingFrames - это главный индикатор, что SDK работает
     // isMeasuring может быть false из-за замыкания, но если isProcessingFrames=true, значит SDK работает
     // Используем ref для получения актуального времени начала измерения
-    if (isProcessingFrames && measurementStartTimeRef.current) {
+    if (isMeasuring && measurementStartTimeRef.current) {
       // Плавное обновление прогресса между вызовами onVitalSign
       const updateProgress = () => {
         const elapsed = Date.now() - measurementStartTimeRef.current - totalPausedTimeRef.current
@@ -1058,7 +1058,8 @@ function Camera() {
   // Показываем прогресс-бар ТОЛЬКО когда SDK реально обрабатывает данные
   // (isProcessingFrames устанавливается в true когда вызывается onVitalSign)
   // ВАЖНО: isProcessingFrames - главный индикатор, isMeasuring может быть false из-за замыкания
-  const showProgressBar = isProcessingFrames
+  // Показываем прогресс во время сканирования (MEASURING)
+  const showProgressBar = isMeasuring
   
   // Показываем индикатор ожидания когда измерение запущено, но SDK еще не обрабатывает данные
   // Это помогает пользователю понять, что происходит (ожидание ~8 секунд до первого onVitalSign)
@@ -1097,10 +1098,9 @@ function Camera() {
   // Сдвигаем рисунок так, чтобы стык пути попадал в "пробел"
   const dashOffset = dashLen + gapLen * 0.5
   
-  // Прогресс шагаем по штрихам (без "полупунктира")
-  const completedDashes = Math.max(0, Math.min(totalDashes, Math.floor((scanProgress / 100) * totalDashes)))
-  const steppedFraction = completedDashes / totalDashes
-  const progressOffset = circumference - circumference * steppedFraction
+  // Плавный прогресс (маска раскрывается непрерывно), но видимыми остаются только пунктиры
+  const progressFraction = Math.max(0, Math.min(1, scanProgress / 100))
+  const progressOffset = circumference - circumference * progressFraction
 
   return (
     <div className="camera-page">
@@ -1155,7 +1155,7 @@ function Camera() {
                         strokeDashoffset={progressOffset}
                         style={{
                           // шаговый прогресс по штрихам
-                          transition: 'stroke-dashoffset 0.12s ease-out',
+                        transition: 'stroke-dashoffset 0.12s linear',
                         }}
                       />
                     </mask>
@@ -1190,7 +1190,7 @@ function Camera() {
                 />
               </svg>
             </div>
-            {isProcessingFrames && scanProgress > 0 ? (
+            {isMeasuring ? (
               <div className="camera-scan-percent" aria-live="polite">
                 {Math.round(scanProgress)}%
               </div>
