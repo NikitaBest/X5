@@ -829,8 +829,10 @@ function Camera() {
       return
     }
 
-    // Автостарт измерения после перехода сессии в ACTIVE — только один раз за фазу ACTIVE.
-    // Проверки внутри таймера делаем по refs, чтобы не зависеть от устаревшего замыкания.
+    // Автостарт измерения: ориентируемся на состояние сессии SDK.
+    // Как только сессия перешла в ACTIVE, через 1 секунду вызываем start().
+    // SDK сам решает, какие кадры валидны (strictMeasurementGuidance: true),
+    // а мы уже по onImageData/onVitalSign подсвечиваем овал и прогресс.
     if (
       sessionState === SessionState.ACTIVE &&
       !isMeasuring &&
@@ -838,14 +840,15 @@ function Camera() {
       !hasAutoStartScheduledRef.current
     ) {
       hasAutoStartScheduledRef.current = true
-      logger.debug('⏱️ Автозапуск измерения через 2 секунды после перехода в ACTIVE')
+      logger.debug('⏱️ Автозапуск измерения через 1 секунду после перехода в ACTIVE')
       startTimerRef.current = setTimeout(() => {
         if (
           sessionStateRef.current === SessionState.ACTIVE &&
-          sessionRef.current
+          sessionRef.current &&
+          !hasMeasurementError
         ) {
           try {
-            logger.session('▶️ start() - автозапуск измерения после ACTIVE')
+            logger.session('▶️ start() - автозапуск измерения после ACTIVE (1 секунда)')
             sessionRef.current.start()
           } catch (err) {
             logger.error('❌ Ошибка запуска измерения', err)
@@ -853,7 +856,7 @@ function Camera() {
           }
         }
         hasAutoStartScheduledRef.current = false
-      }, 2000)
+      }, 1000)
     }
 
     return () => {
@@ -1024,16 +1027,13 @@ function Camera() {
       }
       
       // ВАЖНО: Если SDK обрабатывал данные, но лицо стало невалидным,
-      // SDK перестает обрабатывать данные (при strictMeasurementGuidance: true)
-      // Сбрасываем isProcessingFrames если лицо не валидно более 2 секунд
-      if (isProcessingFrames && imageValidity !== ImageValidity.VALID && lastValidImageTimeRef.current) {
-        const timeSinceLastValid = Date.now() - lastValidImageTimeRef.current
-        if (timeSinceLastValid > 2000) {
-          logger.debug('⏸️ SDK перестал обрабатывать данные - лицо не валидно более 2 сек')
-          setIsProcessingFrames(false)
-          if (measurementPausedTimeRef.current === null && measurementStartTime) {
-            measurementPausedTimeRef.current = Date.now()
-          }
+      // мы сразу ставим «паузу» анализа для более точного UX:
+      // прогресс и индикация сканирования останавливаются мгновенно.
+      if (isProcessingFrames && imageValidity !== ImageValidity.VALID) {
+        logger.debug('⏸️ SDK перестал обрабатывать данные - лицо стало невалидным')
+        setIsProcessingFrames(false)
+        if (measurementPausedTimeRef.current === null && measurementStartTime) {
+          measurementPausedTimeRef.current = Date.now()
         }
       }
     }
@@ -1430,22 +1430,21 @@ function Camera() {
 
   // Определяем цвет овала
   // ЛОГИКА ЦВЕТА ОВАЛА (UX поверх ImageValidity SDK):
-  // - Желтый (warning): лицо НЕ обнаружено в овале (INVALID_ROI) — SDK не может начать сканирование.
-  // - Серый (default): лицо распознано в кадре, но сканирование еще не идет (ожидание/подготовка).
-  // - Зеленый (success): SDK реально сканирует (идет обработка данных, isProcessingFrames === true).
+  // - Желтый (warning): лицо НЕ обнаружено в овале (INVALID_ROI / INVALID_DEVICE_ORIENTATION).
+  // - Серый (default): лицо распознано в кадре, но измерение ещё не запущено/лицо невалидно.
+  // - Зеленый (success):
+  //     - сразу после старта измерения, когда сессия в MEASURING и лицо валидно (SDK говорит, что всё ок);
+  //     - и далее, пока SDK реально обрабатывает данные (isProcessingFrames === true).
   // 
   // ПРАВИЛЬНАЯ ЛОГИКА ПРОГРЕСС-БАРА:
-  // - Синий прогресс-бар: ТОЛЬКО когда SDK реально обрабатывает данные (isProcessingFrames === true)
-  // - Проценты берутся из scanProgress, который обновляется только когда SDK обрабатывает данные
+  // - Синий прогресс-бар: ТОЛЬКО когда SDK реально обрабатывает данные (isProcessingFrames === true).
+  // - Проценты берутся из scanProgress, который обновляется только когда SDK обрабатывает данные.
   
-  // Желтый = лицо НЕ обнаружено (INVALID_ROI / INVALID_DEVICE_ORIENTATION)
-  // Серый = лицо обнаружено, но анализ еще не идет
-  // Зеленый = идет сканирование (SDK обрабатывает кадры)
   const ovalColorClass = !isFaceDetected
     ? 'face-oval-warning' // Желтый - лицо не обнаружено в овале
-    : isProcessingFrames
-      ? 'face-oval-success' // Зеленый - SDK зафиксировал лицо и обрабатывает данные
-      : 'face-oval-default' // Серый - лицо в кадре/овале, но анализ еще не идет
+    : (sessionState === SessionState.MEASURING && isFaceValid) || isProcessingFrames
+      ? 'face-oval-success' // Зеленый - измерение запущено и лицо валидно / SDK обрабатывает данные
+      : 'face-oval-default' // Серый - лицо в кадре, но либо измерение ещё не началось, либо лицо невалидно
   
   // Показываем прогресс-бар ТОЛЬКО когда SDK реально обрабатывает данные
   // (isProcessingFrames устанавливается в true когда вызывается onVitalSign)
