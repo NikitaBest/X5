@@ -398,6 +398,7 @@ function Camera() {
   const [processingTime] = useState(SDK_CONFIG.defaultProcessingTime)
   const [hasMeasurementError, setHasMeasurementError] = useState(false) // Флаг ошибки измерения
   const [isProcessingFrames, setIsProcessingFrames] = useState(false) // Флаг обработки кадров SDK
+  const [showCompletionSuccess, setShowCompletionSuccess] = useState(false) // Уведомление «Готово» перед переходом на результаты
   
   // scanIntervalRef удален - прогресс обновляется только в onVitalSign
   const isCreatingSessionRef = useRef(false) // Флаг для предотвращения множественного создания сессий
@@ -551,13 +552,13 @@ function Camera() {
     setIsMeasuring(false)
     setIsProcessingFrames(false)
     setScanProgress(100)
-    setInstructionText('Анализ завершен!')
+    setShowCompletionSuccess(true) // Показываем уведомление «Готово» ✓
     // НЕ сбрасываем measurementStartTime здесь - он может понадобиться для логирования
     
     // ВАЖНО: Устанавливаем флаг, чтобы предотвратить автоматический перезапуск после завершения
     measurementCompletedRef.current = true
     
-    // Переход на страницу результатов через 1 секунду (чтобы пользователь увидел "Готово!")
+    // Переход на страницу результатов через 1 секунду (пользователь видит уведомление «Готово»)
     setTimeout(() => {
       navigate('/results', { state: { results: vitalSignsResults } })
     }, 1000)
@@ -1575,6 +1576,12 @@ function Camera() {
         {!error && !isLoading && (
           <>
             <div className="camera-overlay"></div>
+            {showCompletionSuccess && (
+              <div className="camera-completion-notification" aria-live="polite">
+                <span className="camera-completion-notification-icon" aria-hidden="true">✓</span>
+                <span className="camera-completion-notification-text">Готово</span>
+              </div>
+            )}
             <div className="face-oval-container">
               <svg 
                 ref={ovalRef}
@@ -1652,15 +1659,17 @@ function Camera() {
                 </g>
               </svg>
             </div>
-            {/* Инструкция показывается всегда, когда пользователю нужно что-то сделать; процент — только когда идёт успешное сканирование */}
-            {isMeasuring && isFaceValid && isProcessingFrames ? (
-              <div className="camera-scan-percent" aria-live="polite">
-                {Math.round(scanProgress)}%
-              </div>
-            ) : (
-              <div className="camera-instruction-container">
-                <p className="camera-instruction-text">{instructionText}</p>
-              </div>
+            {/* При завершении показываем только уведомление «Готово» — без текста инструкции и процентов под ним */}
+            {!showCompletionSuccess && (
+              isMeasuring && isFaceValid && isProcessingFrames ? (
+                <div className="camera-scan-percent" aria-live="polite">
+                  {Math.round(scanProgress)}%
+                </div>
+              ) : (
+                <div className="camera-instruction-container">
+                  <p className="camera-instruction-text">{instructionText}</p>
+                </div>
+              )
             )}
             <button className="camera-cancel-button" onClick={handleCancelClick} type="button">
               <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">

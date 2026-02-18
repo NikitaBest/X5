@@ -92,6 +92,49 @@
   padding: 20px;
 }
 
+/* Уведомление «Готово» при 100% — компактная плашка, затем переход на результаты */
+.camera-completion-notification {
+  position: absolute;
+  bottom: clamp(80px, 18vh, 120px);
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 24px;
+  background: rgba(76, 175, 80, 0.95);
+  border-radius: 999px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  z-index: 15;
+  pointer-events: none;
+  animation: camera-completion-fade 0.3s ease;
+}
+
+@keyframes camera-completion-fade {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) scale(1);
+  }
+}
+
+.camera-completion-notification-icon {
+  color: #fff;
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.camera-completion-notification-text {
+  color: #fff;
+  font-size: clamp(17px, 4vw, 20px);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
 .camera-overlay {
   position: absolute;
   top: 0;
