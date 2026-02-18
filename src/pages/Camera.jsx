@@ -14,6 +14,14 @@ import Page from '../layout/Page.jsx'
 import Modal from '../ui/Modal.jsx'
 import './Camera.css'
 
+// Отладка SDK в консоль: что приходит от SDK и что показываем пользователю
+const SDK_DEBUG = true
+function sdkDebug(label, data) {
+  if (SDK_DEBUG && typeof console !== 'undefined') {
+    console.log('[SDK отладка]', label, data !== undefined ? data : '')
+  }
+}
+
 // Карта оповещений SDK (основные коды из "Список оповещений.MD")
 // Используется только для красивого логирования в консоль.
 const SDK_ALERTS = {
@@ -469,6 +477,10 @@ function Camera() {
   // ВАЖНО: onVitalSign вызывается ТОЛЬКО когда SDK активно обрабатывает данные
   // Это самый надежный индикатор того, что измерение идет
   const onVitalSign = useCallback((vitalSign) => {
+    sdkDebug('SDK обрабатывает кадры (onVitalSign):', {
+      '→ Пользователю': 'прогресс % и зелёный овал',
+      pulseRate: vitalSign?.pulseRate?.value,
+    })
     // Группируем логи SDK для удобства
     console.group('🔵 SDK АНАЛИЗИРУЕТ ДАННЫЕ')
     logger.sdk('onVitalSign - получены промежуточные показатели', {
@@ -521,6 +533,10 @@ function Camera() {
 
   // Callback для получения финальных результатов
   const onFinalResults = useCallback((vitalSignsResults) => {
+    sdkDebug('SDK завершил измерение (onFinalResults):', {
+      '→ Пользователю': 'переход на экран результатов',
+      pulseRate: vitalSignsResults?.results?.pulseRate?.value,
+    })
     // Группируем логи результатов для удобства
     console.group('✅✅✅ ИЗМЕРЕНИЕ ЗАВЕРШЕНО - SDK ОБРАБОТАЛ ДАННЫЕ')
     logger.sdk('onFinalResults - получены финальные результаты', {
@@ -653,11 +669,15 @@ function Camera() {
     // Если это ошибка измерения (domain 3000), не показываем критическую ошибку
     // Пользователь может попробовать снова
     if (errorData.domain === 3000) {
-      // Ошибка измерения - сессия вернется в ACTIVE, можно попробовать снова
-      // НО не запускаем измерение автоматически после ошибки
+      const userMsg = 'Ошибка измерения. Убедитесь, что лицо находится в овале и не двигается. Поместите лицо в овал для начала нового измерения.'
       setHasMeasurementError(true)
       setError('')
-      setInstructionText('Ошибка измерения. Убедитесь, что лицо находится в овале и не двигается. Поместите лицо в овал для начала нового измерения.')
+      setInstructionText(userMsg)
+      sdkDebug('SDK ошибка измерения (onError):', {
+        code: errorData.code,
+        domain: errorData.domain,
+        '→ Пользователю': userMsg,
+      })
       logger.info('Ошибка измерения - сессия вернется в ACTIVE, НЕ запускаем автоматически', {
         code: errorData.code,
         domain: errorData.domain,
@@ -706,6 +726,11 @@ function Camera() {
         const userMessage = getUserMessageForAlert(alertInfo)
         if (userMessage) {
           setInstructionText(userMessage)
+          sdkDebug('SDK предупреждение (onWarning):', {
+            code: alertInfo.code,
+            name: alertInfo.name,
+            '→ Пользователю': userMessage,
+          })
         }
       } else {
         logger.warn('SDK Warning (unknown code)', {
@@ -756,6 +781,11 @@ function Camera() {
     
     setSessionState(state)
     sessionStateRef.current = state
+
+    sdkDebug('Состояние сессии (SDK):', {
+      state: stateName,
+      '→ что делаем': state === SessionState.ACTIVE ? 'ждём 1 сек, затем start()' : state === SessionState.MEASURING ? 'ждём onImageData и onVitalSign (~8 сек)' : '',
+    })
 
     if (state === SessionState.ACTIVE) {
       hasAutoStartScheduledRef.current = false // разрешаем запланировать автостарт при следующем ACTIVE
@@ -918,7 +948,7 @@ function Camera() {
       lastImageValidityRef.current = imageValidity
       lastLogTimeRef.current = now
     }
-    
+
     // Определяем, обнаружено ли лицо
     // Лицо обнаружено, если imageValidity !== INVALID_ROI
     // (для TILTED_HEAD, UNEVEN_LIGHT лицо обнаружено, но не валидно)
@@ -957,17 +987,29 @@ function Camera() {
       // ВАЖНО: SDK обрабатывает кадры ТОЛЬКО во время измерения (MEASURING)
       // Но onVitalSign - самый надежный индикатор того, что SDK обрабатывает данные
       if (instructionValidityChanged) {
+        let userMsg = ''
         if (isProcessingFrames) {
-          setInstructionText('Анализ идет. Продолжайте держать лицо в овале')
+          userMsg = 'Анализ идет. Продолжайте держать лицо в овале'
+          setInstructionText(userMsg)
         } else if (isMeasuring) {
-          setInstructionText('Анализ запущен. Ожидаем начала обработки данных...')
+          userMsg = 'Анализ запущен. Ожидаем начала обработки данных...'
+          setInstructionText(userMsg)
         } else {
           if (hasMeasurementError) {
-            setInstructionText('Лицо обнаружено. Начинаем новое измерение...')
+            userMsg = 'Лицо обнаружено. Начинаем новое измерение...'
+            setInstructionText(userMsg)
           } else {
-            setInstructionText('Отлично! Лицо обнаружено, начинаем измерение...')
+            userMsg = 'Отлично! Лицо обнаружено, начинаем измерение...'
+            setInstructionText(userMsg)
           }
         }
+        sdkDebug('Лицо (SDK):', {
+          ImageValidity: imageValidityName,
+          faceDetected: true,
+          faceValid: true,
+          '→ Пользователю': userMsg,
+          '→ Овал': 'зелёный (лицо валидно)',
+        })
       }
     } else {
       // Лицо не валидно - SDK НЕ обрабатывает этот кадр (при strictMeasurementGuidance: true)
@@ -1019,11 +1061,18 @@ function Camera() {
       
       // Обновляем текст инструкции только при смене статуса (чтобы подсказка не мигала)
       if (instructionValidityChanged) {
-        if (!isMeasuring || imageValidity === ImageValidity.INVALID_ROI) {
-          setInstructionText(message)
-        } else {
-          setInstructionText(`${message}. Держите лицо в овале для продолжения.`)
-        }
+        const userMsg = !isMeasuring || imageValidity === ImageValidity.INVALID_ROI
+          ? message
+          : `${message}. Держите лицо в овале для продолжения.`
+        setInstructionText(userMsg)
+        const ovalLabel = !faceDetected ? 'жёлтый (лицо не в овале)' : 'серый (лицо видно, но не валидно)'
+        sdkDebug('Лицо (SDK):', {
+          ImageValidity: imageValidityName,
+          faceDetected,
+          faceValid: false,
+          '→ Пользователю': userMsg,
+          '→ Овал': ovalLabel,
+        })
       }
       
       // ВАЖНО: Если SDK обрабатывал данные, но лицо стало невалидным,
@@ -1461,6 +1510,14 @@ function Camera() {
   
   if (lastOvalStateRef.current.color !== ovalColorClass || 
       lastOvalStateRef.current.progress !== showProgressBar) {
+    const ovalLabel = ovalColorClass === 'face-oval-success' ? 'зелёный' : ovalColorClass === 'face-oval-warning' ? 'жёлтый' : 'серый'
+    sdkDebug('Экран (что видит пользователь):', {
+      овал: ovalLabel,
+      прогресс: showProgressBar ? `${Math.round(scanProgress)}%` : 'не показываем',
+      isFaceDetected,
+      isFaceValid,
+      isProcessingFrames,
+    })
     logger.debug('🎨 Изменение визуального состояния', {
       ovalColor: ovalColorClass,
       showProgressBar,
