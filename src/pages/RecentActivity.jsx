@@ -63,13 +63,14 @@ function RecentActivity() {
   const handleNext = () => {
     // сохраняем выбранную активность в контекст пользователя
     updateUserData({ recentActivity: selectedActivity })
-    navigate('/preparation')
+    // Шаг 2 → Шаг 3: страница ввода данных (пол, возраст, рост, вес, курение)
+    navigate('/algorithm-settings')
   }
 
   return (
     <Page className="recent-activity-page">
       <Header title="Смарт анализ" />
-      <ProgressBar currentStep={2} totalSteps={3} />
+      <ProgressBar currentStep={2} totalSteps={4} />
       
       <div className="recent-activity-content">
         <h1 className="recent-activity-title">Для самого точного результата</h1>

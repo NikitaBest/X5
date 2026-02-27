@@ -4,6 +4,7 @@ import { useUserData } from '../contexts/UserDataContext.jsx'
 import logger from '../utils/logger.js'
 import Page from '../layout/Page.jsx'
 import Header from '../layout/Header.jsx'
+import ProgressBar from '../ui/ProgressBar.jsx'
 import RadioCard from '../ui/RadioCard.jsx'
 import DateInput from '../ui/DateInput.jsx'
 import NumberInput from '../ui/NumberInput.jsx'
@@ -216,6 +217,7 @@ function AlgorithmSettings() {
   return (
     <Page className="algorithm-settings-page">
       <Header title="Настройка алгоритмов" />
+      <ProgressBar currentStep={3} totalSteps={4} />
       
       <div className="algorithm-settings-content">
         {/* Секция выбора пола */}

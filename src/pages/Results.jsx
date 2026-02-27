@@ -1,4 +1,5 @@
 import { useLocation, useNavigate } from 'react-router-dom'
+import { useUserData } from '../contexts/UserDataContext.jsx'
 import Page from '../layout/Page.jsx'
 import logger from '../utils/logger.js'
 import './Results.css'
@@ -6,6 +7,7 @@ import './Results.css'
 function Results() {
   const location = useLocation()
   const navigate = useNavigate()
+  const { userData } = useUserData()
   const results = location.state?.results
 
   if (!results || !results.results) {
@@ -176,10 +178,74 @@ function Results() {
     willRenderSdnn: sdnnValue !== null && sdnnValue !== undefined || sdnn,
   })
 
+  const handleDownloadJson = () => {
+    // Данные пользователя, которые передавались в SDK (пол, возраст, рост, вес, курение)
+    const userInfo = (userData?.age != null || userData?.gender || userData?.weight != null || userData?.height != null || userData?.smokingStatus)
+      ? {
+          sex: userData.gender || null,
+          age: userData.age ?? null,
+          heightCm: userData.height ?? null,
+          weightKg: userData.weight ?? null,
+          smokingStatus: userData.smokingStatus || null,
+        }
+      : null
+
+    // Собираем полезный JSON: данные пользователя + метрики + сырой ответ SDK
+    const payload = {
+      takenAt: results?.measurementTime || new Date().toISOString(),
+      source: 'web_sdk',
+      ...(userInfo && { userInfo }),
+      metrics: {
+        pulseRate: {
+          value: pulseRateValue ?? (pulseRate?.value ?? pulseRate ?? null),
+          unit: 'bpm',
+          confidence: pulseRate && typeof pulseRate === 'object' ? pulseRate.confidence ?? null : null,
+        },
+        respirationRate: {
+          value: respirationRateValue ?? (respirationRate?.value ?? respirationRate ?? null),
+          unit: 'breaths_per_min',
+          confidence: respirationRate && typeof respirationRate === 'object' ? respirationRate.confidence ?? null : null,
+        },
+        stressLevel: {
+          value: stressLevelValue ?? (stressLevel?.value ?? stressLevel ?? null),
+          unit: 'ratio',
+          confidence: stressLevel && typeof stressLevel === 'object' ? stressLevel.confidence ?? null : null,
+        },
+        sdnn: {
+          value: sdnnValue ?? (sdnn?.value ?? sdnn ?? null),
+          unit: 'ms',
+          confidence: sdnn && typeof sdnn === 'object' ? sdnn.confidence ?? null : null,
+        },
+        bloodPressure: {
+          systolic: bloodPressureSystolic,
+          diastolic: bloodPressureDiastolic,
+          unit: 'mmHg',
+          confidence: bloodPressure && typeof bloodPressure === 'object' ? bloodPressure.confidence ?? null : null,
+        },
+      },
+      sdkRaw: results,
+    }
+
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `binah-results-${new Date().toISOString()}.json`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+  }
+
   return (
     <Page>
       <div className="results-page">
-        <h1 className="results-title">Результаты измерения</h1>
+        <div className="results-header">
+          <h1 className="results-title">Результаты измерения</h1>
+          <button type="button" className="results-download-button" onClick={handleDownloadJson}>
+            Скачать JSON
+          </button>
+        </div>
         
         {!hasAnyResults && (
           <div style={{ padding: '2rem', textAlign: 'center', color: 'red' }}>
