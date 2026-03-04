@@ -62,7 +62,7 @@ const SMOKING_OPTIONS = [
 function AlgorithmSettings() {
   const navigate = useNavigate()
   const { updateUserData } = useUserData()
-  const [gender, setGender] = useState('male')
+  const [gender, setGender] = useState('')
   const [birthDate, setBirthDate] = useState('')
   const [dateError, setDateError] = useState('')
   const [height, setHeight] = useState('')
@@ -189,6 +189,11 @@ function AlgorithmSettings() {
   const isValidDate = dateValidation.isValid && !dateError
   const age = dateValidation.age
   
+  // Флаги этапов для поэтапного появления блоков
+  const hasGenderStepDone = !!gender
+  const hasBirthDateStepDone = isValidDate && age !== null
+  const hasPhysicalStepDone = !!height && !!weight
+
   // Валидация всех обязательных полей
   const isFormValid = 
     gender && 
@@ -221,7 +226,7 @@ function AlgorithmSettings() {
       
       <div className="algorithm-settings-content">
         {/* Секция выбора пола */}
-        <div className="settings-section">
+        <div className="settings-section settings-section--visible">
           <h2 className="settings-section-title">Ваш пол</h2>
           <p className="settings-section-subtitle">
             Влияет на нормы артериального давления и риск ИБС
@@ -250,104 +255,110 @@ function AlgorithmSettings() {
           )}
         </div>
 
-        {/* Секция даты рождения */}
-        <div className="settings-section">
-          <h2 className="settings-section-title">Дата рождения</h2>
-          <p className="settings-section-subtitle">
-            Для расчёта возрастных рисков
-          </p>
-          
-          <DateInput
-            value={birthDate}
-            onChange={handleDateChange}
-            placeholder="ДД.ММ.ГГГГ"
-          />
-          {dateError && (
-            <p className="date-error-text">{dateError}</p>
-          )}
-          {isValidDate && age !== null && (
-            <div className="settings-note">
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M13.3333 4L6 11.3333L2.66667 8" stroke="#5DAF2E" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-              </svg>
-              <span>
-                Возраст: {age} {getAgeWord(age)}
-              </span>
-            </div>
-          )}
-        </div>
-
-        {/* Секция физических параметров */}
-        <div className="settings-section">
-          <h2 className="settings-section-title">Физические параметры</h2>
-          <p className="settings-section-subtitle">
-            Для расчёта индекса массы тела и метаболических рисков
-          </p>
-          
-          <div className="physical-params-inputs">
-            <NumberInput
-              value={height}
-              onChange={setHeight}
-              placeholder="Рост"
-              unit="CM"
-              maxLength={3}
+        {/* Секция даты рождения – появляется после выбора пола */}
+        {hasGenderStepDone && (
+          <div className="settings-section settings-section--step">
+            <h2 className="settings-section-title">Дата рождения</h2>
+            <p className="settings-section-subtitle">
+              Для расчёта возрастных рисков
+            </p>
+            
+            <DateInput
+              value={birthDate}
+              onChange={handleDateChange}
+              placeholder="ДД.ММ.ГГГГ"
             />
-            <NumberInput
-              value={weight}
-              onChange={setWeight}
-              placeholder="Вес"
-              unit="KG"
-              maxLength={3}
-            />
+            {dateError && (
+              <p className="date-error-text">{dateError}</p>
+            )}
+            {isValidDate && age !== null && (
+              <div className="settings-note">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M13.3333 4L6 11.3333L2.66667 8" stroke="#5DAF2E" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+                </svg>
+                <span>
+                  Возраст: {age} {getAgeWord(age)}
+                </span>
+              </div>
+            )}
           </div>
+        )}
 
-          {height && weight && (
-            <div className="settings-note">
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M13.3333 4L6 11.3333L2.66667 8" stroke="#5DAF2E" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-              </svg>
-              <span>Учтём ваши параметры</span>
-            </div>
-          )}
-        </div>
-
-        {/* Секция статуса курения */}
-        <div className="settings-section">
-          <h2 className="settings-section-title">Статус курения</h2>
-          <p className="settings-section-subtitle">
-            Курение увеличивает риск сердечно-сосудистых заболеваний в 2-3 раза
-          </p>
-          
-          <div className="gender-options">
-            {SMOKING_OPTIONS.map((option) => (
-              <RadioCard
-                key={option.value}
-                icon={option.icon}
-                label={option.label}
-                value={option.value}
-                selected={smokingStatus === option.value}
-                onClick={setSmokingStatus}
+        {/* Секция физических параметров – появляется после валидной даты рождения */}
+        {hasBirthDateStepDone && (
+          <div className="settings-section settings-section--step">
+            <h2 className="settings-section-title">Физические параметры</h2>
+            <p className="settings-section-subtitle">
+              Для расчёта индекса массы тела и метаболических рисков
+            </p>
+            
+            <div className="physical-params-inputs">
+              <NumberInput
+                value={height}
+                onChange={setHeight}
+                placeholder="Рост"
+                unit="CM"
+                maxLength={3}
               />
-            ))}
-          </div>
+              <NumberInput
+                value={weight}
+                onChange={setWeight}
+                placeholder="Вес"
+                unit="KG"
+                maxLength={3}
+              />
+            </div>
 
-          {smokingStatus === 'no' && (
-            <div className="settings-note">
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M13.3333 4L6 11.3333L2.66667 8" stroke="#5DAF2E" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-              </svg>
-              <span>Риски снижены</span>
+            {height && weight && (
+              <div className="settings-note">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M13.3333 4L6 11.3333L2.66667 8" stroke="#5DAF2E" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+                </svg>
+                <span>Учтём ваши параметры</span>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Секция статуса курения – появляется после ввода роста и веса */}
+        {hasPhysicalStepDone && (
+          <div className="settings-section settings-section--step">
+            <h2 className="settings-section-title">Статус курения</h2>
+            <p className="settings-section-subtitle">
+              Курение увеличивает риск сердечно-сосудистых заболеваний в 2-3 раза
+            </p>
+            
+            <div className="gender-options">
+              {SMOKING_OPTIONS.map((option) => (
+                <RadioCard
+                  key={option.value}
+                  icon={option.icon}
+                  label={option.label}
+                  value={option.value}
+                  selected={smokingStatus === option.value}
+                  onClick={setSmokingStatus}
+                />
+              ))}
             </div>
-          )}
-          {smokingStatus === 'yes' && (
-            <div className="settings-note">
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M13.3333 4L6 11.3333L2.66667 8" stroke="#5DAF2E" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-              </svg>
-              <span>Риски повышены</span>
-            </div>
-          )}
-        </div>
+
+            {smokingStatus === 'no' && (
+              <div className="settings-note">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M13.3333 4L6 11.3333L2.66667 8" stroke="#5DAF2E" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+                </svg>
+                <span>Риски снижены</span>
+              </div>
+            )}
+            {smokingStatus === 'yes' && (
+              <div className="settings-note">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M13.3333 4L6 11.3333L2.66667 8" stroke="#5DAF2E" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+                </svg>
+                <span>Риски повышены</span>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="algorithm-settings-footer">

@@ -18,6 +18,19 @@
   flex-direction: column;
   gap: 8px;
   width: 100%;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 0.25s ease-out, transform 0.25s ease-out;
+}
+
+.settings-section--visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.settings-section--step {
+  opacity: 1;
+  transform: translateY(0);
 }
 
 .settings-section-title {
