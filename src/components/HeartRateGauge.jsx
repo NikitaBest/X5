@@ -8,7 +8,7 @@ function clamp(value, min, max) {
 // Маппим пульс на угол стрелки: от -90° (низкий) до +90° (высокий)
 function getNeedleAngle(pulse) {
   if (pulse == null || Number.isNaN(pulse)) {
-    return -60 // базовое положение, если данных нет
+    return -180 // базовое положение, если данных нет — край слева
   }
 
   // Для теста: сжимаем диапазон в узкий коридор 75–90 уд/мин,
@@ -18,7 +18,7 @@ function getNeedleAngle(pulse) {
   const clamped = clamp(pulse, minPulse, maxPulse)
   const fraction = (clamped - minPulse) / (maxPulse - minPulse) // 0..1
 
-  const minAngle = -90
+  const minAngle = -180
   const maxAngle = 0
   return minAngle + (maxAngle - minAngle) * fraction
 }
@@ -46,7 +46,7 @@ function getZoneColorByAngle(angle) {
 function HeartRateGauge({ pulse }) {
   const numericPulse = typeof pulse === 'number' ? pulse : null
   const targetAngle = getNeedleAngle(numericPulse)
-  const [angle, setAngle] = useState(-90)
+  const [angle, setAngle] = useState(-180)
   const zoneColor = getZoneColorByAngle(angle)
 
   // Генерируем белые штрихи по всей дуге, как на примере
