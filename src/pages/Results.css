@@ -9,6 +9,18 @@
   justify-content: center;
 }
 
+.results-gauge-badge {
+  align-self: center;
+  margin-top: -14px;
+  padding: 6px 16px;
+  border-radius: 999px;
+  background: #ff8e8e;
+  color: #ffffff;
+  font-size: 20px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
 .results-header {
   display: flex;
   align-items: center;
@@ -92,9 +104,9 @@
 }
 
 .results-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
 }
 
 .result-card {
@@ -169,6 +181,118 @@
 .result-card--sdnn .result-card-icon {
   background-color: rgba(114, 111, 255, 0.12);
   color: #726fff;
+}
+
+/* Спец-оформление карточки стресса */
+.result-card--stress {
+  border-width: 1px;
+  border-style: solid;
+}
+
+.result-card--stress-low {
+  border-color: #30AD43;
+}
+
+.result-card--stress-medium {
+  border-color: #FEC014;
+}
+
+.result-card--stress-high {
+  border-color: #FF6B6B;
+}
+
+.stress-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.stress-card-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.stress-card-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.stress-card-icon img {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.stress-card-label {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--color-fg-primary, #111111);
+}
+
+.stress-card-status {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.result-card--stress-low .stress-card-status {
+  color: #30AD43;
+}
+
+.result-card--stress-medium .stress-card-status {
+  color: #FEC014;
+}
+
+.result-card--stress-high .stress-card-status {
+  color: #FF6B6B;
+}
+
+.stress-card-bar {
+  margin-top: 0.6rem;
+  width: 100%;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(48, 173, 67, 0.15);
+  overflow: hidden;
+}
+
+.stress-card-bar-fill {
+  height: 100%;
+  border-radius: inherit;
+  transition: width 0.25s ease;
+}
+
+.stress-card-bar-fill-low {
+  width: 20%;
+  background: #30AD43;
+}
+
+.stress-card-bar-fill-medium {
+  width: 55%;
+  background: #FEC014;
+}
+
+.stress-card-bar-fill-high {
+  width: 80%;
+  background: #FF6B6B;
+}
+
+.result-card--extra .result-card-icon {
+  background-color: rgba(0, 0, 0, 0.04);
+  color: #666666;
+}
+
+.result-card-icon-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background-color: currentColor;
 }
 
 .result-label {
@@ -272,6 +396,29 @@
   display: flex;
   flex-direction: column;
   gap: 1rem;
+}
+
+.results-toggle-all {
+  margin: 0.25rem auto 0.75rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+  border: none;
+  background: transparent;
+  color: var(--color-fg-secondary, #666666);
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.results-toggle-all-arrow {
+  display: inline-block;
+  transition: transform 0.15s ease;
+}
+
+.results-toggle-all-arrow.open {
+  transform: rotate(180deg);
 }
 
 .results-button {

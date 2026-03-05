@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useUserData } from '../contexts/UserDataContext.jsx'
 import Page from '../layout/Page.jsx'
@@ -6,6 +7,7 @@ import logger from '../utils/logger.js'
 import './Results.css'
 
 function Results() {
+  const [showAllMetricsCards, setShowAllMetricsCards] = useState(false)
   const location = useLocation()
   const navigate = useNavigate()
   const { userData } = useUserData()
@@ -47,6 +49,28 @@ function Results() {
   const pulseRateValue = getValue(pulseRate)
   const respirationRateValue = getValue(respirationRate)
   const sdnnValue = getValue(sdnn)
+
+  // Для визуального статуса стресса (только для теста: 1 — зелёный, 2 — жёлтый, 3 — красный)
+  const rawStressNumeric =
+    typeof stressLevelValue === 'number'
+      ? stressLevelValue
+      : Number(stressLevelValue ?? (stressLevel && typeof stressLevel === 'object' ? stressLevel.value : stressLevel))
+
+  let stressVisualLevel = null // 'low' | 'medium' | 'high'
+  let stressVisualLabel = null
+
+  if (!Number.isNaN(rawStressNumeric) && rawStressNumeric != null) {
+    if (rawStressNumeric === 1) {
+      stressVisualLevel = 'low'
+      stressVisualLabel = 'Низкий'
+    } else if (rawStressNumeric === 2) {
+      stressVisualLevel = 'medium'
+      stressVisualLabel = 'Повышен'
+    } else if (rawStressNumeric === 3) {
+      stressVisualLevel = 'high'
+      stressVisualLabel = 'Высокий'
+    }
+  }
 
   // Детальное логирование для отладки
   console.log('🔍 ДЕТАЛЬНАЯ ОТЛАДКА ИЗВЛЕЧЕНИЯ ЗНАЧЕНИЙ:', {
@@ -124,6 +148,11 @@ function Results() {
 
     return { key, value: displayValue, extra }
   })
+
+  // Основные метрики, для которых уже есть "большие" карточки
+  const primaryMetricKeys = new Set(['pulseRate', 'respirationRate', 'stressLevel', 'bloodPressure', 'sdnn'])
+  // Дополнительные метрики SDK, которые покажем отдельными карточками при раскрытии
+  const additionalMetrics = allMetrics.filter((metric) => !primaryMetricKeys.has(metric.key))
 
   // Выводим полные данные в консоль для отладки
   console.log('📊📊📊 РЕЗУЛЬТАТЫ НА СТРАНИЦЕ RESULTS (можно развернуть в консоли):', {
@@ -249,40 +278,17 @@ function Results() {
         </div>
 
         {hasAnyResults && (
-          <div className="results-gauge-wrapper">
-            <HeartRateGauge pulse={pulseRateValue} />
-          </div>
+          <>
+            <div className="results-gauge-wrapper">
+              <HeartRateGauge pulse={pulseRateValue} />
+            </div>
+            <div className="results-gauge-badge">Тест ваших показателей</div>
+          </>
         )}
 
         {!hasAnyResults && (
           <div style={{ padding: '2rem', textAlign: 'center', color: 'red' }}>
             ⚠️ ВНИМАНИЕ: Данные есть, но не извлекаются. Проверьте консоль для отладки.
-          </div>
-        )}
-
-        {hasAnyResults && (
-          <div className="results-summary-card">
-            <div className="results-summary-icon">
-              <svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true">
-                <path
-                  d="M10 1.667C5.40002 1.667 1.66669 5.40033 1.66669 10.0003C1.66669 14.6003 5.40002 18.3337 10 18.3337C14.6 18.3337 18.3334 14.6003 18.3334 10.0003C18.3334 5.40033 14.6 1.667 10 1.667Z"
-                  fill="rgba(149, 219, 109, 0.16)"
-                />
-                <path
-                  d="M7.91669 10.4167L9.16669 11.6667L12.0834 8.33337"
-                  stroke="#5DAF2E"
-                  strokeWidth="1.7"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </div>
-            <div className="results-summary-text">
-              <div className="results-summary-title">Анализ завершён</div>
-              <div className="results-summary-subtitle">
-                Мы рассчитали ключевые показатели вашего состояния.
-              </div>
-            </div>
           </div>
         )}
 
@@ -353,160 +359,160 @@ function Results() {
             </div>
           ) : null}
 
-          {/* Уровень стресса */}
-          {((stressLevelValue !== null && stressLevelValue !== undefined) || (stressLevel && (stressLevel.value !== undefined || stressLevel !== null))) ? (
-            <div className="result-card result-card--stress">
-              <div className="result-card-top">
-                <div className="result-card-icon result-card-icon--stress" aria-hidden="true">
-                  <svg width="20" height="20" viewBox="0 0 20 20">
-                    <path
-                      d="M10 2.5C6.318 2.5 3.33331 5.48467 3.33331 9.16667C3.33331 12.8487 6.318 15.8333 10 15.8333"
-                      stroke="currentColor"
-                      strokeWidth="1.5"
-                      strokeLinecap="round"
-                    />
-                    <path
-                      d="M7.5 8.33337H8.33331"
-                      stroke="currentColor"
-                      strokeWidth="1.5"
-                      strokeLinecap="round"
-                    />
-                    <path
-                      d="M11.6667 8.33337H12.5"
-                      stroke="currentColor"
-                      strokeWidth="1.5"
-                      strokeLinecap="round"
-                    />
-                    <path
-                      d="M9 11.25C9.33333 11.6667 9.66667 11.875 10 11.875C10.3333 11.875 10.6667 11.6667 11 11.25"
-                      stroke="currentColor"
-                      strokeWidth="1.5"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
+          {/* Уровень стресса — спец-карточка, как на макете */}
+          {((stressLevelValue !== null && stressLevelValue !== undefined) ||
+            (stressLevel && (stressLevel.value !== undefined || stressLevel !== null))) ? (
+              <div
+                className={`result-card result-card--stress${
+                  stressVisualLevel ? ` result-card--stress-${stressVisualLevel}` : ''
+                }`}
+              >
+                <div className="stress-card-header">
+                  <div className="stress-card-title">
+                    <div className="stress-card-icon" aria-hidden="true">
+                      <img src="/Frame 4.svg" alt="" />
+                    </div>
+                    <div className="stress-card-label">Стресс</div>
+                  </div>
+                  <div className="stress-card-status">
+                    {stressLevelValue ?? (stressLevel?.value ?? stressLevel ?? '—')}
+                  </div>
                 </div>
-                <div className="result-label">Уровень стресса</div>
+                {stressVisualLevel && (
+                  <div className="stress-card-bar">
+                    <div
+                      className={`stress-card-bar-fill stress-card-bar-fill-${stressVisualLevel}`}
+                    />
+                  </div>
+                )}
+                {stressLevel && typeof stressLevel === 'object' && stressLevel.confidence && (
+                  <div className="result-confidence">
+                    Уверенность: {Math.round(stressLevel.confidence * 100)}%
+                  </div>
+                )}
               </div>
-              <div className="result-main">
-                <div className="result-value">
-                  {stressLevelValue ?? (stressLevel?.value ?? stressLevel ?? '—')}
-                </div>
-                <div className="result-unit">из 10</div>
-              </div>
-              {stressLevel && typeof stressLevel === 'object' && stressLevel.confidence && (
-                <div className="result-confidence">
-                  Уверенность: {Math.round(stressLevel.confidence * 100)}%
-                </div>
-              )}
-            </div>
           ) : null}
 
           {/* Артериальное давление */}
-          {((bloodPressureSystolic !== null && bloodPressureDiastolic !== null) || 
-            (bloodPressure && bloodPressure.value && bloodPressure.value.systolic && bloodPressure.value.diastolic) ||
-            (bloodPressure && bloodPressure.systolic && bloodPressure.diastolic)) ? (
-            <div className="result-card result-card--bp">
-              <div className="result-card-top">
-                <div className="result-card-icon result-card-icon--bp" aria-hidden="true">
-                  <svg width="20" height="20" viewBox="0 0 20 20">
-                    <path
-                      d="M10 3.33337C7.23858 3.33337 5 5.57195 5 8.33337C5 11.6667 8.33333 14.5834 9.58333 15.5834C9.72462 15.6968 9.86006 15.7871 10 15.7871C10.1399 15.7871 10.2754 15.6968 10.4167 15.5834C11.6667 14.5834 15 11.6667 15 8.33337C15 5.57195 12.7614 3.33337 10 3.33337Z"
-                      stroke="currentColor"
-                      strokeWidth="1.5"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                    <path
-                      d="M10 10.4167C11.1506 10.4167 12.0833 9.48401 12.0833 8.33337C12.0833 7.18273 11.1506 6.25004 10 6.25004C8.84938 6.25004 7.91669 7.18273 7.91669 8.33337C7.91669 9.48401 8.84938 10.4167 10 10.4167Z"
-                      stroke="currentColor"
-                      strokeWidth="1.5"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
+          {showAllMetricsCards &&
+            (((bloodPressureSystolic !== null && bloodPressureDiastolic !== null) ||
+              (bloodPressure && bloodPressure.value && bloodPressure.value.systolic && bloodPressure.value.diastolic) ||
+              (bloodPressure && bloodPressure.systolic && bloodPressure.diastolic)) ? (
+              <div className="result-card result-card--bp">
+                <div className="result-card-top">
+                  <div className="result-card-icon result-card-icon--bp" aria-hidden="true">
+                    <svg width="20" height="20" viewBox="0 0 20 20">
+                      <path
+                        d="M10 3.33337C7.23858 3.33337 5 5.57195 5 8.33337C5 11.6667 8.33333 14.5834 9.58333 15.5834C9.72462 15.6968 9.86006 15.7871 10 15.7871C10.1399 15.7871 10.2754 15.6968 10.4167 15.5834C11.6667 14.5834 15 11.6667 15 8.33337C15 5.57195 12.7614 3.33337 10 3.33337Z"
+                        stroke="currentColor"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                      <path
+                        d="M10 10.4167C11.1506 10.4167 12.0833 9.48401 12.0833 8.33337C12.0833 7.18273 11.1506 6.25004 10 6.25004C8.84938 6.25004 7.91669 7.18273 7.91669 8.33337C7.91669 9.48401 8.84938 10.4167 10 10.4167Z"
+                        stroke="currentColor"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </div>
+                  <div className="result-label">Артериальное давление</div>
                 </div>
-                <div className="result-label">Артериальное давление</div>
+                <div className="result-main">
+                  <div className="result-value">
+                    {bloodPressureSystolic !== null && bloodPressureDiastolic !== null
+                      ? `${bloodPressureSystolic}/${bloodPressureDiastolic}`
+                      : bloodPressure?.value?.systolic && bloodPressure?.value?.diastolic
+                        ? `${bloodPressure.value.systolic}/${bloodPressure.value.diastolic}`
+                        : bloodPressure?.systolic && bloodPressure?.diastolic
+                          ? `${bloodPressure.systolic}/${bloodPressure.diastolic}`
+                          : '—'}
+                  </div>
+                  <div className="result-unit">мм рт. ст.</div>
+                </div>
+                {bloodPressure && typeof bloodPressure === 'object' && bloodPressure.confidence && (
+                  <div className="result-confidence">
+                    Уверенность: {Math.round(bloodPressure.confidence * 100)}%
+                  </div>
+                )}
               </div>
-              <div className="result-main">
-                <div className="result-value">
-                  {bloodPressureSystolic !== null && bloodPressureDiastolic !== null 
-                    ? `${bloodPressureSystolic}/${bloodPressureDiastolic}`
-                    : bloodPressure?.value?.systolic && bloodPressure?.value?.diastolic
-                      ? `${bloodPressure.value.systolic}/${bloodPressure.value.diastolic}`
-                      : bloodPressure?.systolic && bloodPressure?.diastolic
-                        ? `${bloodPressure.systolic}/${bloodPressure.diastolic}`
-                        : '—'}
-                </div>
-                <div className="result-unit">мм рт. ст.</div>
-              </div>
-              {bloodPressure && typeof bloodPressure === 'object' && bloodPressure.confidence && (
-                <div className="result-confidence">
-                  Уверенность: {Math.round(bloodPressure.confidence * 100)}%
-                </div>
-              )}
-            </div>
-          ) : null}
+            ) : null)}
 
           {/* SDNN */}
-          {((sdnnValue !== null && sdnnValue !== undefined) || (sdnn && (sdnn.value !== undefined || typeof sdnn === 'number'))) ? (
-            <div className="result-card result-card--sdnn">
-              <div className="result-card-top">
-                <div className="result-card-icon result-card-icon--sdnn" aria-hidden="true">
-                  <svg width="20" height="20" viewBox="0 0 20 20">
-                    <path
-                      d="M3.33331 13.3334C4.55553 12.5 5.77775 12.0834 6.99998 12.0834C8.2222 12.0834 9.44442 12.5 10.6666 13.3334C11.8889 14.1667 13.1111 14.5834 14.3333 14.5834C15.5555 14.5834 16.7778 14.1667 18 13.3334"
-                      stroke="currentColor"
-                      strokeWidth="1.5"
-                      strokeLinecap="round"
-                    />
-                    <path
-                      d="M6.25 5.83337H7.08331"
-                      stroke="currentColor"
-                      strokeWidth="1.5"
-                      strokeLinecap="round"
-                    />
-                    <path
-                      d="M12.9167 5.83337H13.75"
-                      stroke="currentColor"
-                      strokeWidth="1.5"
-                      strokeLinecap="round"
-                    />
-                  </svg>
+          {showAllMetricsCards &&
+            (((sdnnValue !== null && sdnnValue !== undefined) ||
+              (sdnn && (sdnn.value !== undefined || typeof sdnn === 'number'))) ? (
+                <div className="result-card result-card--sdnn">
+                  <div className="result-card-top">
+                    <div className="result-card-icon result-card-icon--sdnn" aria-hidden="true">
+                      <svg width="20" height="20" viewBox="0 0 20 20">
+                        <path
+                          d="M3.33331 13.3334C4.55553 12.5 5.77775 12.0834 6.99998 12.0834C8.2222 12.0834 9.44442 12.5 10.6666 13.3334C11.8889 14.1667 13.1111 14.5834 14.3333 14.5834C15.5555 14.5834 16.7778 14.1667 18 13.3334"
+                          stroke="currentColor"
+                          strokeWidth="1.5"
+                          strokeLinecap="round"
+                        />
+                        <path
+                          d="M6.25 5.83337H7.08331"
+                          stroke="currentColor"
+                          strokeWidth="1.5"
+                          strokeLinecap="round"
+                        />
+                        <path
+                          d="M12.9167 5.83337H13.75"
+                          stroke="currentColor"
+                          strokeWidth="1.5"
+                          strokeLinecap="round"
+                        />
+                      </svg>
+                    </div>
+                    <div className="result-label">SDNN</div>
+                  </div>
+                  <div className="result-main">
+                    <div className="result-value">{sdnnValue ?? (sdnn?.value ?? sdnn ?? '—')}</div>
+                    <div className="result-unit">мс</div>
+                  </div>
+                  {sdnn && typeof sdnn === 'object' && sdnn.confidence && (
+                    <div className="result-confidence">
+                      Уверенность: {Math.round(sdnn.confidence * 100)}%
+                    </div>
+                  )}
                 </div>
-                <div className="result-label">SDNN</div>
-              </div>
-              <div className="result-main">
-                <div className="result-value">{sdnnValue ?? (sdnn?.value ?? sdnn ?? '—')}</div>
-                <div className="result-unit">мс</div>
-              </div>
-              {sdnn && typeof sdnn === 'object' && sdnn.confidence && (
-                <div className="result-confidence">
-                  Уверенность: {Math.round(sdnn.confidence * 100)}%
+            ) : null)}
+
+          {/* Дополнительные показатели SDK — как отдельные карточки */}
+          {showAllMetricsCards &&
+            additionalMetrics.map((metric) => (
+              <div key={metric.key} className="result-card result-card--extra">
+                <div className="result-card-top">
+                  <div className="result-card-icon" aria-hidden="true">
+                    <span className="result-card-icon-dot" />
+                  </div>
+                  <div className="result-label">{metric.key}</div>
                 </div>
-              )}
-            </div>
-          ) : null}
+                <div className="result-main">
+                  <div className="result-value">
+                    {metric.value !== undefined && metric.value !== null ? String(metric.value) : '—'}
+                  </div>
+                  {metric.extra && <div className="result-unit">conf: {metric.extra}</div>}
+                </div>
+              </div>
+            ))}
         </div>
 
-        {/* Все показатели SDK */}
-        {allMetrics && allMetrics.length > 0 && (
-          <div className="results-raw">
-            <h2 className="results-subtitle">Все показатели SDK</h2>
-            <div className="results-raw-list">
-              {allMetrics.map((metric) => (
-                <div key={metric.key} className="results-raw-row">
-                  <div className="results-raw-key">{metric.key}</div>
-                  <div className="results-raw-value">
-                    {metric.value !== undefined && metric.value !== null ? String(metric.value) : '—'}
-                    {metric.extra && (
-                      <span className="results-raw-extra"> (conf: {metric.extra})</span>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+        {hasAnyResults && (
+          <button
+            type="button"
+            className="results-toggle-all"
+            onClick={() => setShowAllMetricsCards((prev) => !prev)}
+          >
+            <span>{showAllMetricsCards ? 'Скрыть все показатели' : 'Показать все показатели'}</span>
+            <span className={`results-toggle-all-arrow ${showAllMetricsCards ? 'open' : ''}`} aria-hidden="true">
+              ▾
+            </span>
+          </button>
         )}
 
         <div className="results-actions">
