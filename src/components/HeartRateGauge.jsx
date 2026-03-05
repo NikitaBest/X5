@@ -153,9 +153,9 @@ function HeartRateGauge({ pulse }) {
             y2="20"
             gradientUnits="userSpaceOnUse"
           >
-            {/* В самом низу полукруга — чуть усиленное размытие */}
-            <stop offset="0" stopColor={zoneColor} stopOpacity="0.28" />
-            <stop offset="0.3" stopColor={zoneColor} stopOpacity="0.55" />
+            {/* В самом низу полукруга — более мягкое, растянутое размытие */}
+            <stop offset="0" stopColor={zoneColor} stopOpacity="0.12" />
+            <stop offset="0.35" stopColor={zoneColor} stopOpacity="0.5" />
             {/* К середине и к верху фона цвет становится плотнее */}
             <stop offset="0.65" stopColor={zoneColor} stopOpacity="0.85" />
             <stop offset="1" stopColor={zoneColor} stopOpacity="0.95" />
