@@ -4,6 +4,11 @@
   gap: 16px;
 }
 
+.results-gauge-wrapper {
+  display: flex;
+  justify-content: center;
+}
+
 .results-header {
   display: flex;
   align-items: center;

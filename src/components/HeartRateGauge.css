@@ -1,0 +1,18 @@
+.hr-gauge {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  margin-top: 4px;
+  margin-bottom: 8px;
+}
+
+.hr-gauge-svg {
+  width: 260px;
+  max-width: min(260px, 80vw);
+  display: block;
+}
+
+.hr-gauge-needle-group {
+  transform-origin: 127px 127px;
+  transition: transform 0.7s cubic-bezier(0.22, 0.61, 0.36, 1);
+}

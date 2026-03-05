@@ -1,6 +1,7 @@
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useUserData } from '../contexts/UserDataContext.jsx'
 import Page from '../layout/Page.jsx'
+import HeartRateGauge from '../components/HeartRateGauge.jsx'
 import logger from '../utils/logger.js'
 import './Results.css'
 
@@ -246,7 +247,13 @@ function Results() {
             Скачать JSON
           </button>
         </div>
-        
+
+        {hasAnyResults && (
+          <div className="results-gauge-wrapper">
+            <HeartRateGauge pulse={pulseRateValue} />
+          </div>
+        )}
+
         {!hasAnyResults && (
           <div style={{ padding: '2rem', textAlign: 'center', color: 'red' }}>
             ⚠️ ВНИМАНИЕ: Данные есть, но не извлекаются. Проверьте консоль для отладки.
