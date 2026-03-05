@@ -1543,8 +1543,9 @@ function Camera() {
   const gapLen = dashCycle - dashLen
   const dashArray = `${dashLen} ${gapLen}`
   
-  // Сдвигаем рисунок так, чтобы стык пути попадал в "пробел"
-  const dashOffset = dashLen + gapLen * 0.5
+  // Сдвиг пунктира: начинаем ровно с первого штриха без смещения,
+  // чтобы прогресс заполнял пунктир "с самого начала".
+  const dashOffset = 0
   
   // Толщина пунктирного "кольца": рисуем в 2 раза толще и маской убираем внутреннюю половину,
   // чтобы внешний край был закругленным, а внутренний — ровным (как на референсе).
@@ -1619,8 +1620,7 @@ function Camera() {
                         strokeDasharray={circumference}
                         strokeDashoffset={progressOffset}
                         style={{
-                          // шаговый прогресс по штрихам
-                        transition: 'stroke-dashoffset 0.12s linear',
+                          transition: 'stroke-dashoffset 0.12s linear',
                         }}
                       />
                     </mask>

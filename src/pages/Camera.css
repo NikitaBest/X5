@@ -153,8 +153,10 @@
   pointer-events: none;
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
-  mask-image: radial-gradient(ellipse 52% 48% at center, transparent 55%, black 59%);
-  -webkit-mask-image: radial-gradient(ellipse 50% 35% at center, transparent 55%, black 70%);
+  /* Маска: внутри овала фон остаётся резким, за овалом — размытый.
+     Используем одинаковую форму для всех движков, чтобы блюр не «заходил» внутрь круга. */
+  mask-image: radial-gradient(ellipse 52% 42% at center, transparent 60%, black 62%);
+  -webkit-mask-image: radial-gradient(ellipse 52% 42% at center, transparent 60%, black 62%);
 }
 
 .face-oval-container {
