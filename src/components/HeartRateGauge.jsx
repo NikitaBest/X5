@@ -49,6 +49,42 @@ function HeartRateGauge({ pulse }) {
   const [angle, setAngle] = useState(-90)
   const zoneColor = getZoneColorByAngle(angle)
 
+  // Генерируем белые штрихи по всей дуге, как на примере
+  const TICK_COUNT = 60
+  const centerX = 127
+  const centerY = 127
+  // Радиусы для штрихов подогнаны под радиус фонового полукруга (95)
+  const innerRadius = 88
+  const outerRadius = 95
+
+  const ticks = Array.from({ length: TICK_COUNT }, (_, i) => {
+    const fraction = i / (TICK_COUNT - 1) // 0..1 по всей дуге
+    // Угол вдоль ВЕРХНЕГО полукруга: слева (-180°) → через верх (-90°) → справа (0°)
+    const angleDeg = -180 + fraction * 180
+    const rad = (angleDeg * Math.PI) / 180
+
+    const x1 = centerX + innerRadius * Math.cos(rad)
+    const y1 = centerY + innerRadius * Math.sin(rad)
+    const x2 = centerX + outerRadius * Math.cos(rad)
+    const y2 = centerY + outerRadius * Math.sin(rad)
+
+    const isMajor = i % 5 === 0
+
+    return (
+      <line
+        key={i}
+        x1={x1}
+        y1={y1}
+        x2={x2}
+        y2={y2}
+        stroke="#FFFFFF"
+        strokeWidth={isMajor ? 2 : 1}
+        strokeLinecap="round"
+        opacity={0.9}
+      />
+    )
+  })
+
   // При входе на страницу плавно анимируем стрелку из левого края к целевому углу
   useEffect(() => {
     setAngle(targetAngle)
@@ -69,16 +105,27 @@ function HeartRateGauge({ pulse }) {
             <stop offset="0.66" stopColor="#C9F47A" />    {/* светло-зелёный */}
             <stop offset="1" stopColor="#30AD43" />       {/* зелёный */}
           </linearGradient>
-          {/* Фон внутри полукруга: цвет зависит от зоны, куда указывает стрелка */}
-          <radialGradient id="hr-gauge-bg" cx="50%" cy="100%" r="80%">
-            <stop offset="0" stopColor={zoneColor} stopOpacity="0.35" />
+          {/* Фон внутри полукруга: отдельный полукруг чуть меньшего радиуса, с размытием по нижнему краю */}
+          <linearGradient
+            id="hr-gauge-bg"
+            x1="0"
+            y1="20"
+            x2="0"
+            y2="127"
+            gradientUnits="userSpaceOnUse"
+          >
+            {/* Вся верхняя и средняя часть полукруга — ровный цвет */}
+            <stop offset="0" stopColor={zoneColor} stopOpacity="0.95" />
+            <stop offset="0.85" stopColor={zoneColor} stopOpacity="0.95" />
+            {/* Самый нижний участок у хорды плавно переходит в белый */}
+            <stop offset="0.96" stopColor={zoneColor} stopOpacity="0.4" />
             <stop offset="1" stopColor="#FFFFFF" stopOpacity="0" />
-          </radialGradient>
+          </linearGradient>
         </defs>
 
-        {/* Фоновый розовый полукруг */}
+        {/* Фоновый полукруг с тем же центром, но заметно меньшим радиусом — видимый отступ от цветной шкалы */}
         <path
-          d="M20 127 A107 107 0 0 1 234 127 L234 140 L20 140 Z"
+          d="M32 127 A95 95 0 0 1 222 127 L32 127 Z"
           fill="url(#hr-gauge-bg)"
         />
 
@@ -90,6 +137,9 @@ function HeartRateGauge({ pulse }) {
           strokeWidth="16"
           strokeLinecap="round"
         />
+
+        {/* Внутренние белые штрихи‑деления по дуге */}
+        {ticks}
 
         {/* Центральная точка */}
         <circle
