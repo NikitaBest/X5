@@ -5,16 +5,16 @@ function clamp(value, min, max) {
   return Math.min(max, Math.max(min, value))
 }
 
-// Маппим пульс на угол стрелки: от -90° (низкий) до +90° (высокий)
+// Маппим пульс на угол стрелки по всему полукругу: от левого края (-180°) до правого (0°)
 function getNeedleAngle(pulse) {
   if (pulse == null || Number.isNaN(pulse)) {
     return -180 // базовое положение, если данных нет — край слева
   }
 
-  // Для теста: сжимаем диапазон в узкий коридор 75–90 уд/мин,
-  // чтобы было лучше видно, как стрелка двигается в этой зоне.
-  const minPulse = 75
-  const maxPulse = 90
+  // Расширенный рабочий диапазон: от 40 до 140 уд/мин,
+  // чтобы стрелка заметно двигалась на всём полукруге
+  const minPulse = 40
+  const maxPulse = 140
   const clamped = clamp(pulse, minPulse, maxPulse)
   const fraction = (clamped - minPulse) / (maxPulse - minPulse) // 0..1
 
@@ -23,7 +23,29 @@ function getNeedleAngle(pulse) {
   return minAngle + (maxAngle - minAngle) * fraction
 }
 
-// Цвет зоны по углу: совпадает с основными цветами шкалы, считаем по X-координате кончика стрелки
+// Плавная интерполяция цвета по той же шкале, что и цветовая дуга
+function lerpColor(color1, color2, t) {
+  const c1 = {
+    r: parseInt(color1.slice(1, 3), 16),
+    g: parseInt(color1.slice(3, 5), 16),
+    b: parseInt(color1.slice(5, 7), 16),
+  }
+  const c2 = {
+    r: parseInt(color2.slice(1, 3), 16),
+    g: parseInt(color2.slice(3, 5), 16),
+    b: parseInt(color2.slice(5, 7), 16),
+  }
+
+  const r = Math.round(c1.r + (c2.r - c1.r) * t)
+  const g = Math.round(c1.g + (c2.g - c1.g) * t)
+  const b = Math.round(c1.b + (c2.b - c1.b) * t)
+
+  return `#${r.toString(16).padStart(2, '0')}${g
+    .toString(16)
+    .padStart(2, '0')}${b.toString(16).padStart(2, '0')}`
+}
+
+// Цвет фона по углу: плавная интерполяция по той же шкале, что и цветовая линия
 function getZoneColorByAngle(angle) {
   // Центр дуги и радиус должны совпадать с путём "M20 127 A107 107 0 0 1 234 127"
   const centerX = 127
@@ -36,11 +58,26 @@ function getZoneColorByAngle(angle) {
 
   const fractionX = clamp((tipX - leftX) / (rightX - leftX), 0, 1) // 0..1 слева направо по шкале
 
-  // Сегменты по X: 0–0.25 красный, 0.25–0.5 оранжевый, 0.5–0.75 светло‑зелёный, 0.75–1 зелёный
-  if (fractionX <= 0.25) return '#FF6B6B'
-  if (fractionX <= 0.5) return '#FEC014'
-  if (fractionX <= 0.75) return '#C9F47A'
-  return '#30AD43'
+  // Те же ключевые цвета, что и на дуге
+  const stops = [
+    { pos: 0, color: '#FF6B6B' }, // красный
+    { pos: 0.33, color: '#FEC014' }, // жёлтый/оранжевый
+    { pos: 0.66, color: '#C9F47A' }, // светло‑зелёный
+    { pos: 1, color: '#30AD43' }, // зелёный
+  ]
+
+  // Находим два ближайших цвета и интерполируем между ними
+  for (let i = 0; i < stops.length - 1; i += 1) {
+    const a = stops[i]
+    const b = stops[i + 1]
+    if (fractionX >= a.pos && fractionX <= b.pos) {
+      const localT = (fractionX - a.pos) / (b.pos - a.pos)
+      return lerpColor(a.color, b.color, localT)
+    }
+  }
+
+  // На крайний случай
+  return stops[stops.length - 1].color
 }
 
 function HeartRateGauge({ pulse }) {
