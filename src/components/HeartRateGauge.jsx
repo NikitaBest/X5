@@ -53,7 +53,8 @@ function HeartRateGauge({ pulse }) {
   const TICK_COUNT = 60
   const centerX = 127
   const centerY = 127
-  // Радиусы для штрихов подогнаны под радиус фонового полукруга (95)
+  // Радиусы для штрихов подогнаны под радиус фонового полукруга (95),
+  // чтобы деления шли по границе зелёного фона, а не по внешней цветной дуге
   const innerRadius = 88
   const outerRadius = 95
 
@@ -105,25 +106,26 @@ function HeartRateGauge({ pulse }) {
             <stop offset="0.66" stopColor="#C9F47A" />    {/* светло-зелёный */}
             <stop offset="1" stopColor="#30AD43" />       {/* зелёный */}
           </linearGradient>
-          {/* Фон внутри полукруга: отдельный полукруг чуть меньшего радиуса, с размытием по нижнему краю */}
+          {/* Фон внутри полукруга: полукруг чуть меньшего радиуса, чем цветная дуга,
+              с плавным размытием цвета снизу вверх */}
           <linearGradient
             id="hr-gauge-bg"
             x1="0"
-            y1="20"
+            y1="127"
             x2="0"
-            y2="127"
+            y2="20"
             gradientUnits="userSpaceOnUse"
           >
-            {/* Вся верхняя и средняя часть полукруга — ровный цвет */}
-            <stop offset="0" stopColor={zoneColor} stopOpacity="0.95" />
-            <stop offset="0.85" stopColor={zoneColor} stopOpacity="0.95" />
-            {/* Самый нижний участок у хорды плавно переходит в белый */}
-            <stop offset="0.96" stopColor={zoneColor} stopOpacity="0.4" />
-            <stop offset="1" stopColor="#FFFFFF" stopOpacity="0" />
+            {/* В самом низу полукруга цвет более светлый */}
+            <stop offset="0" stopColor={zoneColor} stopOpacity="0.4" />
+            <stop offset="0.25" stopColor={zoneColor} stopOpacity="0.6" />
+            {/* К середине и к верху фона цвет становится плотнее */}
+            <stop offset="0.6" stopColor={zoneColor} stopOpacity="0.85" />
+            <stop offset="1" stopColor={zoneColor} stopOpacity="0.95" />
           </linearGradient>
         </defs>
 
-        {/* Фоновый полукруг с тем же центром, но заметно меньшим радиусом — видимый отступ от цветной шкалы */}
+        {/* Фоновый полукруг меньшего радиуса — даёт зазор под цветной линией */}
         <path
           d="M32 127 A95 95 0 0 1 222 127 L32 127 Z"
           fill="url(#hr-gauge-bg)"
@@ -135,7 +137,7 @@ function HeartRateGauge({ pulse }) {
           fill="none"
           stroke="url(#hr-gauge-arc)"
           strokeWidth="16"
-          strokeLinecap="round"
+          strokeLinecap="butt"
         />
 
         {/* Внутренние белые штрихи‑деления по дуге */}
