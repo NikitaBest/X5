@@ -116,11 +116,11 @@ function HeartRateGauge({ pulse }) {
             y2="20"
             gradientUnits="userSpaceOnUse"
           >
-            {/* В самом низу полукруга цвет более светлый */}
-            <stop offset="0" stopColor={zoneColor} stopOpacity="0.4" />
-            <stop offset="0.25" stopColor={zoneColor} stopOpacity="0.6" />
+            {/* В самом низу полукруга — чуть усиленное размытие */}
+            <stop offset="0" stopColor={zoneColor} stopOpacity="0.28" />
+            <stop offset="0.3" stopColor={zoneColor} stopOpacity="0.55" />
             {/* К середине и к верху фона цвет становится плотнее */}
-            <stop offset="0.6" stopColor={zoneColor} stopOpacity="0.85" />
+            <stop offset="0.65" stopColor={zoneColor} stopOpacity="0.85" />
             <stop offset="1" stopColor={zoneColor} stopOpacity="0.95" />
           </linearGradient>
         </defs>
@@ -136,7 +136,7 @@ function HeartRateGauge({ pulse }) {
           d="M20 127 A107 107 0 0 1 234 127"
           fill="none"
           stroke="url(#hr-gauge-arc)"
-          strokeWidth="16"
+          strokeWidth="10"
           strokeLinecap="butt"
         />
 
