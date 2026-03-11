@@ -1,0 +1,58 @@
+.day-calendar {
+  margin-top: 12px;
+}
+
+.day-calendar-row {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.day-calendar-row::-webkit-scrollbar {
+  display: none;
+}
+
+.day-calendar-row {
+  -ms-overflow-style: none; /* IE и Edge */
+  scrollbar-width: none; /* Firefox */
+}
+
+.day-calendar-pill {
+  min-width: 44px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #e0e0e0;
+  background: #ffffff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  cursor: pointer;
+  color: #666666;
+  font-size: 11px;
+}
+
+.day-calendar-pill-weekday {
+  text-transform: uppercase;
+  font-weight: 600;
+  font-size: 10px;
+}
+
+.day-calendar-pill-day {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.day-calendar-pill--selected {
+  background: #5DAF2E;
+  border-color: #5DAF2E;
+  color: #ffffff;
+}
+
+.day-calendar-date {
+  margin-top: 8px;
+  font-size: 14px;
+  font-weight: 600;
+}
+

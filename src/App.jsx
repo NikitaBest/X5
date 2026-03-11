@@ -8,6 +8,7 @@ import AlgorithmSettings from './pages/AlgorithmSettings.jsx'
 import Preparation from './pages/Preparation.jsx'
 import Camera from './pages/Camera.jsx'
 import Results from './pages/Results.jsx'
+import NutritionPlan from './pages/NutritionPlan.jsx'
 import './App.css'
 
 function App() {
@@ -23,6 +24,7 @@ function App() {
             <Route path="/preparation" element={<Preparation />} />
             <Route path="/camera" element={<Camera />} />
             <Route path="/results" element={<Results />} />
+            <Route path="/nutrition" element={<NutritionPlan />} />
           </Route>
         </Routes>
       </BrowserRouter>

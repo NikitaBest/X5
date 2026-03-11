@@ -516,7 +516,10 @@ function Results() {
         )}
 
         <div className="results-actions">
-          <button onClick={() => navigate('/camera')} className="results-button">
+          <button onClick={() => navigate('/nutrition')} className="results-button">
+            Подобрать рацион
+          </button>
+          <button onClick={() => navigate('/camera')} className="results-button secondary">
             Измерить снова
           </button>
           <button onClick={() => navigate('/')} className="results-button secondary">
