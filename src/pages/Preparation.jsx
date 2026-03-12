@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Page from '../layout/Page.jsx'
 import Header from '../layout/Header.jsx'
@@ -7,6 +8,7 @@ import './Preparation.css'
 
 function Preparation() {
   const navigate = useNavigate()
+  const [isAcknowledged, setIsAcknowledged] = useState(false)
 
   const handleStartScan = () => {
     navigate('/camera')
@@ -104,10 +106,21 @@ function Preparation() {
             </div>
           </div>
         </div>
+
+        <label className="preparation-confirm">
+          <input
+            type="checkbox"
+            checked={isAcknowledged}
+            onChange={(e) => setIsAcknowledged(e.target.checked)}
+          />
+          <span className="preparation-confirm-text">
+            Понятно, я готов(а) к сканированию
+          </span>
+        </label>
       </div>
 
       <div className="preparation-footer">
-        <PrimaryButton onClick={handleStartScan}>
+        <PrimaryButton onClick={handleStartScan} disabled={!isAcknowledged}>
           Запустить сканирование
         </PrimaryButton>
       </div>
