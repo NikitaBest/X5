@@ -53,6 +53,8 @@ function Preparation() {
           </div>
         </div>
 
+        <h2 className="preparation-important-title">Важные рекомендации</h2>
+
         <div className="preparation-requirements">
           <div className="requirement-item">
             <div className="requirement-icon">
