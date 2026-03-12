@@ -59,7 +59,7 @@ function Allergies() {
 
         <div className="allergies-search-wrapper">
           <span className="allergies-search-icon" aria-hidden="true">
-            🔍
+            <img src="/po.svg" alt="" />
           </span>
           <input
             className="allergies-search-input"
