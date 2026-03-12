@@ -70,19 +70,6 @@ function Allergies() {
           />
         </div>
 
-        <div className="allergies-tabs">
-          {CATEGORY_TABS.map((tab) => (
-            <button
-              key={tab}
-              type="button"
-              className={`allergies-tab${tab === activeTab ? ' allergies-tab--active' : ''}`}
-              onClick={() => setActiveTab(tab)}
-            >
-              {tab}
-            </button>
-          ))}
-        </div>
-
         {selectedTags.size > 0 && (
           <div className="allergies-selected">
             <div className="allergies-selected-title">
@@ -105,6 +92,19 @@ function Allergies() {
             </div>
           </div>
         )}
+
+        <div className="allergies-tabs">
+          {CATEGORY_TABS.map((tab) => (
+            <button
+              key={tab}
+              type="button"
+              className={`allergies-tab${tab === activeTab ? ' allergies-tab--active' : ''}`}
+              onClick={() => setActiveTab(tab)}
+            >
+              {tab}
+            </button>
+          ))}
+        </div>
 
         <div className="allergies-tags">
           {filteredTags.map((tag) => {
