@@ -100,6 +100,33 @@
   gap: 8px;
 }
 
+.allergies-empty {
+  width: 100%;
+  padding: 32px 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 8px;
+  color: #999999;
+}
+
+.allergies-empty-icon img {
+  width: 40px;
+  height: 40px;
+  opacity: 0.6;
+}
+
+.allergies-empty-title {
+  font-size: 14px;
+}
+
+.allergies-empty-subtitle {
+  font-size: 12px;
+  color: #bbbbbb;
+}
+
 .allergies-tag {
   padding: 6px 12px;
   border-radius: 10px;
@@ -136,15 +163,15 @@
 .allergies-selected-tags {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 8px;
 }
 
 .allergies-selected-tag {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 2px 12px;
-  border-radius: 999px;
+  padding: 8px 12px;
+  border-radius: 20px;
   border: none;
   background: #5DAF2E;
   color: #ffffff;

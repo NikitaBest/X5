@@ -107,19 +107,31 @@ function Allergies() {
         </div>
 
         <div className="allergies-tags">
-          {filteredTags.map((tag) => {
-            const selected = selectedTags.has(tag)
-            return (
-              <button
-                key={tag}
-                type="button"
-                className={`allergies-tag${selected ? ' allergies-tag--selected' : ''}`}
-                onClick={() => handleToggleTag(tag)}
-              >
-                {tag}
-              </button>
-            )
-          })}
+          {filteredTags.length === 0 && query.trim() ? (
+            <div className="allergies-empty">
+              <div className="allergies-empty-icon" aria-hidden="true">
+                <img src="/po2.svg" alt="" />
+              </div>
+              <div className="allergies-empty-title">
+                Ничего не найдено по запросу “{query.trim()}”
+              </div>
+              <div className="allergies-empty-subtitle">Попробуйте другой поиск</div>
+            </div>
+          ) : (
+            filteredTags.map((tag) => {
+              const selected = selectedTags.has(tag)
+              return (
+                <button
+                  key={tag}
+                  type="button"
+                  className={`allergies-tag${selected ? ' allergies-tag--selected' : ''}`}
+                  onClick={() => handleToggleTag(tag)}
+                >
+                  {tag}
+                </button>
+              )
+            })
+          )}
         </div>
       </div>
 
