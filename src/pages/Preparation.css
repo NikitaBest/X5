@@ -57,6 +57,10 @@
   display: flex;
   gap: 8px;
   width: 100%;
+  opacity: 0;
+  transform: translateY(8px);
+  animation: prep-fade-in 0.4s ease-out forwards;
+  animation-delay: 0.3s;
 }
 
 .preparation-info-card {
@@ -91,6 +95,10 @@
   font-weight: 700;
   line-height: 1.05;
   text-align: left;
+  opacity: 0;
+  transform: translateY(8px);
+  animation: prep-fade-in 0.4s ease-out forwards;
+  animation-delay: 0.6s;
 }
 
 .preparation-play-button {
@@ -142,6 +150,25 @@
   width: 100%;
   background: #F0F5F2;
   border-radius: 12px;
+  opacity: 0;
+  transform: translateY(8px);
+  animation: prep-fade-in 0.4s ease-out forwards;
+}
+
+.requirement-item:nth-child(1) {
+  animation-delay: 0.9s;
+}
+
+.requirement-item:nth-child(2) {
+  animation-delay: 1.2s;
+}
+
+.requirement-item:nth-child(3) {
+  animation-delay: 1.5s;
+}
+
+.requirement-item:nth-child(4) {
+  animation-delay: 1.8s;
 }
 
 .requirement-icon {
@@ -237,6 +264,18 @@
 
 .preparation-confirm-text {
   flex: 1;
+}
+
+@keyframes prep-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* Тёмная тема */
