@@ -83,6 +83,29 @@ function Allergies() {
           ))}
         </div>
 
+        {selectedTags.size > 0 && (
+          <div className="allergies-selected">
+            <div className="allergies-selected-title">
+              Исключено ({selectedTags.size})
+            </div>
+            <div className="allergies-selected-tags">
+              {Array.from(selectedTags).map((tag) => (
+                <button
+                  key={tag}
+                  type="button"
+                  className="allergies-selected-tag"
+                  onClick={() => handleToggleTag(tag)}
+                >
+                  <span className="allergies-selected-tag-label">{tag}</span>
+                  <span className="allergies-selected-tag-close" aria-hidden="true">
+                    ×
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
         <div className="allergies-tags">
           {filteredTags.map((tag) => {
             const selected = selectedTags.has(tag)
@@ -106,7 +129,7 @@ function Allergies() {
           className="allergies-next-button"
           onClick={() => navigate('/preparation')}
         >
-          Продолжить без исключений
+          {selectedTags.size > 0 ? 'Продолжить' : 'Продолжить без исключений'}
         </button>
       </div>
     </Page>
