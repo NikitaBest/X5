@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useUserData } from '../contexts/UserDataContext.jsx'
 import logger from '../utils/logger.js'
@@ -61,13 +61,38 @@ const SMOKING_OPTIONS = [
 
 function AlgorithmSettings() {
   const navigate = useNavigate()
-  const { updateUserData } = useUserData()
+  const { userData, updateUserData } = useUserData()
   const [gender, setGender] = useState('')
   const [birthDate, setBirthDate] = useState('')
   const [dateError, setDateError] = useState('')
   const [height, setHeight] = useState('')
   const [weight, setWeight] = useState('')
   const [smokingStatus, setSmokingStatus] = useState('')
+
+  // При возврате на экран заполняем поля из сохранённых данных пользователя
+  useEffect(() => {
+    if (userData?.gender) {
+      setGender(userData.gender === 'MALE' ? 'male' : userData.gender === 'FEMALE' ? 'female' : '')
+    }
+    if (userData?.birthDate) {
+      setBirthDate(userData.birthDate)
+    }
+    if (userData?.height != null) {
+      setHeight(String(userData.height))
+    }
+    if (userData?.weight != null) {
+      setWeight(String(userData.weight))
+    }
+    if (userData?.smokingStatus) {
+      setSmokingStatus(
+        userData.smokingStatus === 'SMOKER'
+          ? 'yes'
+          : userData.smokingStatus === 'NON_SMOKER'
+            ? 'no'
+            : '',
+      )
+    }
+  }, [userData])
 
   // Валидация даты
   const validateDate = (dateString) => {
@@ -211,18 +236,19 @@ function AlgorithmSettings() {
         weight: parseFloat(weight),
         height: parseFloat(height),
         smokingStatus: smokingStatus === 'yes' ? 'SMOKER' : 'NON_SMOKER',
+        birthDate,
       }
-      
+
       logger.user('Данные пользователя сохранены', userDataToSave)
       updateUserData(userDataToSave)
-      navigate('/preparation')
+      navigate('/allergies')
     }
   }
 
   return (
     <Page className="algorithm-settings-page">
       <Header title="Настройка алгоритмов" />
-      <ProgressBar currentStep={3} totalSteps={4} />
+      <ProgressBar currentStep={3} totalSteps={5} />
       
       <div className="algorithm-settings-content">
         {/* Секция выбора пола */}

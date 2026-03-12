@@ -15,7 +15,7 @@ function Preparation() {
   return (
     <Page className="preparation-page">
       <Header title="Подготовка" />
-      <ProgressBar currentStep={4} totalSteps={4} />
+      <ProgressBar currentStep={5} totalSteps={5} />
       
       <div className="preparation-content">
         <h2 className="preparation-title">Как пройти сканирование</h2>

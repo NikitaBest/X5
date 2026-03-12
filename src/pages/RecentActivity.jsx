@@ -70,7 +70,7 @@ function RecentActivity() {
   return (
     <Page className="recent-activity-page">
       <Header title="Смарт анализ" />
-      <ProgressBar currentStep={2} totalSteps={4} />
+      <ProgressBar currentStep={2} totalSteps={5} />
       
       <div className="recent-activity-content">
         <h1 className="recent-activity-title">Для самого точного результата</h1>

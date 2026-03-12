@@ -9,6 +9,7 @@ export function UserDataProvider({ children }) {
     weight: null,
     height: null,
     smokingStatus: null,
+    birthDate: null,
     goals: [],
     recentActivity: null,
   })
@@ -27,6 +28,7 @@ export function UserDataProvider({ children }) {
       weight: null,
       height: null,
       smokingStatus: null,
+      birthDate: null,
       goals: [],
       recentActivity: null,
     })

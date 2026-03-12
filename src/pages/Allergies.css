@@ -1,0 +1,119 @@
+.allergies-page {
+  gap: 12px;
+}
+
+.allergies-content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.allergies-title-block {
+  text-align: left;
+}
+
+.allergies-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.allergies-subtitle {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: #666666;
+}
+
+.allergies-search-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.allergies-search-icon {
+  position: absolute;
+  left: 12px;
+  font-size: 14px;
+  opacity: 0.6;
+}
+
+.allergies-search-input {
+  width: 100%;
+  padding: 10px 12px 10px 32px;
+  border-radius: 12px;
+  border: 1px solid #e0e0e0;
+  font-size: 14px;
+}
+
+.allergies-tabs {
+  display: flex;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  gap: 8px;
+  padding-bottom: 4px;
+}
+
+.allergies-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.allergies-tabs {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.allergies-tab {
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid #e0e0e0;
+  background: #f5f5f5;
+  font-size: 12px;
+  color: #555555;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.allergies-tab--active {
+  background: #111111;
+  color: #ffffff;
+  border-color: #111111;
+}
+
+.allergies-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.allergies-tag {
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid #e0e0e0;
+  background: #ffffff;
+  font-size: 12px;
+  color: #444444;
+  cursor: pointer;
+}
+
+.allergies-tag--selected {
+  background: #111111;
+  color: #ffffff;
+  border-color: #111111;
+}
+
+.allergies-footer {
+  margin-top: 24px;
+}
+
+.allergies-next-button {
+  width: 100%;
+  padding: 14px;
+  border-radius: 12px;
+  border: none;
+  background: #5DAF2E;
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
