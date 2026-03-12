@@ -7,6 +7,7 @@
   padding: 0;
   margin-bottom: 0px;
   min-height: 53px;
+  justify-content: center;
 }
 
 .header-glass-card {
@@ -30,6 +31,16 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  width: 100%;
+  flex: 1;
+}
+
+.page-header .back-button {
+  position: absolute;
+  left: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
 }
 
