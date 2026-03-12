@@ -43,7 +43,7 @@ function Preparation() {
         <div className="preparation-info-cards">
           <div className="preparation-info-card">
             <img src="/coonfen.svg" alt="Конфиденциально" className="preparation-info-icon" />
-            <div className="preparation-info-text">Конфиденциально</div>
+            <div className="preparation-info-text">Приватно</div>
           </div>
           <div className="preparation-info-card">
             <img src="/speed.svg" alt="60 секунд" className="preparation-info-icon" />
