@@ -38,6 +38,21 @@ function Preparation() {
           </button>
         </div>
 
+        <div className="preparation-info-cards">
+          <div className="preparation-info-card">
+            <img src="/coonfen.svg" alt="Конфиденциально" className="preparation-info-icon" />
+            <div className="preparation-info-text">Конфиденциально</div>
+          </div>
+          <div className="preparation-info-card">
+            <img src="/speed.svg" alt="60 секунд" className="preparation-info-icon" />
+            <div className="preparation-info-text">60 секунд</div>
+          </div>
+          <div className="preparation-info-card">
+            <img src="/doc.svg" alt="Не диагноз" className="preparation-info-icon" />
+            <div className="preparation-info-text">Не диагноз</div>
+          </div>
+        </div>
+
         <div className="preparation-requirements">
           <div className="requirement-item">
             <div className="requirement-icon">
