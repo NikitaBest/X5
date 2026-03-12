@@ -135,9 +135,13 @@
 
 .requirement-item {
   display: flex;
+  flex-direction: row;
   align-items: flex-start;
-  gap: 16px;
+  padding: 12px 8px;
+  gap: 4px;
   width: 100%;
+  background: #F0F5F2;
+  border-radius: 12px;
 }
 
 .requirement-icon {
