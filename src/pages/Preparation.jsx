@@ -18,9 +18,9 @@ function Preparation() {
       <ProgressBar currentStep={5} totalSteps={5} />
       
       <div className="preparation-content">
-        <h2 className="preparation-title">Как пройти сканирование</h2>
+        <h2 className="preparation-title">Подготовьтесь к сканированию</h2>
         <p className="preparation-description">
-          Поместите лицо в овал камеры и не двигайтесь 45 секунд. Технология rPPG проанализирует Ваш пульс бесконтактно.
+          Следуйте рекомендациям для точного результата.
         </p>
 
         <div className="preparation-video-container">
