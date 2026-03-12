@@ -58,31 +58,49 @@ function Preparation() {
         <div className="preparation-requirements">
           <div className="requirement-item">
             <div className="requirement-icon">
-              <img src="/Conditions.svg" alt="Лицо должно быть открыто" />
+              <img src="/material-symbols_medical-information-outline.svg" alt="Хорошее освещение" />
             </div>
             <div className="requirement-content">
-              <h3 className="requirement-title">Лицо должно быть открыто</h3>
-              <p className="requirement-description">Снимите очки и уберите волосы со лба</p>
+              <h3 className="requirement-title">Хорошее освещение</h3>
+              <p className="requirement-description">
+                Встаньте лицом к источнику света. Избегайте теней на лице.
+              </p>
             </div>
           </div>
 
           <div className="requirement-item">
             <div className="requirement-icon">
-              <img src="/Conditions1.svg" alt="Равномерное освещение" />
+              <img src="/material-symbols_medical-information-outline (1).svg" alt="Телефон на уровне глаз" />
             </div>
             <div className="requirement-content">
-              <h3 className="requirement-title">Равномерное освещение</h3>
-              <p className="requirement-description">Встаньте напротив окна или источника света</p>
+              <h3 className="requirement-title">Телефон на уровне глаз</h3>
+              <p className="requirement-description">
+                Зафиксируйте устройство на расстоянии 30–40 см от лица.
+              </p>
             </div>
           </div>
 
           <div className="requirement-item">
             <div className="requirement-icon">
-              <img src="/Conditions2.svg" alt="Полная приватность" />
+              <img src="/material-symbols_medical-information-outline (2).svg" alt="Не двигайтесь" />
             </div>
             <div className="requirement-content">
-              <h3 className="requirement-title">Полная приватность</h3>
-              <p className="requirement-description">Видео обрабатывается на устройстве и не сохраняется</p>
+              <h3 className="requirement-title">Не двигайтесь</h3>
+              <p className="requirement-description">
+                Расслабьте лицо, не говорите и не двигайтесь во время измерения.
+              </p>
+            </div>
+          </div>
+
+          <div className="requirement-item">
+            <div className="requirement-icon">
+              <img src="/material-symbols_medical-information-outline (3).svg" alt="Без кофе и сигарет" />
+            </div>
+            <div className="requirement-content">
+              <h3 className="requirement-title">Без кофе и сигарет</h3>
+              <p className="requirement-description">
+                Воздержитесь минимум 20 минут до сканирования.
+              </p>
             </div>
           </div>
         </div>
