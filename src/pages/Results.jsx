@@ -583,6 +583,10 @@ function Results() {
         <ResultDetailSheet
           open={!!activeDetail}
           onClose={() => setActiveDetail(null)}
+          onSelectPlan={() => {
+            setActiveDetail(null)
+            navigate('/nutrition')
+          }}
           title={activeDetail?.title}
           value={activeDetail?.value}
           unit={activeDetail?.unit}

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import './ResultDetailSheet.css'
 
-function ResultDetailSheet({ open, onClose, title, value, unit, statusText, description }) {
+function ResultDetailSheet({ open, onClose, onSelectPlan, title, value, unit, statusText, description }) {
   const sheetRef = useRef(null)
   const startYRef = useRef(null)
   const [isClosing, setIsClosing] = useState(false)
@@ -93,8 +93,11 @@ function ResultDetailSheet({ open, onClose, title, value, unit, statusText, desc
           type="button"
           className="result-sheet-action-button"
           onClick={() => {
-            // Пока просто закрываем окно; позже можно будет перейти на страницу рациона
-            onClose?.()
+            if (onSelectPlan) {
+              onSelectPlan()
+            } else {
+              onClose?.()
+            }
           }}
         >
           Подобрать рацион
