@@ -314,6 +314,7 @@ function Results() {
                 <div className="result-value">{pulseRateValue ?? (pulseRate?.value ?? pulseRate ?? '—')}</div>
                 <div className="result-unit">уд/мин</div>
               </div>
+              <div className="result-status-pill">Тестовый статус</div>
               {pulseRate && typeof pulseRate === 'object' && pulseRate.confidence && (
                 <div className="result-confidence">
                   Уверенность: {Math.round(pulseRate.confidence * 100)}%
@@ -351,6 +352,7 @@ function Results() {
                 </div>
                 <div className="result-unit">дых/мин</div>
               </div>
+              <div className="result-status-pill">Тестовый статус</div>
               {respirationRate && typeof respirationRate === 'object' && respirationRate.confidence && (
                 <div className="result-confidence">
                   Уверенность: {Math.round(respirationRate.confidence * 100)}%
@@ -359,38 +361,33 @@ function Results() {
             </div>
           ) : null}
 
-          {/* Уровень стресса — спец-карточка, как на макете */}
-          {((stressLevelValue !== null && stressLevelValue !== undefined) ||
-            (stressLevel && (stressLevel.value !== undefined || stressLevel !== null))) ? (
-              <div
-                className={`result-card result-card--stress${
-                  stressVisualLevel ? ` result-card--stress-${stressVisualLevel}` : ''
-                }`}
-              >
-                <div className="stress-card-header">
-                  <div className="stress-card-title">
-                    <div className="stress-card-icon" aria-hidden="true">
-                      <img src="/Frame 4.svg" alt="" />
-                    </div>
-                    <div className="stress-card-label">Стресс</div>
-                  </div>
-                  <div className="stress-card-status">
-                    {stressLevelValue ?? (stressLevel?.value ?? stressLevel ?? '—')}
-                  </div>
+        {/* Уровень стресса — оформлен как обычная карточка результата */}
+        {((stressLevelValue !== null && stressLevelValue !== undefined) ||
+          (stressLevel && (stressLevel.value !== undefined || stressLevel !== null))) ? (
+            <div
+              className={`result-card result-card--stress${
+                stressVisualLevel ? ` result-card--stress-${stressVisualLevel}` : ''
+              }`}
+            >
+              <div className="result-card-top">
+                <div className="result-card-icon result-card-icon--stress" aria-hidden="true">
+                  <img src="/Frame 4.svg" alt="" />
                 </div>
-                {stressVisualLevel && (
-                  <div className="stress-card-bar">
-                    <div
-                      className={`stress-card-bar-fill stress-card-bar-fill-${stressVisualLevel}`}
-                    />
-                  </div>
-                )}
-                {stressLevel && typeof stressLevel === 'object' && stressLevel.confidence && (
-                  <div className="result-confidence">
-                    Уверенность: {Math.round(stressLevel.confidence * 100)}%
-                  </div>
-                )}
+                <div className="result-label">Стресс</div>
               </div>
+              <div className="result-main">
+                <div className="result-value">
+                  {stressLevelValue ?? (stressLevel?.value ?? stressLevel ?? '—')}
+                </div>
+                <div className="result-unit">из 10</div>
+              </div>
+              <div className="result-status-pill">Тестовый статус</div>
+              {stressLevel && typeof stressLevel === 'object' && stressLevel.confidence && (
+                <div className="result-confidence">
+                  Уверенность: {Math.round(stressLevel.confidence * 100)}%
+                </div>
+              )}
+            </div>
           ) : null}
 
           {/* Артериальное давление */}
@@ -432,6 +429,7 @@ function Results() {
                   </div>
                   <div className="result-unit">мм рт. ст.</div>
                 </div>
+              <div className="result-status-pill">Тестовый статус</div>
                 {bloodPressure && typeof bloodPressure === 'object' && bloodPressure.confidence && (
                   <div className="result-confidence">
                     Уверенность: {Math.round(bloodPressure.confidence * 100)}%
@@ -474,6 +472,7 @@ function Results() {
                     <div className="result-value">{sdnnValue ?? (sdnn?.value ?? sdnn ?? '—')}</div>
                     <div className="result-unit">мс</div>
                   </div>
+                  <div className="result-status-pill">Тестовый статус</div>
                   {sdnn && typeof sdnn === 'object' && sdnn.confidence && (
                     <div className="result-confidence">
                       Уверенность: {Math.round(sdnn.confidence * 100)}%

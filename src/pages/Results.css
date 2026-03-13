@@ -104,9 +104,15 @@
 }
 
 .results-grid {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.75rem;
+}
+
+@media (max-width: 360px) {
+  .results-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .result-card {
@@ -114,7 +120,7 @@
   border-radius: 12px;
   padding: 1.25rem 1rem 1.1rem;
   border: 1px solid var(--border-color, rgba(0, 0, 0, 0.06));
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.03);
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -163,9 +169,20 @@
   color: #ff6370;
 }
 
+/* Цветовые варианты карточек в зависимости от статуса (пока тестового) */
+.result-card--pulse {
+  background: rgba(255, 99, 132, 0.05);
+  border-color: rgba(255, 99, 132, 0.35);
+}
+
 .result-card--respiration .result-card-icon {
   background-color: rgba(55, 178, 255, 0.12);
   color: #37b2ff;
+}
+
+.result-card--respiration {
+  background: rgba(55, 178, 255, 0.04);
+  border-color: rgba(55, 178, 255, 0.25);
 }
 
 .result-card--stress .result-card-icon {
@@ -178,15 +195,27 @@
   color: #5DAF2E;
 }
 
+.result-card--bp {
+  background: rgba(149, 219, 109, 0.12);
+  border-color: rgba(149, 219, 109, 0.6);
+}
+
 .result-card--sdnn .result-card-icon {
   background-color: rgba(114, 111, 255, 0.12);
   color: #726fff;
+}
+
+.result-card--sdnn {
+  background: rgba(149, 219, 109, 0.12);
+  border-color: rgba(149, 219, 109, 0.6);
 }
 
 /* Спец-оформление карточки стресса */
 .result-card--stress {
   border-width: 1px;
   border-style: solid;
+  background: rgba(255, 193, 7, 0.12);
+  border-color: rgba(255, 193, 7, 0.6);
 }
 
 .result-card--stress-low {
@@ -316,8 +345,39 @@
 .result-main {
   display: flex;
   align-items: baseline;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: 4px;
+  flex-wrap: wrap;
+}
+
+.result-status-pill {
+  margin-top: 0px;
+  align-self: flex-start;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.result-card--pulse .result-status-pill {
+  background: rgba(255, 99, 132, 0.12);
+  color: #ff6370;
+}
+
+.result-card--respiration .result-status-pill {
+  background: rgba(55, 178, 255, 0.12);
+  color: #37b2ff;
+}
+
+.result-card--bp .result-status-pill,
+.result-card--sdnn .result-status-pill {
+  background: rgba(149, 219, 109, 0.18);
+  color: #5DAF2E;
+}
+
+.result-card--stress .result-status-pill {
+  background: rgba(254, 193, 7, 0.18);
+  color: #FEC014;
 }
 
 .result-confidence {
