@@ -174,7 +174,7 @@ function HeartRateGauge({ pulse }) {
           fill="none"
           stroke="url(#hr-gauge-arc)"
           strokeWidth="10"
-          strokeLinecap="butt"
+          strokeLinecap="round"
         />
 
         {/* Внутренние белые штрихи‑деления по дуге */}
