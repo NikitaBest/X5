@@ -3,11 +3,13 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { useUserData } from '../contexts/UserDataContext.jsx'
 import Page from '../layout/Page.jsx'
 import HeartRateGauge from '../components/HeartRateGauge.jsx'
+import ResultDetailSheet from '../components/ResultDetailSheet.jsx'
 import logger from '../utils/logger.js'
 import './Results.css'
 
 function Results() {
   const [showAllMetricsCards, setShowAllMetricsCards] = useState(false)
+  const [activeDetail, setActiveDetail] = useState(null)
   const location = useLocation()
   const navigate = useNavigate()
   const { userData } = useUserData()
@@ -295,7 +297,19 @@ function Results() {
         <div className="results-grid">
           {/* Пульс */}
           {((pulseRateValue !== null && pulseRateValue !== undefined) || (pulseRate && (pulseRate.value !== undefined || typeof pulseRate === 'number'))) ? (
-            <div className="result-card result-card--pulse">
+            <div
+              className="result-card result-card--pulse"
+              onClick={() =>
+                setActiveDetail({
+                  title: 'Пульс',
+                  value: pulseRateValue ?? (pulseRate?.value ?? pulseRate ?? '—'),
+                  unit: 'уд/мин',
+                  statusText: 'Тестовый статус',
+                  description:
+                    'Показывает частоту сокращений сердца. Оптимальный пульс в покое — один из ключевых показателей здоровья сердечно‑сосудистой системы.',
+                })
+              }
+            >
               <div className="result-card-top">
                 <div className="result-card-icon result-card-icon--pulse" aria-hidden="true">
                   <svg width="20" height="20" viewBox="0 0 20 20">
@@ -325,7 +339,19 @@ function Results() {
 
           {/* Частота дыхания */}
           {((respirationRateValue !== null && respirationRateValue !== undefined) || (respirationRate && (respirationRate.value !== undefined || typeof respirationRate === 'number'))) ? (
-            <div className="result-card result-card--respiration">
+            <div
+              className="result-card result-card--respiration"
+              onClick={() =>
+                setActiveDetail({
+                  title: 'Частота дыхания',
+                  value: respirationRateValue ?? (respirationRate?.value ?? respirationRate ?? '—'),
+                  unit: 'дых/мин',
+                  statusText: 'Тестовый статус',
+                  description:
+                    'Отражает, насколько ровно и спокойно вы дышите. Учащённое дыхание может говорить о стрессе или нагрузке.',
+                })
+              }
+            >
               <div className="result-card-top">
                 <div className="result-card-icon result-card-icon--respiration" aria-hidden="true">
                   <svg width="20" height="20" viewBox="0 0 20 20">
@@ -368,6 +394,16 @@ function Results() {
               className={`result-card result-card--stress${
                 stressVisualLevel ? ` result-card--stress-${stressVisualLevel}` : ''
               }`}
+              onClick={() =>
+                setActiveDetail({
+                  title: 'Стресс',
+                  value: stressLevelValue ?? (stressLevel?.value ?? stressLevel ?? '—'),
+                  unit: 'из 10',
+                  statusText: 'Тестовый статус',
+                  description:
+                    'Стресс‑индекс учитывает вариабельность сердечного ритма. Высокие значения могут говорить о перегрузке нервной системы.',
+                })
+              }
             >
               <div className="result-card-top">
                 <div className="result-card-icon result-card-icon--stress" aria-hidden="true">
@@ -394,7 +430,26 @@ function Results() {
           {((bloodPressureSystolic !== null && bloodPressureDiastolic !== null) ||
             (bloodPressure && bloodPressure.value && bloodPressure.value.systolic && bloodPressure.value.diastolic) ||
             (bloodPressure && bloodPressure.systolic && bloodPressure.diastolic)) ? (
-              <div className="result-card result-card--bp">
+              <div
+                className="result-card result-card--bp"
+                onClick={() =>
+                  setActiveDetail({
+                    title: 'Артериальное давление',
+                    value:
+                      bloodPressureSystolic !== null && bloodPressureDiastolic !== null
+                        ? `${bloodPressureSystolic}/${bloodPressureDiastolic}`
+                        : bloodPressure?.value?.systolic && bloodPressure?.value?.diastolic
+                          ? `${bloodPressure.value.systolic}/${bloodPressure.value.diastolic}`
+                          : bloodPressure?.systolic && bloodPressure?.diastolic
+                            ? `${bloodPressure.systolic}/${bloodPressure.diastolic}`
+                            : '—',
+                    unit: 'мм рт. ст.',
+                    statusText: 'Тестовый статус',
+                    description:
+                      'Показывает нагрузку на сосуды и сердце. Важно отслеживать давление в динамике, особенно при повышенных значениях.',
+                  })
+                }
+              >
                 <div className="result-card-top">
                   <div className="result-card-icon result-card-icon--bp" aria-hidden="true">
                     <svg width="20" height="20" viewBox="0 0 20 20">
@@ -524,6 +579,16 @@ function Results() {
             На главную
           </button>
         </div>
+
+        <ResultDetailSheet
+          open={!!activeDetail}
+          onClose={() => setActiveDetail(null)}
+          title={activeDetail?.title}
+          value={activeDetail?.value}
+          unit={activeDetail?.unit}
+          statusText={activeDetail?.statusText}
+          description={activeDetail?.description}
+        />
       </div>
     </Page>
   )
