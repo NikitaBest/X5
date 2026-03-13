@@ -106,26 +106,21 @@
 .results-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.75rem;
-}
-
-@media (max-width: 360px) {
-  .results-grid {
-    grid-template-columns: 1fr;
-  }
+  gap: 0.6rem;
 }
 
 .result-card {
   background: var(--card-bg, #ffffff);
   border-radius: 12px;
-  padding: 1.25rem 1rem 1.1rem;
+  padding: 0.9rem 0.8rem 0.8rem;
   border: 1px solid var(--border-color, rgba(0, 0, 0, 0.06));
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.03);
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
   position: relative;
   overflow: hidden;
+  min-height: 120px;
 }
 
 .result-card::before {
@@ -145,12 +140,12 @@
 .result-card-top {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 
 .result-card-icon {
-  width: 28px;
-  height: 28px;
+  width: 26px;
+  height: 26px;
   border-radius: 999px;
   display: flex;
   align-items: center;
@@ -325,20 +320,20 @@
 }
 
 .result-label {
-  font-size: 0.75rem;
+  font-size: clamp(11px, 3.2vw, 12px);
   letter-spacing: 0.02em;
   text-transform: uppercase;
   color: var(--color-fg-secondary, #777777);
 }
 
 .result-value {
-  font-size: 1.75rem;
+  font-size: clamp(20px, 5.6vw, 28px);
   font-weight: 600;
   color: var(--color-fg-primary, #000000);
 }
 
 .result-unit {
-  font-size: 0.75rem;
+  font-size: clamp(10px, 2.8vw, 11px);
   color: var(--color-fg-secondary, #666666);
 }
 
@@ -355,7 +350,7 @@
   align-self: flex-start;
   padding: 4px 10px;
   border-radius: 999px;
-  font-size: 11px;
+  font-size: clamp(9px, 2.6vw, 11px);
   font-weight: 500;
 }
 
@@ -381,7 +376,7 @@
 }
 
 .result-confidence {
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   color: var(--color-fg-secondary, #777777);
   margin-top: 0.5rem;
 }
@@ -456,6 +451,23 @@
   display: flex;
   flex-direction: column;
   gap: 1rem;
+}
+
+/* Дополнительная адаптация для очень узких экранов */
+@media (max-width: 360px) {
+  .result-card {
+    padding: 0.7rem 0.6rem 0.6rem;
+    border-radius: 10px;
+  }
+
+  .result-card-icon {
+    width: 22px;
+    height: 22px;
+  }
+
+  .result-main {
+    gap: 2px;
+  }
 }
 
 .results-toggle-all {

@@ -391,10 +391,9 @@ function Results() {
           ) : null}
 
           {/* Артериальное давление */}
-          {showAllMetricsCards &&
-            (((bloodPressureSystolic !== null && bloodPressureDiastolic !== null) ||
-              (bloodPressure && bloodPressure.value && bloodPressure.value.systolic && bloodPressure.value.diastolic) ||
-              (bloodPressure && bloodPressure.systolic && bloodPressure.diastolic)) ? (
+          {((bloodPressureSystolic !== null && bloodPressureDiastolic !== null) ||
+            (bloodPressure && bloodPressure.value && bloodPressure.value.systolic && bloodPressure.value.diastolic) ||
+            (bloodPressure && bloodPressure.systolic && bloodPressure.diastolic)) ? (
               <div className="result-card result-card--bp">
                 <div className="result-card-top">
                   <div className="result-card-icon result-card-icon--bp" aria-hidden="true">
@@ -429,14 +428,14 @@ function Results() {
                   </div>
                   <div className="result-unit">мм рт. ст.</div>
                 </div>
-              <div className="result-status-pill">Тестовый статус</div>
+                <div className="result-status-pill">Тестовый статус</div>
                 {bloodPressure && typeof bloodPressure === 'object' && bloodPressure.confidence && (
                   <div className="result-confidence">
                     Уверенность: {Math.round(bloodPressure.confidence * 100)}%
                   </div>
                 )}
               </div>
-            ) : null)}
+            ) : null}
 
           {/* SDNN */}
           {showAllMetricsCards &&
