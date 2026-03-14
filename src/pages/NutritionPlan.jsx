@@ -94,7 +94,6 @@ function NutritionPlan() {
 
       <MealCard
         mealType="Завтрак"
-        time="08:00"
         title={meals[0].shortTitle}
         description={meals[0].composition}
         tag={meals[0].statusTag}
@@ -104,7 +103,6 @@ function NutritionPlan() {
 
       <MealCard
         mealType="Обед"
-        time="13:00"
         title={meals[1].shortTitle}
         description={meals[1].composition}
         tag={meals[1].statusTag}
@@ -114,7 +112,6 @@ function NutritionPlan() {
 
       <MealCard
         mealType="Ужин"
-        time="19:00"
         title={meals[2].shortTitle}
         description={meals[2].composition}
         tag={meals[2].statusTag}
