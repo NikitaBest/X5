@@ -1,6 +1,6 @@
 import './MealCard.css'
 
-function MealCard({ mealType, time, title, description, tag }) {
+function MealCard({ mealType, time, title, description, tag, onClick }) {
   return (
     <section className="meal-section">
       <header className="meal-section-header">
@@ -8,7 +8,7 @@ function MealCard({ mealType, time, title, description, tag }) {
         {time && <span className="meal-section-time">{time}</span>}
       </header>
 
-      <div className="meal-card">
+      <div className={`meal-card${onClick ? ' meal-card--clickable' : ''}`} role={onClick ? 'button' : undefined} tabIndex={onClick ? 0 : undefined} onClick={onClick} onKeyDown={onClick ? (e) => { if (e.key === 'Enter' || e.key === ' ') e.preventDefault(); if (e.key === 'Enter') onClick(); } : undefined}>
         <div className="meal-card-image" aria-hidden="true" />
         <div className="meal-card-content">
           <div className="meal-card-text">

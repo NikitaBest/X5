@@ -29,6 +29,15 @@
   box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.04);
 }
 
+.meal-card--clickable {
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.meal-card--clickable:active {
+  opacity: 0.96;
+}
+
 .meal-card-image {
   width: 72px;
   height: 72px;

@@ -1,0 +1,210 @@
+.meal-sheet-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0);
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  z-index: 40;
+  transition: background 0.28s ease-out;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.meal-sheet-backdrop--open {
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.meal-sheet-backdrop--closing {
+  background: rgba(0, 0, 0, 0);
+}
+
+.meal-sheet {
+  width: 100%;
+  max-width: 480px;
+  max-height: 90vh;
+  max-height: 90dvh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  background: #ffffff;
+  border-radius: 20px 20px 0 0;
+  padding: 16px 16px 24px;
+  padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+  box-shadow: 0 -8px 20px rgba(0, 0, 0, 0.15);
+  transform: translateY(100%);
+  transition: transform 0.28s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.28s ease-out;
+  touch-action: pan-y;
+  flex-shrink: 0;
+}
+
+.meal-sheet--open {
+  transform: translateY(0);
+}
+
+.meal-sheet--closing {
+  opacity: 0;
+  transform: translateY(100%);
+}
+
+.meal-sheet-handle {
+  width: 48px;
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.12);
+  margin: -4px auto 12px;
+  padding: 12px 24px;
+  box-sizing: content-box;
+  flex-shrink: 0;
+}
+
+.meal-sheet-image-wrap {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 12px;
+}
+
+.meal-sheet-image {
+  width: 120px;
+  height: 120px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #f5e6d3 0%, #e8d4c4 100%);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.meal-sheet-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.meal-sheet-title {
+  font-size: clamp(16px, 4.5vw, 18px);
+  font-weight: 700;
+  color: #000000;
+  margin: 0 0 8px;
+  line-height: 1.3;
+  text-align: left;
+}
+
+.meal-sheet-status {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgba(93, 175, 46, 0.15);
+  color: #2d6b1a;
+  font-size: clamp(11px, 2.8vw, 12px);
+  font-weight: 500;
+  margin-bottom: 16px;
+}
+
+.meal-sheet-section {
+  margin-bottom: 14px;
+  text-align: left;
+}
+
+.meal-sheet-section-title {
+  font-size: clamp(13px, 3.2vw, 14px);
+  font-weight: 700;
+  color: #000000;
+  margin: 0 0 6px;
+}
+
+.meal-sheet-composition {
+  font-size: clamp(12px, 3vw, 13px);
+  line-height: 1.4;
+  color: #333333;
+  background: rgba(0, 0, 0, 0.06);
+  border-radius: 12px;
+  padding: 12px 14px;
+}
+
+.meal-sheet-calories {
+  font-size: clamp(18px, 4.5vw, 20px);
+  font-weight: 700;
+  color: #000000;
+  margin: 0;
+}
+
+.meal-sheet-bju {
+  margin-top: 16px;
+}
+
+.meal-sheet-bju-bar {
+  display: flex;
+  height: clamp(8px, 2.2vw, 10px);
+  border-radius: 999px;
+  overflow: hidden;
+  margin-bottom: 10px;
+}
+
+.meal-sheet-bju-segment {
+  min-width: 0;
+}
+
+.meal-sheet-bju-segment--protein {
+  background: #30ad43;
+}
+
+.meal-sheet-bju-segment--fat {
+  background: #f0a030;
+}
+
+.meal-sheet-bju-segment--carbs {
+  background: #4da6d9;
+}
+
+.meal-sheet-bju-labels {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 20px;
+  font-size: clamp(12px, 3vw, 13px);
+  color: #333333;
+  font-weight: 400;
+}
+
+.meal-sheet-bju-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.meal-sheet-bju-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.meal-sheet-bju-dot--protein {
+  background: #30ad43;
+}
+
+.meal-sheet-bju-dot--fat {
+  background: #f0a030;
+}
+
+.meal-sheet-bju-dot--carbs {
+  background: #4da6d9;
+}
+
+@media (max-width: 360px) {
+  .meal-sheet {
+    padding: 14px 12px 20px;
+    padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+    border-radius: 16px 16px 0 0;
+  }
+
+  .meal-sheet-image {
+    width: 100px;
+    height: 100px;
+  }
+}
+
+@media (max-height: 500px) {
+  .meal-sheet {
+    max-height: 85vh;
+    max-height: 85dvh;
+  }
+}
