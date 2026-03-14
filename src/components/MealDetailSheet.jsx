@@ -115,7 +115,7 @@ function MealDetailSheet({ open, onClose, meal, mealType, slotIndex, alternative
     >
       <div
         ref={sheetRef}
-        className={`meal-sheet${isClosing ? ' meal-sheet--closing' : ''}${isAnimatedOpen ? ' meal-sheet--open' : ''}`}
+        className={`meal-sheet${isClosing ? ' meal-sheet--closing' : ''}${isAnimatedOpen ? ' meal-sheet--open' : ''}${view === 'alternatives' ? ' meal-sheet--alternatives' : ''}`}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
       >
@@ -160,8 +160,8 @@ function MealDetailSheet({ open, onClose, meal, mealType, slotIndex, alternative
               <button type="button" className="meal-sheet-btn meal-sheet-btn--primary" onClick={handlePreviewSelect}>
                 Выбрать блюдо
               </button>
-              <button type="button" className="meal-sheet-btn meal-sheet-btn--back" onClick={() => setPreviewMeal(null)}>
-                Назад
+              <button type="button" className="meal-sheet-btn meal-sheet-btn--back meal-sheet-btn--back-arrow-only" onClick={() => setPreviewMeal(null)} aria-label="Назад">
+                <span className="meal-sheet-back-arrow" aria-hidden="true">←</span>
               </button>
             </div>
           </>
@@ -199,9 +199,7 @@ function MealDetailSheet({ open, onClose, meal, mealType, slotIndex, alternative
                         {(alt.composition || '').length > 80 ? `${(alt.composition || '').slice(0, 80)}...` : (alt.composition || '')}
                       </div>
                       <div className="meal-sheet-alt-tags">
-                        {(alt.tags || (alt.statusTag ? [alt.statusTag] : [])).slice(0, 2).map((t) => (
-                          <span key={t} className="meal-sheet-alt-tag">{t}</span>
-                        ))}
+                        {(alt.tags || (alt.statusTag ? [alt.statusTag] : [])).slice(0, 2).join(', ')}
                       </div>
                       {!selected && (
                         <button type="button" className="meal-sheet-alt-select" onClick={(e) => { e.stopPropagation(); handleSelectAlternative(alt); }}>

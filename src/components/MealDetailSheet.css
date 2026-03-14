@@ -240,6 +240,17 @@
   border: 1px solid rgba(0, 0, 0, 0.15);
 }
 
+.meal-sheet-btn--back-arrow-only {
+  width: fit-content;
+  min-width: 32px;
+  padding: 6px 10px;
+}
+
+.meal-sheet-btn--back-arrow-only .meal-sheet-back-arrow {
+  font-size: 20px;
+  font-weight: 400;
+}
+
 .meal-sheet-actions--preview {
   margin-top: 20px;
 }
@@ -254,10 +265,10 @@
 
 .meal-sheet-back-btn {
   flex-shrink: 0;
-  width: 44px;
-  height: 44px;
-  min-width: 44px;
-  min-height: 44px;
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  min-height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -265,15 +276,15 @@
   background: transparent;
   color: #000000;
   cursor: pointer;
-  border-radius: 12px;
+  border-radius: 8px;
   -webkit-tap-highlight-color: transparent;
   outline: none;
 }
 
 .meal-sheet-back-arrow {
   display: block;
-  font-size: 24px;
-  font-weight: 700;
+  font-size: 22px;
+  font-weight: 400;
   line-height: 1;
   color: #000000;
 }
@@ -288,7 +299,7 @@
 
 .meal-sheet-alternatives-title {
   font-size: clamp(17px, 4.5vw, 19px);
-  font-weight: 700;
+  font-weight: 500;
   color: #000000;
   margin: 0;
   text-align: left;
@@ -361,44 +372,76 @@
 
 .meal-sheet-alt-title {
   font-size: clamp(14px, 3.5vw, 15px);
-  font-weight: 600;
+  font-weight: 500;
   color: #000000;
   line-height: 1.3;
 }
 
 .meal-sheet-alt-desc {
   font-size: clamp(12px, 3vw, 13px);
+  font-weight: 400;
   color: #666666;
   line-height: 1.35;
 }
 
 .meal-sheet-alt-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 4px;
-}
-
-.meal-sheet-alt-tag {
-  padding: 4px 10px;
-  border-radius: 999px;
-  background: rgba(93, 175, 46, 0.18);
-  color: #2d6b1a;
+  display: block;
+  margin-top: 6px;
+  padding: 6px 12px;
+  border-radius: 10px;
+  background: #DAFAE3;
+  color: #1BA258;
   font-size: 11px;
-  font-weight: 500;
+  font-weight: 400;
+  line-height: 1.35;
 }
 
 .meal-sheet-alt-select {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
   margin-top: 8px;
-  padding: 8px 16px;
-  border-radius: 10px;
-  border: 2px solid #5DAF2E;
+  padding: 8px 4px;
+  gap: 8px;
+  min-height: 34px;
+  border: 1px solid #5DAF2E;
+  border-radius: 12px;
   background: transparent;
   color: #5DAF2E;
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 400;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
+  flex: none;
+  align-self: stretch;
+  flex-grow: 0;
+}
+
+/* В окне альтернатив — более лёгкий шрифт для заголовков, текста в блоках и кнопок */
+.meal-sheet--alternatives .meal-sheet-title {
+  font-weight: 500;
+}
+
+.meal-sheet--alternatives .meal-sheet-section-title {
+  font-weight: 500;
+}
+
+.meal-sheet--alternatives .meal-sheet-composition {
+  font-weight: 400;
+}
+
+.meal-sheet--alternatives .meal-sheet-calories {
+  font-weight: 500;
+}
+
+.meal-sheet--alternatives .meal-sheet-status {
+  font-weight: 400;
+}
+
+.meal-sheet--alternatives .meal-sheet-btn {
+  font-weight: 500;
 }
 
 .meal-sheet-alt-select:active {
