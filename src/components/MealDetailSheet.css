@@ -91,11 +91,11 @@
   display: block;
   width: fit-content;
   padding: 6px 12px;
-  border-radius: 999px;
+  border-radius: 10px;
   background: #DAFAE3;
-  color: #2d6b1a;
+  color: #1BA258;
   font-size: clamp(11px, 2.8vw, 12px);
-  font-weight: 500;
+  font-weight: 400;
   margin-bottom: 16px;
   margin-right: auto;
   text-align: left;
@@ -217,9 +217,18 @@
 }
 
 .meal-sheet-btn--replace {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   background: #ffffff;
   color: #5DAF2E;
-  border: 2px solid #5DAF2E;
+  border: 1px solid #5DAF2E;
+  font-weight: 400;
+}
+
+.meal-sheet-btn--replace img {
+  flex-shrink: 0;
 }
 
 .meal-sheet-btn--keep {
@@ -261,6 +270,22 @@
   align-items: center;
   gap: 12px;
   margin-bottom: 16px;
+}
+
+.meal-sheet-alternatives-header--preview {
+  position: relative;
+  padding-left: 36px;
+}
+
+.meal-sheet-alternatives-header--preview .meal-sheet-back-btn {
+  position: absolute;
+  left: 0;
+}
+
+.meal-sheet-alternatives-header--preview .meal-sheet-alternatives-title {
+  flex: 1;
+  text-align: center;
+  padding-right: 36px;
 }
 
 .meal-sheet-back-btn {

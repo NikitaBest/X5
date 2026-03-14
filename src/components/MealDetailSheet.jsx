@@ -123,7 +123,7 @@ function MealDetailSheet({ open, onClose, meal, mealType, slotIndex, alternative
 
         {view === 'alternatives' && previewMeal ? (
           <>
-            <div className="meal-sheet-alternatives-header">
+            <div className="meal-sheet-alternatives-header meal-sheet-alternatives-header--preview">
               <button type="button" className="meal-sheet-back-btn" onClick={() => setPreviewMeal(null)} aria-label="Назад">
                 <span className="meal-sheet-back-arrow" aria-hidden="true">←</span>
               </button>
@@ -159,9 +159,6 @@ function MealDetailSheet({ open, onClose, meal, mealType, slotIndex, alternative
             <div className="meal-sheet-actions meal-sheet-actions--preview">
               <button type="button" className="meal-sheet-btn meal-sheet-btn--primary" onClick={handlePreviewSelect}>
                 Выбрать блюдо
-              </button>
-              <button type="button" className="meal-sheet-btn meal-sheet-btn--back meal-sheet-btn--back-arrow-only" onClick={() => setPreviewMeal(null)} aria-label="Назад">
-                <span className="meal-sheet-back-arrow" aria-hidden="true">←</span>
               </button>
             </div>
           </>
@@ -253,6 +250,7 @@ function MealDetailSheet({ open, onClose, meal, mealType, slotIndex, alternative
 
             <div className="meal-sheet-actions">
               <button type="button" className="meal-sheet-btn meal-sheet-btn--replace" onClick={() => setView('alternatives')}>
+                <img src="/zam.svg" alt="" width={12} height={12} aria-hidden="true" />
                 Заменить блюдо
               </button>
               <button type="button" className="meal-sheet-btn meal-sheet-btn--keep" onClick={handleClose}>
