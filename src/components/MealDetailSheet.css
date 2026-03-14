@@ -189,6 +189,220 @@
   background: #4da6d9;
 }
 
+/* Кнопки внизу экрана детали */
+.meal-sheet-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.meal-sheet-btn {
+  width: 100%;
+  padding: 14px 20px;
+  border-radius: 12px;
+  font-size: clamp(14px, 3.8vw, 15px);
+  font-weight: 600;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: opacity 0.15s;
+}
+
+.meal-sheet-btn:active {
+  opacity: 0.9;
+}
+
+.meal-sheet-btn--replace {
+  background: #ffffff;
+  color: #5DAF2E;
+  border: 2px solid #5DAF2E;
+}
+
+.meal-sheet-btn--keep {
+  background: #5DAF2E;
+  color: #ffffff;
+  border: none;
+}
+
+.meal-sheet-btn--primary {
+  background: #5DAF2E;
+  color: #ffffff;
+  border: none;
+}
+
+.meal-sheet-btn--back {
+  background: #ffffff;
+  color: #333333;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+}
+
+.meal-sheet-actions--preview {
+  margin-top: 20px;
+}
+
+/* Экран альтернатив */
+.meal-sheet-alternatives-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.meal-sheet-back-btn {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: #000000;
+  cursor: pointer;
+  border-radius: 12px;
+  -webkit-tap-highlight-color: transparent;
+  outline: none;
+}
+
+.meal-sheet-back-arrow {
+  display: block;
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1;
+  color: #000000;
+}
+
+.meal-sheet-back-btn:hover {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.meal-sheet-back-btn:active {
+  opacity: 0.8;
+}
+
+.meal-sheet-alternatives-title {
+  font-size: clamp(17px, 4.5vw, 19px);
+  font-weight: 700;
+  color: #000000;
+  margin: 0;
+  text-align: left;
+  flex: 1;
+  min-width: 0;
+}
+
+.meal-sheet-alternatives-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.meal-sheet-alt-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 16px;
+  background: #ffffff;
+  border: 1px solid rgba(93, 175, 46, 0.35);
+  position: relative;
+  text-align: left;
+}
+
+.meal-sheet-alt-card--clickable {
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.meal-sheet-alt-card--clickable:active {
+  opacity: 0.97;
+}
+
+.meal-sheet-alt-card--selected {
+  border-color: #5DAF2E;
+  border-width: 2px;
+}
+
+.meal-sheet-alt-check {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #5DAF2E;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+}
+
+.meal-sheet-alt-image {
+  width: 72px;
+  height: 72px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #f5e6d3 0%, #e8d4c4 100%);
+  flex-shrink: 0;
+}
+
+.meal-sheet-alt-content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: flex-start;
+}
+
+.meal-sheet-alt-title {
+  font-size: clamp(14px, 3.5vw, 15px);
+  font-weight: 600;
+  color: #000000;
+  line-height: 1.3;
+}
+
+.meal-sheet-alt-desc {
+  font-size: clamp(12px, 3vw, 13px);
+  color: #666666;
+  line-height: 1.35;
+}
+
+.meal-sheet-alt-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.meal-sheet-alt-tag {
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(93, 175, 46, 0.18);
+  color: #2d6b1a;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.meal-sheet-alt-select {
+  margin-top: 8px;
+  padding: 8px 16px;
+  border-radius: 10px;
+  border: 2px solid #5DAF2E;
+  background: transparent;
+  color: #5DAF2E;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.meal-sheet-alt-select:active {
+  opacity: 0.85;
+}
+
 @media (max-width: 360px) {
   .meal-sheet {
     padding: 14px 12px 20px;
@@ -199,6 +413,11 @@
   .meal-sheet-image {
     width: 100px;
     height: 100px;
+  }
+
+  .meal-sheet-alt-image {
+    width: 60px;
+    height: 60px;
   }
 }
 
