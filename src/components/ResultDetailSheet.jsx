@@ -5,6 +5,27 @@ function ResultDetailSheet({ open, onClose, onSelectPlan, title, value, unit, st
   const sheetRef = useRef(null)
   const startYRef = useRef(null)
   const [isClosing, setIsClosing] = useState(false)
+  const [isAnimatedOpen, setIsAnimatedOpen] = useState(false)
+
+  useEffect(() => {
+    if (!open) {
+      setIsAnimatedOpen(false)
+      return undefined
+    }
+    const id = requestAnimationFrame(() => {
+      requestAnimationFrame(() => setIsAnimatedOpen(true))
+    })
+    return () => cancelAnimationFrame(id)
+  }, [open])
+
+  useEffect(() => {
+    if (!open) return undefined
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = prev
+    }
+  }, [open])
 
   useEffect(() => {
     if (!open) return undefined
@@ -23,8 +44,9 @@ function ResultDetailSheet({ open, onClose, onSelectPlan, title, value, unit, st
     setIsClosing(true)
     setTimeout(() => {
       setIsClosing(false)
+      setIsAnimatedOpen(false)
       onClose?.()
-    }, 200)
+    }, 280)
   }
 
   const handleBackdropClick = (event) => {
@@ -42,7 +64,7 @@ function ResultDetailSheet({ open, onClose, onSelectPlan, title, value, unit, st
     if (startY == null) return
     const endY = event.changedTouches[0].clientY
     const deltaY = endY - startY
-    if (deltaY > 40) {
+    if (deltaY > 50) {
       handleClose()
     }
     startYRef.current = null
@@ -52,12 +74,12 @@ function ResultDetailSheet({ open, onClose, onSelectPlan, title, value, unit, st
 
   return (
     <div
-      className={`result-sheet-backdrop${isClosing ? ' result-sheet-backdrop--closing' : ''}`}
+      className={`result-sheet-backdrop${isClosing ? ' result-sheet-backdrop--closing' : ''}${isAnimatedOpen ? ' result-sheet-backdrop--open' : ''}`}
       onClick={handleBackdropClick}
     >
       <div
         ref={sheetRef}
-        className={`result-sheet${isClosing ? ' result-sheet--closing' : ''}`}
+        className={`result-sheet${isClosing ? ' result-sheet--closing' : ''}${isAnimatedOpen ? ' result-sheet--open' : ''}`}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
       >

@@ -1,12 +1,22 @@
 .result-sheet-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.4);
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  padding: 0;
+  background: rgba(0, 0, 0, 0);
   display: flex;
   justify-content: center;
   align-items: flex-end;
   z-index: 40;
-  transition: background 0.2s ease-out;
+  transition: background 0.28s ease-out;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.result-sheet-backdrop--open {
+  background: rgba(0, 0, 0, 0.4);
 }
 
 .result-sheet-backdrop--closing {
@@ -16,17 +26,29 @@
 .result-sheet {
   width: 100%;
   max-width: 480px;
+  max-height: 90vh;
+  max-height: 90dvh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
   background: #ffffff;
   border-radius: 20px 20px 0 0;
   padding: 16px 16px 24px;
+  padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px));
   box-shadow: 0 -8px 20px rgba(0, 0, 0, 0.15);
+  transform: translateY(100%);
+  transition: transform 0.28s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.28s ease-out;
+  touch-action: pan-y;
+  flex-shrink: 0;
+}
+
+.result-sheet--open {
   transform: translateY(0);
-  transition: transform 0.2s ease-out, opacity 0.2s ease-out;
 }
 
 .result-sheet--closing {
   opacity: 0;
-  transform: translateY(40px);
+  transform: translateY(100%);
 }
 
 .result-sheet-handle {
@@ -35,17 +57,24 @@
   border-radius: 999px;
   background: rgba(0, 0, 0, 0.12);
   margin: 0 auto 12px;
+  flex-shrink: 0;
+  /* Увеличиваем зону касания для свайпа вниз */
+  padding: 12px 24px;
+  margin: -4px auto 8px;
+  box-sizing: content-box;
 }
 
 .result-sheet-header {
   text-align: center;
   margin-bottom: 12px;
+  flex-shrink: 0;
 }
 
 .result-sheet-title {
-  font-size: 18px;
+  font-size: clamp(16px, 4.5vw, 18px);
   font-weight: 700;
   margin-bottom: 4px;
+  line-height: 1.3;
 }
 
 .result-sheet-value-row {
@@ -53,15 +82,16 @@
   justify-content: center;
   align-items: baseline;
   gap: 6px;
+  flex-wrap: wrap;
 }
 
 .result-sheet-value {
-  font-size: 32px;
+  font-size: clamp(26px, 8vw, 32px);
   font-weight: 700;
 }
 
 .result-sheet-unit {
-  font-size: 12px;
+  font-size: clamp(11px, 2.8vw, 12px);
   color: #666666;
 }
 
@@ -74,17 +104,18 @@
   border-radius: 999px;
   background: rgba(255, 99, 132, 0.12);
   color: #ff6370;
-  font-size: 11px;
+  font-size: clamp(10px, 2.8vw, 11px);
   font-weight: 500;
 }
 
 .result-sheet-scale {
   margin-top: 12px;
+  flex-shrink: 0;
 }
 
 .result-sheet-scale-bar {
   display: flex;
-  height: 8px;
+  height: clamp(6px, 2vw, 8px);
   border-radius: 999px;
   overflow: hidden;
 }
@@ -109,28 +140,31 @@
   display: flex;
   justify-content: space-between;
   margin-top: 4px;
-  font-size: 10px;
+  font-size: clamp(9px, 2.5vw, 10px);
   color: #666666;
 }
 
 .result-sheet-description {
   margin-top: 14px;
-  font-size: 13px;
+  font-size: clamp(12px, 3.2vw, 13px);
   line-height: 1.4;
   color: #333333;
+  word-break: break-word;
 }
 
 .result-sheet-action-button {
   margin-top: 16px;
   width: 100%;
-  padding: 12px;
+  min-height: 48px;
+  padding: 12px 16px;
   border-radius: 12px;
   border: none;
   background: #5DAF2E;
   color: #ffffff;
-  font-size: 15px;
+  font-size: clamp(14px, 3.8vw, 15px);
   font-weight: 600;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .result-sheet-action-button:active {
@@ -139,19 +173,35 @@
 
 .result-sheet-disclaimer {
   margin-top: 8px;
-  font-size: 11px;
+  font-size: clamp(10px, 2.8vw, 11px);
   line-height: 1.4;
   color: #777777;
   text-align: center;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
+/* Узкие экраны */
 @media (max-width: 360px) {
   .result-sheet {
     padding: 14px 12px 20px;
+    padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+    border-radius: 16px 16px 0 0;
   }
 
   .result-sheet-value {
-    font-size: 28px;
+    font-size: 26px;
+  }
+
+  .result-sheet-handle {
+    margin-bottom: 6px;
+  }
+}
+
+/* Очень низкие экраны — ограничиваем высоту и скролл */
+@media (max-height: 500px) {
+  .result-sheet {
+    max-height: 85vh;
+    max-height: 85dvh;
   }
 }
 
