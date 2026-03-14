@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import './MealDetailSheet.css'
 
-function MealDetailSheet({ open, onClose, meal, mealType, slotIndex, alternatives = [], onReplaceMeal }) {
+function MealDetailSheet({ open, onClose, meal, mealType, slotIndex, alternatives = [], onReplaceMeal, initialView = 'detail' }) {
   const sheetRef = useRef(null)
   const startYRef = useRef(null)
   const [isClosing, setIsClosing] = useState(false)
@@ -16,11 +16,12 @@ function MealDetailSheet({ open, onClose, meal, mealType, slotIndex, alternative
       setPreviewMeal(null)
       return undefined
     }
+    setView(initialView === 'alternatives' ? 'alternatives' : 'detail')
     const id = requestAnimationFrame(() => {
       requestAnimationFrame(() => setIsAnimatedOpen(true))
     })
     return () => cancelAnimationFrame(id)
-  }, [open])
+  }, [open, initialView])
 
   useEffect(() => {
     if (!open) return undefined

@@ -88,15 +88,17 @@
 }
 
 .meal-sheet-status {
-  display: inline-flex;
-  align-items: center;
+  display: block;
+  width: fit-content;
   padding: 6px 12px;
   border-radius: 999px;
-  background: rgba(93, 175, 46, 0.15);
+  background: #DAFAE3;
   color: #2d6b1a;
   font-size: clamp(11px, 2.8vw, 12px);
   font-weight: 500;
   margin-bottom: 16px;
+  margin-right: auto;
+  text-align: left;
 }
 
 .meal-sheet-section {

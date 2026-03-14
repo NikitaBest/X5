@@ -78,3 +78,29 @@
   font-weight: 500;
 }
 
+.meal-card-replace {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 8px;
+  padding: 8px 14px;
+  border: 1px solid #5DAF2E;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #5DAF2E;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.meal-card-replace:active {
+  opacity: 0.85;
+}
+
+.meal-card-replace img {
+  display: block;
+  flex-shrink: 0;
+}
+

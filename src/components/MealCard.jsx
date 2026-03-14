@@ -1,6 +1,6 @@
 import './MealCard.css'
 
-function MealCard({ mealType, time, title, description, tag, onClick }) {
+function MealCard({ mealType, time, title, description, tag, onClick, onReplaceClick }) {
   return (
     <section className="meal-section">
       <header className="meal-section-header">
@@ -16,6 +16,12 @@ function MealCard({ mealType, time, title, description, tag, onClick }) {
             <div className="meal-card-description">{description}</div>
           </div>
           {tag && <div className="meal-card-tag">{tag}</div>}
+          {onReplaceClick && (
+            <button type="button" className="meal-card-replace" onClick={(e) => { e.stopPropagation(); onReplaceClick(); }} aria-label="Заменить блюдо">
+              <img src="/zam.svg" alt="" width={12} height={12} aria-hidden="true" />
+              <span>Заменить</span>
+            </button>
+          )}
         </div>
       </div>
     </section>

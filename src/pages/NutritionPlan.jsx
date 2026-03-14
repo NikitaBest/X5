@@ -69,6 +69,7 @@ const ALTERNATIVES_BY_SLOT = [ALTERNATIVES_BREAKFAST, ALTERNATIVES_LUNCH, ALTERN
 function NutritionPlan() {
   const [meals, setMeals] = useState([...MEALS_MOCK])
   const [activeSlot, setActiveSlot] = useState(null)
+  const [openReplaceView, setOpenReplaceView] = useState(false)
 
   const activeMeal = activeSlot != null ? meals[activeSlot] : null
   const mealType = activeSlot != null ? SLOT_LABELS[activeSlot] : null
@@ -79,6 +80,11 @@ function NutritionPlan() {
       next[slotIndex] = { ...newMeal, id: newMeal.id || next[slotIndex].id }
       return next
     })
+  }
+
+  const handleCloseSheet = () => {
+    setActiveSlot(null)
+    setOpenReplaceView(false)
   }
 
   return (
@@ -92,7 +98,8 @@ function NutritionPlan() {
         title={meals[0].shortTitle}
         description={meals[0].composition}
         tag={meals[0].statusTag}
-        onClick={() => setActiveSlot(0)}
+        onClick={() => { setOpenReplaceView(false); setActiveSlot(0); }}
+        onReplaceClick={() => { setOpenReplaceView(true); setActiveSlot(0); }}
       />
 
       <MealCard
@@ -101,7 +108,8 @@ function NutritionPlan() {
         title={meals[1].shortTitle}
         description={meals[1].composition}
         tag={meals[1].statusTag}
-        onClick={() => setActiveSlot(1)}
+        onClick={() => { setOpenReplaceView(false); setActiveSlot(1); }}
+        onReplaceClick={() => { setOpenReplaceView(true); setActiveSlot(1); }}
       />
 
       <MealCard
@@ -110,17 +118,19 @@ function NutritionPlan() {
         title={meals[2].shortTitle}
         description={meals[2].composition}
         tag={meals[2].statusTag}
-        onClick={() => setActiveSlot(2)}
+        onClick={() => { setOpenReplaceView(false); setActiveSlot(2); }}
+        onReplaceClick={() => { setOpenReplaceView(true); setActiveSlot(2); }}
       />
 
       <MealDetailSheet
         open={activeSlot != null}
-        onClose={() => setActiveSlot(null)}
+        onClose={handleCloseSheet}
         meal={activeMeal}
         mealType={mealType}
         slotIndex={activeSlot}
         alternatives={activeSlot != null ? ALTERNATIVES_BY_SLOT[activeSlot] : []}
         onReplaceMeal={handleReplaceMeal}
+        initialView={openReplaceView ? 'alternatives' : 'detail'}
       />
     </Page>
   )
