@@ -10,6 +10,7 @@ import Preparation from './pages/Preparation.jsx'
 import Camera from './pages/Camera.jsx'
 import Results from './pages/Results.jsx'
 import NutritionPlan from './pages/NutritionPlan.jsx'
+import Cart from './pages/Cart.jsx'
 import './App.css'
 
 function App() {
@@ -27,6 +28,7 @@ function App() {
             <Route path="/camera" element={<Camera />} />
             <Route path="/results" element={<Results />} />
             <Route path="/nutrition" element={<NutritionPlan />} />
+            <Route path="/cart" element={<Cart />} />
           </Route>
         </Routes>
       </BrowserRouter>

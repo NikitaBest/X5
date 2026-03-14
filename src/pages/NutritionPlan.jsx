@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import Page from '../layout/Page.jsx'
 import Header from '../layout/Header.jsx'
 import DayCalendar from '../components/DayCalendar.jsx'
@@ -67,6 +68,7 @@ const SLOT_LABELS = ['Завтрак', 'Обед', 'Ужин']
 const ALTERNATIVES_BY_SLOT = [ALTERNATIVES_BREAKFAST, ALTERNATIVES_LUNCH, ALTERNATIVES_DINNER]
 
 function NutritionPlan() {
+  const navigate = useNavigate()
   const [meals, setMeals] = useState([...MEALS_MOCK])
   const [activeSlot, setActiveSlot] = useState(null)
   const [openReplaceView, setOpenReplaceView] = useState(false)
@@ -118,6 +120,12 @@ function NutritionPlan() {
         onClick={() => { setOpenReplaceView(false); setActiveSlot(2); }}
         onReplaceClick={() => { setOpenReplaceView(true); setActiveSlot(2); }}
       />
+
+      <div className="nutrition-plan-footer">
+        <button type="button" className="nutrition-plan-cart-btn" onClick={() => navigate('/cart')}>
+          Добавить в корзину
+        </button>
+      </div>
 
       <MealDetailSheet
         open={activeSlot != null}
