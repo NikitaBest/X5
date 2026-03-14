@@ -47,14 +47,14 @@
 }
 
 .meal-sheet-handle {
-  width: 48px;
+  width: 36px;
   height: 4px;
-  border-radius: 999px;
-  background: rgba(0, 0, 0, 0.12);
-  margin: -4px auto 12px;
-  padding: 12px 24px;
-  box-sizing: content-box;
-  flex-shrink: 0;
+  background: #DEEAF9;
+  border-radius: 2px;
+  flex: none;
+  order: 0;
+  flex-grow: 0;
+  margin: 0 auto 10px;
 }
 
 .meal-sheet-image-wrap {
