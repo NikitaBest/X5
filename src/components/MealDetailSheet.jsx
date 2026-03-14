@@ -86,7 +86,7 @@ function MealDetailSheet({ open, onClose, meal, mealType, slotIndex, alternative
     if (typeof slotIndex !== 'number' || !onReplaceMeal) return
     onReplaceMeal(slotIndex, alt)
     setPreviewMeal(null)
-    setView('detail')
+    onClose?.()
   }
 
   const handlePreviewSelect = () => {
@@ -94,6 +94,7 @@ function MealDetailSheet({ open, onClose, meal, mealType, slotIndex, alternative
     onReplaceMeal(slotIndex, previewMeal)
     setPreviewMeal(null)
     setView('detail')
+    onClose?.()
   }
 
   const isSelected = (alt) => meal && (alt.id === meal.id || (alt.title === meal.title && !alt.id && !meal.id))
