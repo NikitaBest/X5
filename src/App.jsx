@@ -1,6 +1,8 @@
+import { useState, useEffect } from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { UserDataProvider } from './contexts/UserDataContext.jsx'
 import MobileAppShell from './layout/MobileAppShell.jsx'
+import LoadingScreen from './components/LoadingScreen.jsx'
 import Welcome from './pages/Welcome.jsx'
 import RecentActivity from './pages/RecentActivity.jsx'
 import PrioritySelection from './pages/PrioritySelection.jsx'
@@ -14,6 +16,17 @@ import Cart from './pages/Cart.jsx'
 import './App.css'
 
 function App() {
+  const [isInitialLoad, setIsInitialLoad] = useState(true)
+
+  useEffect(() => {
+    const timer = setTimeout(() => setIsInitialLoad(false), 800)
+    return () => clearTimeout(timer)
+  }, [])
+
+  if (isInitialLoad) {
+    return <LoadingScreen text="Загрузка..." />
+  }
+
   return (
     <UserDataProvider>
       <BrowserRouter>

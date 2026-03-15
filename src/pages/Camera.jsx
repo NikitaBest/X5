@@ -12,6 +12,7 @@ import { SDK_CONFIG } from '../config/sdkConfig.js'
 import logger from '../utils/logger.js'
 import Page from '../layout/Page.jsx'
 import Modal from '../ui/Modal.jsx'
+import LoadingScreen from '../components/LoadingScreen.jsx'
 import './Camera.css'
 
 // Отладка SDK в консоль: что приходит от SDK и что показываем пользователю
@@ -1558,15 +1559,11 @@ function Camera() {
   const progressOffset = circumference - circumference * progressFraction
 
   return (
-    <div className="camera-page">
-      <div className="camera-preview">
-        {isLoading && (
-          <div className="camera-loading-container">
-            <div className="camera-loading-spinner"></div>
-            <p className="camera-loading-text">Инициализация камеры...</p>
-          </div>
-        )}
-        {error && <p className="error-text">{error}</p>}
+    <>
+      {isLoading && <LoadingScreen text="Инициализация камеры..." />}
+      <div className="camera-page">
+        <div className="camera-preview">
+          {error && <p className="error-text">{error}</p>}
         <video
           ref={videoRef}
           autoPlay
@@ -1690,7 +1687,8 @@ function Camera() {
         cancelText="Выйти"
         onCancel={handleExit}
       />
-    </div>
+      </div>
+    </>
   )
 }
 
