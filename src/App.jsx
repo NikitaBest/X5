@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { AuthProvider, useAuth } from './contexts/AuthContext.jsx'
 import { UserDataProvider } from './contexts/UserDataContext.jsx'
 import MobileAppShell from './layout/MobileAppShell.jsx'
 import LoadingScreen from './components/LoadingScreen.jsx'
@@ -23,8 +24,10 @@ function App() {
   }
 
   return (
-    <UserDataProvider>
-      <BrowserRouter>
+    <AuthProvider>
+      <AuthInit />
+      <UserDataProvider>
+        <BrowserRouter>
         <Routes>
           <Route element={<MobileAppShell />}>
             <Route path="/" element={<Welcome />} />
@@ -41,7 +44,24 @@ function App() {
         </Routes>
       </BrowserRouter>
     </UserDataProvider>
+    </AuthProvider>
   )
+}
+
+function AuthInit() {
+  const { token, login } = useAuth()
+  const loginSentRef = useRef(false)
+  useEffect(() => {
+    if (token) return
+    if (loginSentRef.current) return
+    loginSentRef.current = true
+    if (import.meta.env.DEV) console.log('[auth] Отправляем POST /auth/login (один раз)')
+    login({ id: null, utm: null }).catch((err) => {
+      loginSentRef.current = false
+      console.warn('Auth login failed', err)
+    })
+  }, [token, login])
+  return null
 }
 
 export default App
