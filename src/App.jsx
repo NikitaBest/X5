@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { UserDataProvider } from './contexts/UserDataContext.jsx'
 import MobileAppShell from './layout/MobileAppShell.jsx'
@@ -18,13 +18,8 @@ import './App.css'
 function App() {
   const [isInitialLoad, setIsInitialLoad] = useState(true)
 
-  useEffect(() => {
-    const timer = setTimeout(() => setIsInitialLoad(false), 800)
-    return () => clearTimeout(timer)
-  }, [])
-
   if (isInitialLoad) {
-    return <LoadingScreen text="Загрузка..." />
+    return <LoadingScreen text="Загрузка..." onComplete={() => setIsInitialLoad(false)} />
   }
 
   return (

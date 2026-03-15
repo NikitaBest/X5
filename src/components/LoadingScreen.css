@@ -11,6 +11,11 @@
   padding: 24px;
 }
 
+/* Простой вариант: кружок + текст */
+.loading-screen--simple {
+  gap: 16px;
+}
+
 .loading-screen-spinner {
   width: 40px;
   height: 40px;
@@ -31,4 +36,107 @@
   to {
     transform: rotate(360deg);
   }
+}
+
+/* Вариант «сканирование» */
+.loading-screen--scan {
+  justify-content: center;
+  gap: 24px;
+  padding-bottom: 48px;
+}
+
+.loading-scan {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.loading-scan-oval {
+  position: relative;
+  width: 160px;
+  height: 220px;
+  border: 2px solid rgba(93, 175, 46, 0.4);
+  border-radius: 50% 50% 50% 50% / 45% 45% 55% 55%;
+  overflow: hidden;
+  background: rgba(93, 175, 46, 0.04);
+}
+
+.loading-scan-oval-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center top;
+  display: block;
+}
+
+.loading-scan-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, #5DAF2E, transparent);
+  box-shadow: 0 0 12px rgba(93, 175, 46, 0.5);
+  animation: loading-scan-line 2s ease-in-out infinite;
+}
+
+@keyframes loading-scan-line {
+  0%, 100% {
+    top: 10%;
+    opacity: 0.8;
+  }
+  50% {
+    top: 90%;
+    opacity: 1;
+  }
+}
+
+.loading-scan-dots {
+  position: absolute;
+  inset: -4px;
+  pointer-events: none;
+}
+
+.loading-scan-dot {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #5DAF2E;
+  opacity: 0.5;
+  animation: loading-scan-dot-blink 1.5s ease-in-out infinite;
+  animation-delay: calc(var(--i) * 0.12s);
+  left: 50%;
+  top: 50%;
+  margin-left: -3px;
+  margin-top: -3px;
+  transform: rotate(calc(var(--i) * 30deg)) translateY(-115px);
+}
+
+@keyframes loading-scan-dot-blink {
+  0%, 100% {
+    opacity: 0.25;
+    transform: rotate(calc(var(--i) * 30deg)) translateY(-115px) scale(0.85);
+  }
+  50% {
+    opacity: 0.85;
+    transform: rotate(calc(var(--i) * 30deg)) translateY(-115px) scale(1.15);
+  }
+}
+
+.loading-progress-wrap {
+  width: 120px;
+  height: 3px;
+  background: rgba(93, 175, 46, 0.2);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.loading-progress-bar {
+  height: 100%;
+  background: #5DAF2E;
+  border-radius: 999px;
+  transition: width 0.3s ease;
 }
