@@ -31,3 +31,26 @@ export async function postAuthLogin(body = { id: null, utm: null }) {
 export function getTokenFromLoginResponse(data) {
   return data?.token ?? data?.accessToken ?? data?.access_token ?? null
 }
+
+/**
+ * PUT /user/update — обновление профиля пользователя.
+ * @param {string} token - JWT из auth/login
+ * @param {{ age: number, height: number, weight: number, gender: number, smokeStatus: number, goals: string[] }} body
+ */
+export async function putUserUpdate(token, body) {
+  const url = `${BASE_URL.replace(/\/$/, '')}/user/update`
+  const res = await fetch(url, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify(body),
+  })
+  if (!res.ok) {
+    const errText = await res.text()
+    throw new Error(`user/update failed: ${res.status} ${errText}`)
+  }
+  const data = await res.json().catch(() => ({}))
+  return data
+}

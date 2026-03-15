@@ -1,6 +1,8 @@
 import { useState, useMemo, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useUserData } from '../contexts/UserDataContext.jsx'
+import { useAuth } from '../contexts/AuthContext.jsx'
+import { putUserUpdate } from '../api/client.js'
 import logger from '../utils/logger.js'
 import Page from '../layout/Page.jsx'
 import Header from '../layout/Header.jsx'
@@ -61,6 +63,7 @@ const SMOKING_OPTIONS = [
 
 function AlgorithmSettings() {
   const navigate = useNavigate()
+  const { token } = useAuth()
   const { userData, updateUserData } = useUserData()
   const [gender, setGender] = useState('')
   const [birthDate, setBirthDate] = useState('')
@@ -227,22 +230,36 @@ function AlgorithmSettings() {
     weight && 
     smokingStatus
 
-  const handleNext = () => {
-    if (isFormValid) {
-      // Сохраняем данные пользователя в контекст
-      const userDataToSave = {
-        gender: gender === 'male' ? 'MALE' : 'FEMALE',
-        age: age,
-        weight: parseFloat(weight),
-        height: parseFloat(height),
-        smokingStatus: smokingStatus === 'yes' ? 'SMOKER' : 'NON_SMOKER',
-        birthDate,
-      }
+  const handleNext = async () => {
+    if (!isFormValid) return
 
-      logger.user('Данные пользователя сохранены', userDataToSave)
-      updateUserData(userDataToSave)
-      navigate('/allergies')
+    const userDataToSave = {
+      gender: gender === 'male' ? 'MALE' : 'FEMALE',
+      age: age,
+      weight: parseFloat(weight),
+      height: parseFloat(height),
+      smokingStatus: smokingStatus === 'yes' ? 'SMOKER' : 'NON_SMOKER',
+      birthDate,
     }
+
+    logger.user('Данные пользователя сохранены', userDataToSave)
+    updateUserData(userDataToSave)
+
+    const payload = {
+      age: userDataToSave.age ?? 0,
+      height: userDataToSave.height ?? 0,
+      weight: userDataToSave.weight ?? 0,
+      gender: userDataToSave.gender === 'MALE' ? 0 : userDataToSave.gender === 'FEMALE' ? 1 : 0,
+      smokeStatus: userDataToSave.smokingStatus === 'SMOKER' ? 1 : 0,
+      goals: Array.isArray(userData?.goals) ? userData.goals : [],
+    }
+
+    try {
+      await putUserUpdate(token, payload)
+    } catch (err) {
+      logger.warn('Не удалось отправить данные на сервер', err)
+    }
+    navigate('/allergies')
   }
 
   return (
