@@ -1,95 +1,53 @@
 import { useState, useEffect, useRef } from 'react'
 import './LoadingScreen.css'
 
-const SCAN_PHRASES = [
-  'Сканируем лицо',
-  'Анализируем данные',
-  'Формируем показатели',
-  'Подбираем рекомендации',
-]
-
 /**
- * Полноэкранный экран загрузки.
+ * Простой полноэкранный экран загрузки:
+ * тёмный фон, кружок-спиннер и тонкая полоска прогресса.
+ *
  * @param {Object} props
- * @param {string} [props.text] - Текст (для простого варианта)
- * @param {string} [props.variant] - "scan" (овал, сканирование) или "simple" (кружок + текст)
- * @param {function} [props.onComplete] - Вызывается, когда полоса прогресса заполнена (variant="scan")
+ * @param {string} [props.text] Текст под индикатором
+ * @param {() => void} [props.onComplete] Вызывается один раз, когда прогресс достигнет 100%
  */
-function LoadingScreen({ text = 'Загрузка...', variant = 'scan', onComplete }) {
-  const [phraseIndex, setPhraseIndex] = useState(0)
+function LoadingScreen({ text = 'Загрузка...', onComplete }) {
   const [progress, setProgress] = useState(0)
-  const [faceIndex, setFaceIndex] = useState(0)
   const completedRef = useRef(false)
 
   useEffect(() => {
-    if (variant !== 'scan') return
-    const phraseInterval = setInterval(() => {
-      setPhraseIndex((i) => (i + 1) % SCAN_PHRASES.length)
-    }, 2000)
-    return () => clearInterval(phraseInterval)
-  }, [variant])
+    const interval = setInterval(() => {
+      setProgress((prev) => {
+        if (prev >= 100) return 100
+        // Быстрее заполняем прогресс (примерно 1.5–2 секунды)
+        const next = prev + Math.random() * 14 + 8
+        return next > 100 ? 100 : next
+      })
+    }, 200)
+
+    return () => clearInterval(interval)
+  }, [])
 
   useEffect(() => {
-    if (variant !== 'scan') return
-    const progressInterval = setInterval(() => {
-      setProgress((p) => (p >= 100 ? 100 : Math.min(100, p + Math.random() * 6 + 3)))
-    }, 350)
-    return () => clearInterval(progressInterval)
-  }, [variant])
-
-  useEffect(() => {
-    if (variant !== 'scan') return
-    const facesInterval = setInterval(() => {
-      setFaceIndex((i) => (i + 1) % 2)
-    }, 1500)
-    return () => clearInterval(facesInterval)
-  }, [variant])
-
-  useEffect(() => {
-    if (variant !== 'scan' || progress < 100 || !onComplete || completedRef.current) return
+    if (!onComplete || completedRef.current || progress < 100) return
     completedRef.current = true
-    const t = setTimeout(onComplete, 350)
+    const t = setTimeout(onComplete, 300)
     return () => clearTimeout(t)
-  }, [variant, progress, onComplete])
-
-  if (variant === 'simple') {
-    return (
-      <div className="loading-screen loading-screen--simple" role="status" aria-live="polite" aria-label={text}>
-        <div className="loading-screen-spinner" aria-hidden="true" />
-        {text && <p className="loading-screen-text">{text}</p>}
-      </div>
-    )
-  }
+  }, [progress, onComplete])
 
   return (
-    <div className="loading-screen loading-screen--scan" role="status" aria-live="polite" aria-label={SCAN_PHRASES[phraseIndex]}>
-      <div className="loading-scan">
-        <div className="loading-scan-oval" aria-hidden="true">
-          <div className="loading-scan-faces">
-            <img
-              src="/woomen1.png"
-              alt=""
-              className={`loading-scan-oval-img ${faceIndex === 0 ? 'is-active' : ''}`}
-            />
-            <img
-              src="/men.png"
-              alt=""
-              className={`loading-scan-oval-img ${faceIndex === 1 ? 'is-active' : ''}`}
-            />
-          </div>
-          <div className="loading-scan-line" />
-          <div className="loading-scan-dots">
-            {[...Array(12)].map((_, i) => (
-              <span key={i} className="loading-scan-dot" style={{ '--i': i }} />
-            ))}
-          </div>
+    <div className="loading-screen" role="status" aria-live="polite" aria-label={text}>
+      <div className="loading-screen-inner">
+        <div className="loading-screen-spinner" aria-hidden="true" />
+        <div className="loading-screen-progress">
+          <div
+            className="loading-screen-progress-bar"
+            style={{ width: `${progress}%` }}
+          />
         </div>
-        <div className="loading-progress-wrap">
-          <div className="loading-progress-bar" style={{ width: `${progress}%` }} />
-        </div>
+        {text && <p className="loading-screen-text">{text}</p>}
       </div>
     </div>
   )
 }
 
 export default LoadingScreen
+
