@@ -49,18 +49,22 @@ function App() {
 }
 
 function AuthInit() {
-  const { token, login } = useAuth()
+  const { token, userId, login } = useAuth()
   const loginSentRef = useRef(false)
   useEffect(() => {
-    if (token) return
     if (loginSentRef.current) return
     loginSentRef.current = true
-    if (import.meta.env.DEV) console.log('[auth] Отправляем POST /auth/login (один раз)')
-    login({ id: null, utm: null }).catch((err) => {
+    if (import.meta.env.DEV) {
+      console.log('[auth] Отправляем POST /auth/login (один раз)', {
+        hasToken: !!token,
+        userId,
+      })
+    }
+    login({ id: userId ?? null, utm: null }).catch((err) => {
       loginSentRef.current = false
       console.warn('Auth login failed', err)
     })
-  }, [token, login])
+  }, [token, userId, login])
   return null
 }
 

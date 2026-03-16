@@ -1,14 +1,23 @@
 import { createContext, useContext, useState, useCallback } from 'react'
 import { postAuthLogin, getTokenFromLoginResponse } from '../api/client.js'
 
-const STORAGE_KEY = 'x5_auth_token'
+const TOKEN_STORAGE_KEY = 'x5_auth_token'
+const USER_ID_STORAGE_KEY = 'x5_user_id'
 
 const AuthContext = createContext(null)
 
 export function AuthProvider({ children }) {
   const [token, setTokenState] = useState(() => {
     try {
-      return localStorage.getItem(STORAGE_KEY)
+      return localStorage.getItem(TOKEN_STORAGE_KEY)
+    } catch {
+      return null
+    }
+  })
+
+  const [userId, setUserIdState] = useState(() => {
+    try {
+      return localStorage.getItem(USER_ID_STORAGE_KEY)
     } catch {
       return null
     }
@@ -17,20 +26,36 @@ export function AuthProvider({ children }) {
   const setToken = useCallback((value) => {
     setTokenState(value)
     try {
-      if (value) localStorage.setItem(STORAGE_KEY, value)
-      else localStorage.removeItem(STORAGE_KEY)
+      if (value) localStorage.setItem(TOKEN_STORAGE_KEY, value)
+      else localStorage.removeItem(TOKEN_STORAGE_KEY)
     } catch {}
   }, [])
 
-  const login = useCallback(async (body = { id: null, utm: null }) => {
-    const data = await postAuthLogin(body)
-    const jwt = getTokenFromLoginResponse(data)
-    if (jwt) setToken(jwt)
-    return data
-  }, [setToken])
+  const setUserId = useCallback((value) => {
+    setUserIdState(value)
+    try {
+      if (value) localStorage.setItem(USER_ID_STORAGE_KEY, value)
+      else localStorage.removeItem(USER_ID_STORAGE_KEY)
+    } catch {}
+  }, [])
+
+  const login = useCallback(
+    async (body) => {
+      const finalBody = body ?? { id: userId ?? null, utm: null }
+      const data = await postAuthLogin(finalBody)
+      const jwt = getTokenFromLoginResponse(data)
+      if (jwt) setToken(jwt)
+
+      const returnedUserId = data?.user?.id
+      if (returnedUserId) setUserId(returnedUserId)
+
+      return data
+    },
+    [setToken, setUserId, userId],
+  )
 
   return (
-    <AuthContext.Provider value={{ token, setToken, login }}>
+    <AuthContext.Provider value={{ token, userId, setToken, setUserId, login }}>
       {children}
     </AuthContext.Provider>
   )
