@@ -18,6 +18,7 @@ const SCAN_PHRASES = [
 function LoadingScreen({ text = 'Загрузка...', variant = 'scan', onComplete }) {
   const [phraseIndex, setPhraseIndex] = useState(0)
   const [progress, setProgress] = useState(0)
+  const [faceIndex, setFaceIndex] = useState(0)
   const completedRef = useRef(false)
 
   useEffect(() => {
@@ -34,6 +35,14 @@ function LoadingScreen({ text = 'Загрузка...', variant = 'scan', onCompl
       setProgress((p) => (p >= 100 ? 100 : Math.min(100, p + Math.random() * 6 + 3)))
     }, 350)
     return () => clearInterval(progressInterval)
+  }, [variant])
+
+  useEffect(() => {
+    if (variant !== 'scan') return
+    const facesInterval = setInterval(() => {
+      setFaceIndex((i) => (i + 1) % 2)
+    }, 1500)
+    return () => clearInterval(facesInterval)
   }, [variant])
 
   useEffect(() => {
@@ -56,7 +65,18 @@ function LoadingScreen({ text = 'Загрузка...', variant = 'scan', onCompl
     <div className="loading-screen loading-screen--scan" role="status" aria-live="polite" aria-label={SCAN_PHRASES[phraseIndex]}>
       <div className="loading-scan">
         <div className="loading-scan-oval" aria-hidden="true">
-          <img src="/woomen1.png" alt="" className="loading-scan-oval-img" />
+          <div className="loading-scan-faces">
+            <img
+              src="/woomen1.png"
+              alt=""
+              className={`loading-scan-oval-img ${faceIndex === 0 ? 'is-active' : ''}`}
+            />
+            <img
+              src="/men.png"
+              alt=""
+              className={`loading-scan-oval-img ${faceIndex === 1 ? 'is-active' : ''}`}
+            />
+          </div>
           <div className="loading-scan-line" />
           <div className="loading-scan-dots">
             {[...Array(12)].map((_, i) => (
