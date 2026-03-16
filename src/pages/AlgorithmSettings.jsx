@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useUserData } from '../contexts/UserDataContext.jsx'
 import { useAuth } from '../contexts/AuthContext.jsx'
@@ -8,7 +8,6 @@ import Page from '../layout/Page.jsx'
 import Header from '../layout/Header.jsx'
 import ProgressBar from '../ui/ProgressBar.jsx'
 import RadioCard from '../ui/RadioCard.jsx'
-import DateInput from '../ui/DateInput.jsx'
 import NumberInput from '../ui/NumberInput.jsx'
 import PrimaryButton from '../components/PrimaryButton.jsx'
 import './AlgorithmSettings.css'
@@ -66,8 +65,7 @@ function AlgorithmSettings() {
   const { token } = useAuth()
   const { userData, updateUserData } = useUserData()
   const [gender, setGender] = useState('')
-  const [birthDate, setBirthDate] = useState('')
-  const [dateError, setDateError] = useState('')
+  const [age, setAge] = useState('')
   const [height, setHeight] = useState('')
   const [weight, setWeight] = useState('')
   const [smokingStatus, setSmokingStatus] = useState('')
@@ -77,8 +75,8 @@ function AlgorithmSettings() {
     if (userData?.gender) {
       setGender(userData.gender === 'MALE' ? 'male' : userData.gender === 'FEMALE' ? 'female' : '')
     }
-    if (userData?.birthDate) {
-      setBirthDate(userData.birthDate)
+    if (userData?.age != null) {
+      setAge(String(userData.age))
     }
     if (userData?.height != null) {
       setHeight(String(userData.height))
@@ -97,135 +95,28 @@ function AlgorithmSettings() {
     }
   }, [userData])
 
-  // Валидация даты
-  const validateDate = (dateString) => {
-    if (!dateString || dateString.length !== 10) {
-      return { isValid: false, error: '' }
-    }
+  const parsedAge = Number(age)
+  const isValidAge = Number.isFinite(parsedAge) && parsedAge > 0 && parsedAge < 120
 
-    const parts = dateString.split('.')
-    if (parts.length !== 3) {
-      return { isValid: false, error: 'Неверный формат даты' }
-    }
+  const getAgeWord = (value) => {
+    const lastDigit = value % 10
+    const lastTwoDigits = value % 100
 
-    const day = parseInt(parts[0], 10)
-    const month = parseInt(parts[1], 10)
-    const year = parseInt(parts[2], 10)
-
-    // Проверка диапазонов
-    if (day < 1 || day > 31 || month < 1 || month > 12 || year < 1900 || year > new Date().getFullYear()) {
-      return { isValid: false, error: 'Неверная дата' }
-    }
-
-    // Проверка корректности даты
-    const date = new Date(year, month - 1, day)
-    if (
-      date.getDate() !== day ||
-      date.getMonth() !== month - 1 ||
-      date.getFullYear() !== year
-    ) {
-      return { isValid: false, error: 'Неверная дата' }
-    }
-
-    // Проверка что дата не в будущем
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-    if (date > today) {
-      return { isValid: false, error: 'Дата не может быть в будущем' }
-    }
-
-    // Проверка разумного возраста (например, не старше 150 лет)
-    const age = today.getFullYear() - year
-    if (age > 150) {
-      return { isValid: false, error: 'Неверная дата рождения' }
-    }
-
-    return { isValid: true, error: '' }
-  }
-
-  // Расчет возраста
-  const calculateAge = (dateString) => {
-    if (!dateString || dateString.length !== 10) return null
-
-    const parts = dateString.split('.')
-    if (parts.length !== 3) return null
-
-    const day = parseInt(parts[0], 10)
-    const month = parseInt(parts[1], 10)
-    const year = parseInt(parts[2], 10)
-
-    const birthDate = new Date(year, month - 1, day)
-    const today = new Date()
-
-    let age = today.getFullYear() - birthDate.getFullYear()
-    const monthDiff = today.getMonth() - birthDate.getMonth()
-
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-      age--
-    }
-
-    return age
-  }
-
-  // Функция для правильного склонения слова "год"
-  const getAgeWord = (age) => {
-    const lastDigit = age % 10
-    const lastTwoDigits = age % 100
-
-    // Исключение для 11, 12, 13, 14
-    if (lastTwoDigits >= 11 && lastTwoDigits <= 14) {
-      return 'лет'
-    }
-
-    // 1, 21, 31, 41... → "год"
-    if (lastDigit === 1) {
-      return 'год'
-    }
-
-    // 2, 3, 4, 22, 23, 24, 32, 33, 34... → "года"
-    if (lastDigit >= 2 && lastDigit <= 4) {
-      return 'года'
-    }
-
-    // 5, 6, 7, 8, 9, 10, 15, 16, 17, 18, 19, 20, 25... → "лет"
+    if (lastTwoDigits >= 11 && lastTwoDigits <= 14) return 'лет'
+    if (lastDigit === 1) return 'год'
+    if (lastDigit >= 2 && lastDigit <= 4) return 'года'
     return 'лет'
   }
-
-  const handleDateChange = (value) => {
-    setBirthDate(value)
-    if (value.length === 10) {
-      const validation = validateDate(value)
-      setDateError(validation.error)
-    } else {
-      setDateError('')
-    }
-  }
-
-  // Используем useMemo для оптимизации валидации
-  const dateValidation = useMemo(() => {
-    if (birthDate.length !== 10) {
-      return { isValid: false, age: null }
-    }
-    const validation = validateDate(birthDate)
-    if (validation.isValid) {
-      const age = calculateAge(birthDate)
-      return { isValid: true, age }
-    }
-    return { isValid: false, age: null }
-  }, [birthDate])
-
-  const isValidDate = dateValidation.isValid && !dateError
-  const age = dateValidation.age
   
   // Флаги этапов для поэтапного появления блоков
   const hasGenderStepDone = !!gender
-  const hasBirthDateStepDone = isValidDate && age !== null
-  const hasPhysicalStepDone = !!height && !!weight
+  const hasAgeStepDone = isValidAge
+  const hasPhysicalStepDone = hasAgeStepDone && !!height && !!weight
 
   // Валидация всех обязательных полей
   const isFormValid = 
     gender && 
-    isValidDate && 
+    isValidAge && 
     height && 
     weight && 
     smokingStatus
@@ -235,11 +126,10 @@ function AlgorithmSettings() {
 
     const userDataToSave = {
       gender: gender === 'male' ? 'MALE' : 'FEMALE',
-      age: age,
+      age: parsedAge,
       weight: parseFloat(weight),
       height: parseFloat(height),
       smokingStatus: smokingStatus === 'yes' ? 'SMOKER' : 'NON_SMOKER',
-      birthDate,
     }
 
     logger.user('Данные пользователя сохранены', userDataToSave)
@@ -298,37 +188,42 @@ function AlgorithmSettings() {
           )}
         </div>
 
-        {/* Секция даты рождения – появляется после выбора пола */}
+        {/* Секция возраста – появляется после выбора пола */}
         {hasGenderStepDone && (
           <div className="settings-section settings-section--step">
-            <h2 className="settings-section-title">Дата рождения</h2>
+            <h2 className="settings-section-title">Возраст</h2>
             <p className="settings-section-subtitle">
               Для расчёта возрастных рисков
             </p>
-            
-            <DateInput
-              value={birthDate}
-              onChange={handleDateChange}
-              placeholder="ДД.ММ.ГГГГ"
+            <NumberInput
+              value={age}
+              onChange={setAge}
+              placeholder="Возраст"
+              unit="лет"
+              maxLength={3}
             />
-            {dateError && (
-              <p className="date-error-text">{dateError}</p>
-            )}
-            {isValidDate && age !== null && (
+            {isValidAge && (
               <div className="settings-note">
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M13.3333 4L6 11.3333L2.66667 8" stroke="#5DAF2E" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+                  <path
+                    d="M13.3333 4L6 11.3333L2.66667 8"
+                    stroke="#5DAF2E"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    fill="none"
+                  />
                 </svg>
                 <span>
-                  Возраст: {age} {getAgeWord(age)}
+                  {parsedAge} {getAgeWord(parsedAge)} — учтём возрастные нормы
                 </span>
               </div>
             )}
           </div>
         )}
 
-        {/* Секция физических параметров – появляется после валидной даты рождения */}
-        {hasBirthDateStepDone && (
+        {/* Секция физических параметров – появляется после ввода возраста */}
+        {hasAgeStepDone && (
           <div className="settings-section settings-section--step">
             <h2 className="settings-section-title">Физические параметры</h2>
             <p className="settings-section-subtitle">

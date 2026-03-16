@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { AuthProvider, useAuth } from './contexts/AuthContext.jsx'
-import { UserDataProvider } from './contexts/UserDataContext.jsx'
+import { UserDataProvider, useUserData } from './contexts/UserDataContext.jsx'
 import MobileAppShell from './layout/MobileAppShell.jsx'
 import LoadingScreen from './components/LoadingScreen.jsx'
 import Welcome from './pages/Welcome.jsx'
@@ -25,8 +25,8 @@ function App() {
 
   return (
     <AuthProvider>
-      <AuthInit />
       <UserDataProvider>
+        <AuthInit />
         <BrowserRouter>
         <Routes>
           <Route element={<MobileAppShell />}>
@@ -50,6 +50,7 @@ function App() {
 
 function AuthInit() {
   const { token, userId, login } = useAuth()
+  const { updateUserData } = useUserData()
   const loginSentRef = useRef(false)
   useEffect(() => {
     if (loginSentRef.current) return
@@ -60,11 +61,26 @@ function AuthInit() {
         userId,
       })
     }
-    login({ id: userId ?? null, utm: null }).catch((err) => {
-      loginSentRef.current = false
-      console.warn('Auth login failed', err)
-    })
-  }, [token, userId, login])
+    login({ id: userId ?? null, utm: null })
+      .then((data) => {
+        const profile = data?.user?.profile
+        if (profile) {
+          const mapped = {
+            gender: profile.gender === 0 ? 'MALE' : profile.gender === 1 ? 'FEMALE' : null,
+            age: profile.age ?? null,
+            height: profile.height ?? null,
+            weight: profile.weight ?? null,
+            smokingStatus: profile.smokeStatus === 1 ? 'SMOKER' : profile.smokeStatus === 0 ? 'NON_SMOKER' : null,
+            goals: Array.isArray(profile.goals) ? profile.goals : [],
+          }
+          updateUserData(mapped)
+        }
+      })
+      .catch((err) => {
+        loginSentRef.current = false
+        console.warn('Auth login failed', err)
+      })
+  }, [token, userId, login, updateUserData])
   return null
 }
 
