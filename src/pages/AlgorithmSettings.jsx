@@ -66,6 +66,7 @@ function AlgorithmSettings() {
   const { userData, updateUserData } = useUserData()
   const [gender, setGender] = useState('')
   const [age, setAge] = useState('')
+  const [ageError, setAgeError] = useState('')
   const [height, setHeight] = useState('')
   const [weight, setWeight] = useState('')
   const [smokingStatus, setSmokingStatus] = useState('')
@@ -96,7 +97,7 @@ function AlgorithmSettings() {
   }, [userData])
 
   const parsedAge = Number(age)
-  const isValidAge = Number.isFinite(parsedAge) && parsedAge > 0 && parsedAge < 120
+  const isValidAge = Number.isFinite(parsedAge) && parsedAge >= 18 && parsedAge <= 120
 
   const getAgeWord = (value) => {
     const lastDigit = value % 10
@@ -122,7 +123,14 @@ function AlgorithmSettings() {
     smokingStatus
 
   const handleNext = async () => {
-    if (!isFormValid) return
+    if (!isFormValid) {
+      if (!age) {
+        setAgeError('Укажите возраст')
+      } else if (!isValidAge) {
+        setAgeError('Возраст должен быть от 18 до 120 лет')
+      }
+      return
+    }
 
     const userDataToSave = {
       gender: gender === 'male' ? 'MALE' : 'FEMALE',
@@ -197,12 +205,27 @@ function AlgorithmSettings() {
             </p>
             <NumberInput
               value={age}
-              onChange={setAge}
+              onChange={(value) => {
+                setAge(value)
+                if (!value) {
+                  setAgeError('Укажите возраст')
+                  return
+                }
+                const numeric = Number(value)
+                if (!Number.isFinite(numeric) || numeric < 18 || numeric > 120) {
+                  setAgeError('Возраст должен быть от 18 до 120 лет')
+                } else {
+                  setAgeError('')
+                }
+              }}
               placeholder="Возраст"
               unit="лет"
               maxLength={3}
             />
-            {isValidAge && (
+            {ageError && (
+              <p className="date-error-text">{ageError}</p>
+            )}
+            {isValidAge && !ageError && (
               <div className="settings-note">
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path
