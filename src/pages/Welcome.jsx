@@ -68,6 +68,7 @@ function Welcome() {
   const navigate = useNavigate()
   const { updateUserData } = useUserData()
   const [selectedGoals, setSelectedGoals] = useState([])
+  const [acceptTerms, setAcceptTerms] = useState(false)
 
   const handleGoalToggle = (value) => {
     setSelectedGoals((prev) => {
@@ -94,7 +95,8 @@ function Welcome() {
   }
 
   const selectedCount = selectedGoals.length
-  const canProceed = selectedCount >= 1 && selectedCount <= 2
+  const hasValidGoals = selectedCount >= 1 && selectedCount <= 2
+  const canProceed = hasValidGoals && acceptTerms
 
   return (
     <Page className="welcome-page">
@@ -122,7 +124,21 @@ function Welcome() {
       </div>
 
       <div className="welcome-footer">
-        {canProceed && (
+        <label className="welcome-consent">
+          <input
+            type="checkbox"
+            className="welcome-consent-checkbox"
+            checked={acceptTerms}
+            onChange={(e) => setAcceptTerms(e.target.checked)}
+          />
+          <span className="welcome-consent-text">
+            Я соглашаюсь с{' '}
+            <span className="welcome-consent-link">Политикой конфиденциальности</span> и{' '}
+            <span className="welcome-consent-link">Условиями использования</span>
+          </span>
+        </label>
+
+        {hasValidGoals && (
           <div className="welcome-success-message">
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M16.6667 5L7.50004 14.1667L3.33337 10" stroke="#5DAF2E" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>

@@ -50,6 +50,31 @@
   gap: 12px;
 }
 
+.welcome-consent {
+  width: 100%;
+  max-width: 343px;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--color-fg-secondary);
+}
+
+.welcome-consent-checkbox {
+  margin-top: 2px;
+  width: 16px;
+  height: 16px;
+}
+
+.welcome-consent-text {
+  flex: 1;
+}
+
+.welcome-consent-link {
+  color: #007aff;
+}
+
 .welcome-success-message {
   display: flex;
   align-items: center;
