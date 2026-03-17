@@ -133,6 +133,26 @@
   color: #bbbbbb;
 }
 
+.allergies-empty-add {
+  margin-top: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(93, 175, 46, 0.9);
+  background: #ffffff;
+  color: #5DAF2E;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.allergies-empty-add:active {
+  transform: scale(0.98);
+}
+
 .allergies-tag {
   padding: 6px 12px;
   border-radius: 10px;

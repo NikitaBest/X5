@@ -40,6 +40,17 @@ function Allergies() {
     })
   }
 
+  const handleAddCustomTag = (rawValue) => {
+    const value = rawValue.trim()
+    if (!value) return
+    setSelectedTags((prev) => {
+      const next = new Set(prev)
+      next.add(value)
+      return next
+    })
+    setQuery('')
+  }
+
   const filteredTags = ALLERGEN_TAGS.filter((tag) =>
     tag.toLowerCase().includes(query.toLowerCase().trim()),
   )
@@ -116,6 +127,13 @@ function Allergies() {
                 Ничего не найдено по запросу “{query.trim()}”
               </div>
               <div className="allergies-empty-subtitle">Попробуйте другой поиск</div>
+              <button
+                type="button"
+                className="allergies-empty-add"
+                onClick={() => handleAddCustomTag(query)}
+              >
+                + Добавить “{query.trim()}”
+              </button>
             </div>
           ) : (
             filteredTags.map((tag) => {
