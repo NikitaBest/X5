@@ -69,6 +69,8 @@ function AlgorithmSettings() {
   const [ageError, setAgeError] = useState('')
   const [height, setHeight] = useState('')
   const [weight, setWeight] = useState('')
+  const [heightError, setHeightError] = useState('')
+  const [weightError, setWeightError] = useState('')
   const [smokingStatus, setSmokingStatus] = useState('')
 
   // При возврате на экран заполняем поля из сохранённых данных пользователя
@@ -118,6 +120,8 @@ function AlgorithmSettings() {
   const isFormValid = 
     gender && 
     isValidAge && 
+    !heightError &&
+    !weightError &&
     height && 
     weight && 
     smokingStatus
@@ -128,6 +132,12 @@ function AlgorithmSettings() {
         setAgeError('Укажите возраст')
       } else if (!isValidAge) {
         setAgeError('Возраст должен быть от 18 до 120 лет')
+      }
+      if (!height) {
+        setHeightError('Укажите рост')
+      }
+      if (!weight) {
+        setWeightError('Укажите вес')
       }
       return
     }
@@ -256,21 +266,51 @@ function AlgorithmSettings() {
             <div className="physical-params-inputs">
               <NumberInput
                 value={height}
-                onChange={setHeight}
+                onChange={(value) => {
+                  setHeight(value)
+                  if (!value) {
+                    setHeightError('Укажите рост')
+                    return
+                  }
+                  const numeric = Number(value)
+                  if (!Number.isFinite(numeric) || numeric < 130 || numeric > 230) {
+                    setHeightError('Рост должен быть от 130 до 230 см')
+                  } else {
+                    setHeightError('')
+                  }
+                }}
                 placeholder="Рост"
                 unit="CM"
                 maxLength={3}
               />
               <NumberInput
                 value={weight}
-                onChange={setWeight}
+                onChange={(value) => {
+                  setWeight(value)
+                  if (!value) {
+                    setWeightError('Укажите вес')
+                    return
+                  }
+                  const numeric = Number(value)
+                  if (!Number.isFinite(numeric) || numeric < 40 || numeric > 200) {
+                    setWeightError('Вес должен быть от 40 до 200 кг')
+                  } else {
+                    setWeightError('')
+                  }
+                }}
                 placeholder="Вес"
                 unit="KG"
                 maxLength={3}
               />
             </div>
 
-            {height && weight && (
+            {(heightError || weightError) && (
+              <div className="date-error-text">
+                {heightError || weightError}
+              </div>
+            )}
+
+            {height && weight && !heightError && !weightError && (
               <div className="settings-note">
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path d="M13.3333 4L6 11.3333L2.66667 8" stroke="#5DAF2E" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
