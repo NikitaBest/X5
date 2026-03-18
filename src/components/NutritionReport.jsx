@@ -40,6 +40,9 @@ const MOCK_REPORT = {
  */
 const NutritionReport = forwardRef(function NutritionReport({ report = MOCK_REPORT /*, isPublic = false */ }, ref) {
   const { initials, name, exclusions, profile, goals, caloriesByDay, avgCalories, bju } = report
+  const maxDayCalories = Math.max(1, ...caloriesByDay.map((d) => d.total || 0))
+  const minBarHeight = 56
+  const maxBarHeight = 110
 
   return (
     <div ref={ref} className="nutrition-report">
@@ -96,12 +99,21 @@ const NutritionReport = forwardRef(function NutritionReport({ report = MOCK_REPO
         <div className="nutrition-report-bars">
           {caloriesByDay.map((day) => (
             <div key={day.label} className="nutrition-report-bar">
-              <div className="nutrition-report-bar-stack">
-                <div className="nutrition-report-bar-segment nutrition-report-bar-segment--protein" />
-                <div className="nutrition-report-bar-segment nutrition-report-bar-segment--fat" />
-                <div className="nutrition-report-bar-segment nutrition-report-bar-segment--carb" />
-              </div>
               <div className="nutrition-report-bar-total">{day.total}</div>
+              <div className="nutrition-report-bar-chart" style={{ height: `${maxBarHeight}px` }}>
+                <div
+                  className="nutrition-report-bar-stack"
+                  style={{
+                    height: `${Math.round(
+                      minBarHeight + (Math.max(0, day.total || 0) / maxDayCalories) * (maxBarHeight - minBarHeight),
+                    )}px`,
+                  }}
+                >
+                  <div className="nutrition-report-bar-segment nutrition-report-bar-segment--protein" />
+                  <div className="nutrition-report-bar-segment nutrition-report-bar-segment--fat" />
+                  <div className="nutrition-report-bar-segment nutrition-report-bar-segment--carb" />
+                </div>
+              </div>
               <div className="nutrition-report-bar-label">{day.label}</div>
             </div>
           ))}

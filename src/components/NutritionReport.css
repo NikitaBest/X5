@@ -125,6 +125,7 @@
   margin: 0 0 14px;
   font-size: 14px;
   font-weight: 600;
+  text-align: left;
 }
 
 .nutrition-report-bars {
@@ -142,10 +143,17 @@
   gap: 4px;
 }
 
+.nutrition-report-bar-chart {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+}
+
 .nutrition-report-bar-stack {
   width: 28px;
   height: 96px;
-  border-radius: 10px;
+  border-radius: 3px;
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -156,15 +164,15 @@
 }
 
 .nutrition-report-bar-segment--protein {
-  background: #00b894;
+  background: #36b868;
 }
 
 .nutrition-report-bar-segment--fat {
-  background: #ffb84a;
+  background: #fabb0c;
 }
 
 .nutrition-report-bar-segment--carb {
-  background: #00a0ff;
+  background: #07c3dc;
 }
 
 .nutrition-report-bar-total {
@@ -194,21 +202,22 @@
 }
 
 .dot--protein {
-  background: #00b894;
+  background: #36b868;
 }
 
 .dot--fat {
-  background: #ffb84a;
+  background: #fabb0c;
 }
 
 .dot--carb {
-  background: #00a0ff;
+  background: #07c3dc;
 }
 
 .nutrition-report-legend-note {
   margin: 4px 0 0;
   font-size: 10px;
   color: #999999;
+  text-align: left;
 }
 
 .nutrition-report-bottom {
