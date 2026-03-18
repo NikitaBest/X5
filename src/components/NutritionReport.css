@@ -29,15 +29,15 @@
   font-size: 20px;
 }
 
-.nutrition-report-title {
+.nutrition-report .nutrition-report-title {
   margin: 0 0 8px;
-  font-size: 22px;
+  font-size: clamp(16px, 5.2vw, 22px);
   font-weight: 700;
 }
 
-.nutrition-report-subtitle {
+.nutrition-report .nutrition-report-subtitle {
   margin: 0;
-  font-size: 13px;
+  font-size: clamp(12px, 3.2vw, 13px);
   line-height: 1.5;
   color: #555555;
 }
@@ -377,14 +377,19 @@
 
   .nutrition-report-top-cards {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
   }
 
   .nutrition-report-top-cards .nutrition-report-card {
     text-align: left;
+    padding: 12px 12px;
+    border-radius: 12px;
   }
 
   .nutrition-report-top-cards .nutrition-report-card-title {
     text-align: left;
+    font-size: 12px;
+    margin-bottom: 8px;
   }
 
   .nutrition-report-top-cards .nutrition-report-tags {
@@ -394,11 +399,15 @@
   .nutrition-report-top-cards .nutrition-report-profile-grid {
     justify-items: start;
     text-align: left;
+    grid-template-columns: 1fr 1fr;
+    column-gap: 8px;
+    font-size: 11px;
   }
 
   .nutrition-report-top-cards .nutrition-report-goals {
     padding-left: 16px;
     text-align: left;
+    font-size: 11px;
   }
 
   .nutrition-report-top-cards .nutrition-report-card:nth-child(3) {
@@ -435,6 +444,7 @@
   .nutrition-report-bju-row {
     gap: 8px;
     margin-bottom: 6px;
+    flex-wrap: wrap;
   }
 
   .nutrition-report-bju-grams {
@@ -443,6 +453,67 @@
 
   .nutrition-report-bju-label {
     font-size: 10px;
+  }
+
+  .nutrition-report-calories {
+    padding: 16px 12px 14px;
+    border-radius: 16px;
+  }
+
+  .nutrition-report-bars {
+    gap: 6px;
+  }
+
+  .nutrition-report-bar-stack {
+    width: 24px;
+  }
+
+  .nutrition-report-bar-total,
+  .nutrition-report-bar-label {
+    font-size: 10px;
+  }
+
+  .nutrition-report-legend {
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 360px) {
+  .nutrition-report {
+    padding: 20px 12px 28px;
+  }
+
+  .nutrition-report-top-cards {
+    gap: 8px;
+  }
+
+  .nutrition-report-top-cards .nutrition-report-card {
+    padding: 10px 10px;
+  }
+
+  .nutrition-report-tag {
+    padding: 3px 8px;
+    border-radius: 8px;
+    font-size: 10px;
+  }
+
+  .nutrition-report-bar-stack {
+    width: 22px;
+  }
+
+  .nutrition-report-kcal-value {
+    font-size: 22px;
+  }
+
+  .nutrition-report-bju-grams {
+    font-size: 13px;
+  }
+
+  .nutrition-report-bju-label,
+  .nutrition-report-bju-caption {
+    font-size: 9px;
   }
 }
 
