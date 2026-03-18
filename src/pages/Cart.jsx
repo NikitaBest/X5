@@ -1,18 +1,71 @@
 import { useNavigate } from 'react-router-dom'
+import { useRef, useState } from 'react'
+import html2pdf from 'html2pdf.js'
 import Page from '../layout/Page.jsx'
 import Header from '../layout/Header.jsx'
+import NutritionReport from '../components/NutritionReport.jsx'
 import './Cart.css'
 
 function Cart() {
   const navigate = useNavigate()
+  const [copied, setCopied] = useState(false)
+  const reportRef = useRef(null)
+  const [isGenerating, setIsGenerating] = useState(false)
 
   const handleDownload = () => {
-    // TODO: интеграция скачивания рациона
+    if (!reportRef.current || isGenerating) return
+
+    const element = reportRef.current
+    setIsGenerating(true)
+
+    const opt = {
+      margin: [10, 10, 10, 10],
+      filename: 'nutrition-report.pdf',
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: {
+        scale: 2,
+        useCORS: true,
+      },
+      jsPDF: {
+        unit: 'mm',
+        format: 'a4',
+        orientation: 'portrait',
+      },
+    }
+
+    html2pdf()
+      .set(opt)
+      .from(element)
+      .save()
+      .finally(() => {
+        setIsGenerating(false)
+      })
   }
 
   const handleCopyLink = () => {
-    const url = window.location.origin + window.location.pathname.replace('/cart', '/nutrition')
-    navigator.clipboard?.writeText(url).catch(() => {})
+    const url = `${window.location.origin}/nutrition-report?public=1`
+
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(url)
+      } else {
+        const textarea = document.createElement('textarea')
+        textarea.value = url
+        textarea.style.position = 'fixed'
+        textarea.style.left = '-9999px'
+        document.body.appendChild(textarea)
+        textarea.focus()
+        textarea.select()
+        document.execCommand('copy')
+        document.body.removeChild(textarea)
+      }
+    } catch {
+      // если не удалось скопировать — просто выходим без ошибок в UI
+      return
+    }
+
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
   }
 
   return (
@@ -40,7 +93,15 @@ function Cart() {
             </span>
             Скопировать ссылку
           </button>
+          {copied && (
+            <p className="cart-copy-hint">Ссылка на рацион скопирована в буфер обмена</p>
+          )}
         </div>
+      </div>
+
+      {/* Скрытый блок с отчётом для генерации PDF */}
+      <div style={{ position: 'absolute', left: '-99999px', top: 0, height: 0, overflow: 'hidden' }}>
+        <NutritionReport ref={reportRef} />
       </div>
     </Page>
   )
