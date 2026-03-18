@@ -55,19 +55,21 @@ function Survey() {
 
       <div className="survey-cards">
         {QUESTIONS.map((q) => (
-          <div key={q.id} className="survey-card">
+          <div key={q.id} className={`survey-card${answers[q.id] ? ' is-answered' : ''}`}>
             <div className="survey-card-row">
-              <div className="survey-check" aria-hidden="true">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                  <path
-                    d="M20 6L9 17l-5-5"
-                    stroke="#5DAF2E"
-                    strokeWidth="2.6"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              </div>
+              {answers[q.id] ? (
+                <div className="survey-check" aria-hidden="true">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                    <path
+                      d="M20 6L9 17l-5-5"
+                      stroke="#5DAF2E"
+                      strokeWidth="2.6"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </div>
+              ) : null}
               <div className="survey-card-title">{q.title}</div>
             </div>
 
