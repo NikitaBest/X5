@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import { useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import html2pdf from 'html2pdf.js'
 import Page from '../layout/Page.jsx'
 import Header from '../layout/Header.jsx'
@@ -8,9 +9,19 @@ import './Cart.css'
 
 function Cart() {
   const navigate = useNavigate()
-  const [copied, setCopied] = useState(false)
   const reportRef = useRef(null)
   const [isGenerating, setIsGenerating] = useState(false)
+  const [toastMessage, setToastMessage] = useState('')
+  const toastTimerRef = useRef(null)
+
+  const showToast = (message) => {
+    setToastMessage(message)
+    if (toastTimerRef.current) window.clearTimeout(toastTimerRef.current)
+    toastTimerRef.current = window.setTimeout(() => {
+      setToastMessage('')
+      toastTimerRef.current = null
+    }, 2200)
+  }
 
   const handleDownload = () => {
     if (!reportRef.current || isGenerating) return
@@ -37,17 +48,23 @@ function Cart() {
       .set(opt)
       .from(element)
       .save()
+      .then(() => {
+        showToast('Ваш PDF рациона сохранён')
+      })
+      .catch(() => {
+        showToast('Не удалось скачать PDF')
+      })
       .finally(() => {
         setIsGenerating(false)
       })
   }
 
-  const handleCopyLink = () => {
+  const handleCopyLink = async () => {
     const url = `${window.location.origin}/nutrition-report?public=1`
 
     try {
       if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(url)
+        await navigator.clipboard.writeText(url)
       } else {
         const textarea = document.createElement('textarea')
         textarea.value = url
@@ -61,16 +78,36 @@ function Cart() {
       }
     } catch {
       // если не удалось скопировать — просто выходим без ошибок в UI
+      showToast('Не удалось скопировать ссылку')
       return
     }
 
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
+    showToast('Ссылка скопирована')
   }
 
   return (
     <Page className="cart-page">
       <Header title="Корзина" showBack />
+
+      {toastMessage && typeof document !== 'undefined'
+        ? createPortal(
+            <div className="cart-toast" role="status" aria-live="polite">
+              <span className="cart-toast-icon" aria-hidden="true">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                  <path
+                    d="M20 6L9 17l-5-5"
+                    stroke="#5DAF2E"
+                    strokeWidth="2.6"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </span>
+              <span className="cart-toast-text">{toastMessage}</span>
+            </div>,
+            document.body,
+          )
+        : null}
 
       <div className="cart-content">
         <div className="cart-icon" aria-hidden="true">
@@ -81,8 +118,8 @@ function Cart() {
           Мы скоро подключим доставку продуктов. Пока вы можете сохранить рацион.
         </p>
         <div className="cart-actions">
-          <button type="button" className="cart-btn cart-btn--primary" onClick={handleDownload}>
-            Скачать рацион
+          <button type="button" className="cart-btn cart-btn--primary" onClick={handleDownload} disabled={isGenerating}>
+            {isGenerating ? 'Сохраняем...' : 'Скачать рацион'}
           </button>
           <button type="button" className="cart-btn cart-btn--secondary" onClick={handleCopyLink}>
             <span className="cart-btn-icon" aria-hidden="true">
@@ -93,9 +130,6 @@ function Cart() {
             </span>
             Скопировать ссылку
           </button>
-          {copied && (
-            <p className="cart-copy-hint">Ссылка на рацион скопирована в буфер обмена</p>
-          )}
         </div>
       </div>
 

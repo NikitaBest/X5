@@ -47,11 +47,53 @@
   max-width: 320px;
 }
 
-.cart-copy-hint {
-  margin: 0;
-  font-size: 11px;
-  color: #1ba258;
-  text-align: center;
+.cart-toast {
+  position: fixed;
+  bottom: calc(18px + env(safe-area-inset-bottom, 0px));
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  background: rgba(82, 82, 86, 0.92);
+  color: #ffffff;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  max-width: min(92vw, 420px);
+  animation: cartToastIn 180ms ease-out;
+}
+
+.cart-toast-icon {
+  display: inline-flex;
+  width: 22px;
+  height: 22px;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+}
+
+.cart-toast-text {
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@keyframes cartToastIn {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
 }
 
 .cart-btn {
@@ -83,6 +125,11 @@
   background: #ffffff;
   color: #5DAF2E;
   border: 1px solid #5DAF2E;
+}
+
+.cart-btn:disabled {
+  opacity: 0.75;
+  cursor: default;
 }
 
 .cart-btn-icon {
