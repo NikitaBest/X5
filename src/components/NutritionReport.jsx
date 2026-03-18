@@ -43,6 +43,20 @@ const NutritionReport = forwardRef(function NutritionReport({ report = MOCK_REPO
   const maxDayCalories = Math.max(1, ...caloriesByDay.map((d) => d.total || 0))
   const minBarHeight = 56
   const maxBarHeight = 110
+  const rawBjuPercents = {
+    protein: Number(bju?.protein?.percent ?? 0),
+    fat: Number(bju?.fat?.percent ?? 0),
+    carbs: Number(bju?.carbs?.percent ?? 0),
+  }
+  const bjuPercentSum = rawBjuPercents.protein + rawBjuPercents.fat + rawBjuPercents.carbs
+  const bjuPercents =
+    bjuPercentSum > 0
+      ? {
+          protein: (rawBjuPercents.protein / bjuPercentSum) * 100,
+          fat: (rawBjuPercents.fat / bjuPercentSum) * 100,
+          carbs: (rawBjuPercents.carbs / bjuPercentSum) * 100,
+        }
+      : { protein: 0, fat: 0, carbs: 0 }
 
   return (
     <div ref={ref} className="nutrition-report">
@@ -157,7 +171,18 @@ const NutritionReport = forwardRef(function NutritionReport({ report = MOCK_REPO
             </div>
           </div>
           <div className="nutrition-report-bju-progress">
-            <div className="nutrition-report-bju-progress-bar" />
+            <div
+              className="nutrition-report-bju-progress-seg nutrition-report-bju-progress-seg--protein"
+              style={{ width: `${bjuPercents.protein}%` }}
+            />
+            <div
+              className="nutrition-report-bju-progress-seg nutrition-report-bju-progress-seg--fat"
+              style={{ width: `${bjuPercents.fat}%` }}
+            />
+            <div
+              className="nutrition-report-bju-progress-seg nutrition-report-bju-progress-seg--carb"
+              style={{ width: `${bjuPercents.carbs}%` }}
+            />
           </div>
           <div className="nutrition-report-bju-caption">
             Баланс белков, жиров и углеводов в среднем за день

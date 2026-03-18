@@ -108,6 +108,10 @@
   color: #333333;
 }
 
+.nutrition-report-goals li::marker {
+  color: #5daf2e;
+}
+
 .nutrition-report-goals li + li {
   margin-top: 2px;
 }
@@ -232,12 +236,14 @@
   border-radius: 16px;
   padding: 16px 18px;
   border: 1px solid #e5edf7;
+  text-align: left;
 }
 
 .nutrition-report-kcal-main {
   display: flex;
   align-items: baseline;
   gap: 4px;
+  justify-content: flex-start;
 }
 
 .nutrition-report-kcal-value {
@@ -289,15 +295,15 @@
 }
 
 .nutrition-report-bju-item--protein .nutrition-report-bju-grams {
-  color: #43a729;
+  color: #36b868;
 }
 
 .nutrition-report-bju-item--fat .nutrition-report-bju-grams {
-  color: #f9a825;
+  color: #ff9f05;
 }
 
 .nutrition-report-bju-item--carb .nutrition-report-bju-grams {
-  color: #008adf;
+  color: #07c3dc;
 }
 
 .nutrition-report-bju-progress {
@@ -307,12 +313,24 @@
   background: #e5edf7;
   overflow: hidden;
   margin-bottom: 4px;
+  display: flex;
 }
 
-.nutrition-report-bju-progress-bar {
-  width: 100%;
+.nutrition-report-bju-progress-seg {
   height: 100%;
-  background: linear-gradient(90deg, #43a729, #f9a825, #008adf);
+  flex: 0 0 auto;
+}
+
+.nutrition-report-bju-progress-seg--protein {
+  background: #36b868;
+}
+
+.nutrition-report-bju-progress-seg--fat {
+  background: #ff9f05;
+}
+
+.nutrition-report-bju-progress-seg--carb {
+  background: #07c3dc;
 }
 
 .nutrition-report-bju-caption {
@@ -388,7 +406,43 @@
   }
 
   .nutrition-report-bottom {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .nutrition-report-card--wide {
+    padding: 12px 12px;
+    border-radius: 14px;
+  }
+
+  .nutrition-report-kcal-value {
+    font-size: 24px;
+  }
+
+  .nutrition-report-kcal-unit {
+    font-size: 12px;
+  }
+
+  .nutrition-report-kcal-text-main {
+    font-size: 12px;
+  }
+
+  .nutrition-report-kcal-text-sub {
+    font-size: 10px;
+    margin-top: 4px;
+  }
+
+  .nutrition-report-bju-row {
+    gap: 8px;
+    margin-bottom: 6px;
+  }
+
+  .nutrition-report-bju-grams {
+    font-size: 14px;
+  }
+
+  .nutrition-report-bju-label {
+    font-size: 10px;
   }
 }
 
