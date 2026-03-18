@@ -1,5 +1,6 @@
 import { forwardRef } from 'react'
 import './NutritionReport.css'
+import NutritionWeekDayCard from './NutritionWeekDayCard.jsx'
 
 // Временные мок‑данные, пока нет бекенда
 const MOCK_REPORT = {
@@ -29,6 +30,33 @@ const MOCK_REPORT = {
     fat: { grams: 32, percent: 21 },
     carbs: { grams: 52, percent: 34 },
   },
+  weekPlan: {
+    rangeLabel: '25–31 марта 2026',
+    days: [
+      {
+        id: 'mon',
+        title: 'Понедельник, 25 марта',
+        totalKcal: 930,
+        meals: [
+          { key: 'b', slot: 'Завтрак', text: 'Овсяная каша на молоке Пятерочка Кафе 200г', kcal: 280 },
+          { key: 'l', slot: 'Обед', text: 'Биточки куриный в томатном соусе со спагетти Пятерочка Кафе 250г', kcal: 420 },
+          { key: 'd', slot: 'Ужин', text: 'Салат Чука Fish House 180г', kcal: 230 },
+        ],
+        macros: { proteinGrams: 75, fatGrams: 24, carbsGrams: 97 },
+      },
+      {
+        id: 'tue',
+        title: 'Вторник, 26 марта',
+        totalKcal: 930,
+        meals: [
+          { key: 'b', slot: 'Завтрак', text: 'Омлет с овощами и зеленью 220г', kcal: 280 },
+          { key: 'l', slot: 'Обед', text: 'Лосось запечённый с овощами 280г', kcal: 380 },
+          { key: 'd', slot: 'Ужин', text: 'Индейка с овощами гриль 250г', kcal: 250 },
+        ],
+        macros: { proteinGrams: 82, fatGrams: 42, carbsGrams: 30 },
+      },
+    ],
+  },
 }
 
 /**
@@ -39,7 +67,7 @@ const MOCK_REPORT = {
  * isPublic — режим публичной ссылки (сейчас влияет только на обвязку страницы).
  */
 const NutritionReport = forwardRef(function NutritionReport({ report = MOCK_REPORT /*, isPublic = false */ }, ref) {
-  const { initials, name, exclusions, profile, goals, caloriesByDay, avgCalories, bju } = report
+  const { initials, name, exclusions, profile, goals, caloriesByDay, avgCalories, bju, weekPlan } = report
   const maxDayCalories = Math.max(1, ...caloriesByDay.map((d) => d.total || 0))
   const minBarHeight = 56
   const maxBarHeight = 110
@@ -194,6 +222,18 @@ const NutritionReport = forwardRef(function NutritionReport({ report = MOCK_REPO
         Данный рацион составлен на основе rPPG‑анализа и не является медицинской рекомендацией.
         Проконсультируйтесь с врачом перед изменением диеты.
       </footer>
+
+      <section className="nutrition-week">
+        <div className="nutrition-week-head">
+          <h2 className="nutrition-week-title">Рацион на неделю</h2>
+          <div className="nutrition-week-range">{weekPlan?.rangeLabel}</div>
+        </div>
+        <div className="nutrition-week-days">
+          {(weekPlan?.days ?? []).map((day) => (
+            <NutritionWeekDayCard key={day.id} day={day} />
+          ))}
+        </div>
+      </section>
     </div>
   )
 })

@@ -345,9 +345,173 @@
   text-align: center;
 }
 
+.nutrition-week {
+  margin-top: 8px;
+  margin-bottom: 24px;
+}
+
+.nutrition-week-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.nutrition-week-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.nutrition-week-range {
+  font-size: 12px;
+  color: #777777;
+  white-space: nowrap;
+}
+
+.nutrition-week-days {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.nutrition-week-day {
+  border-radius: 14px;
+  background: #f5fbf7;
+  border-left: 3px solid #36b868;
+  padding: 0;
+}
+
+.nutrition-week-day-inner {
+  padding: 12px 12px;
+}
+
+.nutrition-week-day-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.nutrition-week-day-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #222222;
+}
+
+.nutrition-week-day-kcal {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.nutrition-week-day-kcal-value {
+  font-size: 14px;
+  font-weight: 700;
+  color: #36b868;
+}
+
+.nutrition-week-day-kcal-unit {
+  font-size: 11px;
+  color: #777777;
+}
+
+.nutrition-week-day-meals {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.nutrition-week-day-meal {
+  display: grid;
+  grid-template-columns: 72px 1fr 34px;
+  gap: 8px;
+  align-items: start;
+  font-size: 11px;
+}
+
+.nutrition-week-day-meal-slot {
+  font-weight: 600;
+  color: #333333;
+}
+
+.nutrition-week-day-meal-text {
+  color: #555555;
+}
+
+.nutrition-week-day-meal-kcal {
+  text-align: right;
+  color: #333333;
+  font-variant-numeric: tabular-nums;
+}
+
+.nutrition-week-day-macrobar {
+  height: 6px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: rgba(17, 17, 17, 0.06);
+  display: flex;
+  margin-bottom: 8px;
+}
+
+.nutrition-week-day-macroseg {
+  height: 100%;
+  flex: 0 0 auto;
+}
+
+.nutrition-week-day-macroseg--protein {
+  background: #36b868;
+}
+
+.nutrition-week-day-macroseg--fat {
+  background: #ff9f05;
+}
+
+.nutrition-week-day-macroseg--carb {
+  background: #07c3dc;
+}
+
+.nutrition-week-day-macros {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  font-size: 11px;
+  color: #555555;
+}
+
+.nutrition-week-day-macro {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.nutrition-week-day-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  display: inline-block;
+}
+
+.nutrition-week-day-dot--protein {
+  background: #36b868;
+}
+
+.nutrition-week-day-dot--fat {
+  background: #ff9f05;
+}
+
+.nutrition-week-day-dot--carb {
+  background: #07c3dc;
+}
+
 @media (max-width: 640px) {
   .nutrition-report {
-    padding: 24px 16px 32px;
+    padding: 18px 2px 26px;
   }
 
   .nutrition-report-header {
@@ -478,11 +642,45 @@
     gap: 8px;
     justify-content: flex-start;
   }
+
+  .nutrition-week-head {
+    align-items: flex-start;
+  }
+
+  .nutrition-week-title {
+    font-size: 14px;
+  }
+
+  .nutrition-week-range {
+    font-size: 11px;
+  }
+
+  .nutrition-week-day {
+    border-radius: 12px;
+  }
+
+  .nutrition-week-day-inner {
+    padding: 10px 10px;
+  }
+
+  .nutrition-week-day-title {
+    font-size: 12px;
+  }
+
+  .nutrition-week-day-meal {
+    grid-template-columns: 64px 1fr 32px;
+    font-size: 10px;
+  }
+
+  .nutrition-week-day-macros {
+    gap: 10px;
+    font-size: 10px;
+  }
 }
 
 @media (max-width: 360px) {
   .nutrition-report {
-    padding: 20px 12px 28px;
+    padding: 14px 0px 22px;
   }
 
   .nutrition-report-top-cards {
@@ -514,6 +712,22 @@
   .nutrition-report-bju-label,
   .nutrition-report-bju-caption {
     font-size: 9px;
+  }
+
+  .nutrition-week-head {
+    margin-bottom: 10px;
+  }
+
+  .nutrition-week-title {
+    font-size: 13px;
+  }
+
+  .nutrition-week-range {
+    font-size: 10px;
+  }
+
+  .nutrition-week-day-meal {
+    grid-template-columns: 60px 1fr 30px;
   }
 }
 
