@@ -43,7 +43,7 @@ function NutritionReportPage() {
   }, [location.search])
 
   return (
-    <Page className="nutrition-report-page">
+    <Page className={`nutrition-report-page${isPublic ? ' nutrition-report-page--public' : ''}`}>
       {!isPublic && <Header title="Ваш рацион" showBack />}
       <NutritionReport ref={reportRef} isPublic={isPublic} />
     </Page>

@@ -56,7 +56,12 @@
 }
 
 .nutrition-report-card--profile {
-  background: #f7fafc;
+  background: #f2fcfd;
+}
+
+.nutrition-report-top-cards .nutrition-report-card:nth-child(1),
+.nutrition-report-top-cards .nutrition-report-card:nth-child(3) {
+  background: #f5fbf7;
 }
 
 .nutrition-report-card-title {
@@ -73,9 +78,9 @@
 
 .nutrition-report-tag {
   padding: 4px 10px;
-  border-radius: 999px;
-  background: #ffffff;
-  border: 1px solid #e0e6ed;
+  border-radius: 10px;
+  background: transparent;
+  border: 1px solid rgba(17, 17, 17, 0.12);
   font-size: 11px;
 }
 
@@ -320,10 +325,57 @@
 
   .nutrition-report-header {
     flex-direction: row;
+    margin-bottom: 16px;
+  }
+
+  .nutrition-report-title {
+    margin: 0 0 6px;
+    font-size: 16px;
+    line-height: 1.2;
+  }
+
+  .nutrition-report-subtitle {
+    font-size: 12px;
+    line-height: 1.35;
+  }
+
+  .nutrition-report-page--public .nutrition-report-header {
+    justify-content: flex-start;
+  }
+
+  .nutrition-report-page--public .nutrition-report-title,
+  .nutrition-report-page--public .nutrition-report-subtitle {
+    text-align: left;
   }
 
   .nutrition-report-top-cards {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .nutrition-report-top-cards .nutrition-report-card {
+    text-align: left;
+  }
+
+  .nutrition-report-top-cards .nutrition-report-card-title {
+    text-align: left;
+  }
+
+  .nutrition-report-top-cards .nutrition-report-tags {
+    justify-content: flex-start;
+  }
+
+  .nutrition-report-top-cards .nutrition-report-profile-grid {
+    justify-items: start;
+    text-align: left;
+  }
+
+  .nutrition-report-top-cards .nutrition-report-goals {
+    padding-left: 16px;
+    text-align: left;
+  }
+
+  .nutrition-report-top-cards .nutrition-report-card:nth-child(3) {
+    grid-column: 1 / -1;
   }
 
   .nutrition-report-bottom {
