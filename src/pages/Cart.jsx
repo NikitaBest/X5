@@ -13,14 +13,24 @@ function Cart() {
   const [isGenerating, setIsGenerating] = useState(false)
   const [toastMessage, setToastMessage] = useState('')
   const toastTimerRef = useRef(null)
+  const surveyTimerRef = useRef(null)
 
-  const showToast = (message) => {
+  const showToast = (message, { goSurveyAfter = false } = {}) => {
     setToastMessage(message)
     if (toastTimerRef.current) window.clearTimeout(toastTimerRef.current)
+    if (surveyTimerRef.current) window.clearTimeout(surveyTimerRef.current)
+
     toastTimerRef.current = window.setTimeout(() => {
       setToastMessage('')
       toastTimerRef.current = null
     }, 2200)
+
+    if (goSurveyAfter) {
+      surveyTimerRef.current = window.setTimeout(() => {
+        surveyTimerRef.current = null
+        navigate('/survey')
+      }, 2300)
+    }
   }
 
   const handleDownload = () => {
@@ -49,7 +59,7 @@ function Cart() {
       .from(element)
       .save()
       .then(() => {
-        showToast('Ваш PDF рациона сохранён')
+        showToast('Ваш PDF рациона сохранён', { goSurveyAfter: true })
       })
       .catch(() => {
         showToast('Не удалось скачать PDF')
@@ -82,7 +92,7 @@ function Cart() {
       return
     }
 
-    showToast('Ссылка скопирована')
+    showToast('Ссылка скопирована', { goSurveyAfter: true })
   }
 
   return (
