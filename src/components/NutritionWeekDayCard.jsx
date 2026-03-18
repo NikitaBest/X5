@@ -19,9 +19,11 @@ function getMacroPercents(macros) {
 function NutritionWeekDayCard({ day }) {
   const percents = getMacroPercents(day?.macros)
   const totalKcal = day?.totalKcal ?? 0
+  const id = String(day?.id ?? '')
+  const isGreenDay = id === 'mon' || id === 'wed' || id === 'fri' || id === 'sun'
 
   return (
-    <section className="nutrition-week-day">
+    <section className={`nutrition-week-day ${isGreenDay ? 'nutrition-week-day--green' : 'nutrition-week-day--blue'}`}>
       <div className="nutrition-week-day-inner">
         <div className="nutrition-week-day-header">
           <div className="nutrition-week-day-title">{day?.title}</div>

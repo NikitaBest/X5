@@ -55,6 +55,61 @@ const MOCK_REPORT = {
         ],
         macros: { proteinGrams: 82, fatGrams: 42, carbsGrams: 30 },
       },
+      {
+        id: 'wed',
+        title: 'Среда, 27 марта',
+        totalKcal: 870,
+        meals: [
+          { key: 'b', slot: 'Завтрак', text: 'Творог 5% с ягодами 200г', kcal: 260 },
+          { key: 'l', slot: 'Обед', text: 'Гречка с куриной грудкой и овощами 300г', kcal: 420 },
+          { key: 'd', slot: 'Ужин', text: 'Салат овощной с оливковым маслом 220г', kcal: 190 },
+        ],
+        macros: { proteinGrams: 78, fatGrams: 26, carbsGrams: 84 },
+      },
+      {
+        id: 'thu',
+        title: 'Четверг, 28 марта',
+        totalKcal: 910,
+        meals: [
+          { key: 'b', slot: 'Завтрак', text: 'Греческий йогурт с гранолой 200г', kcal: 300 },
+          { key: 'l', slot: 'Обед', text: 'Треска на пару с картофелем и салатом 320г', kcal: 410 },
+          { key: 'd', slot: 'Ужин', text: 'Овощное рагу 280г', kcal: 200 },
+        ],
+        macros: { proteinGrams: 74, fatGrams: 34, carbsGrams: 68 },
+      },
+      {
+        id: 'fri',
+        title: 'Пятница, 29 марта',
+        totalKcal: 880,
+        meals: [
+          { key: 'b', slot: 'Завтрак', text: 'Банановый смузи на кефире 300мл', kcal: 280 },
+          { key: 'l', slot: 'Обед', text: 'Индейка с рисом и овощами 320г', kcal: 430 },
+          { key: 'd', slot: 'Ужин', text: 'Салат с тунцом 220г', kcal: 170 },
+        ],
+        macros: { proteinGrams: 86, fatGrams: 22, carbsGrams: 74 },
+      },
+      {
+        id: 'sat',
+        title: 'Суббота, 30 марта',
+        totalKcal: 920,
+        meals: [
+          { key: 'b', slot: 'Завтрак', text: 'Сырники запечённые 220г', kcal: 340 },
+          { key: 'l', slot: 'Обед', text: 'Говядина тушёная с овощами 300г', kcal: 430 },
+          { key: 'd', slot: 'Ужин', text: 'Суп-пюре из тыквы 250г', kcal: 150 },
+        ],
+        macros: { proteinGrams: 72, fatGrams: 38, carbsGrams: 66 },
+      },
+      {
+        id: 'sun',
+        title: 'Воскресенье, 31 марта',
+        totalKcal: 860,
+        meals: [
+          { key: 'b', slot: 'Завтрак', text: 'Овсянка с яблоком и корицей 250г', kcal: 300 },
+          { key: 'l', slot: 'Обед', text: 'Куриный суп с овощами 350г', kcal: 360 },
+          { key: 'd', slot: 'Ужин', text: 'Салат с креветками 220г', kcal: 200 },
+        ],
+        macros: { proteinGrams: 80, fatGrams: 20, carbsGrams: 78 },
+      },
     ],
   },
 }

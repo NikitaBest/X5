@@ -378,13 +378,23 @@
 
 .nutrition-week-day {
   border-radius: 14px;
-  background: #f5fbf7;
-  border-left: 3px solid #36b868;
+  border-left: 3px solid transparent;
   padding: 0;
+}
+
+.nutrition-week-day--green {
+  background: #f5fbf7;
+  border-left-color: #d0ecdb;
+}
+
+.nutrition-week-day--blue {
+  background: #f2fcfd;
+  border-left-color: #d3edf1;
 }
 
 .nutrition-week-day-inner {
   padding: 12px 12px;
+  text-align: left;
 }
 
 .nutrition-week-day-header {
@@ -432,15 +442,18 @@
   gap: 8px;
   align-items: start;
   font-size: 11px;
+  text-align: left;
 }
 
 .nutrition-week-day-meal-slot {
   font-weight: 600;
   color: #333333;
+  text-align: left;
 }
 
 .nutrition-week-day-meal-text {
   color: #555555;
+  text-align: left;
 }
 
 .nutrition-week-day-meal-kcal {
