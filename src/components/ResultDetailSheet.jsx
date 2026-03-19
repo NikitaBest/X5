@@ -188,11 +188,14 @@ function ResultDetailSheet({
             <div className="result-sheet-scale-bar">
               {hasDynamicScale ? (
                 scaleItems.map((item, idx) => (
+                  // Сегменты рисуем строго по координатам percentFrom/percentTo,
+                  // чтобы цветовая линия совпадала с маркером по оси шкалы.
                   <div
                     key={`${item.percentFrom}-${item.percentTo}-${idx}`}
                     className="result-sheet-scale-segment"
                     style={{
-                      width: `${Math.max(0, Number(item.percentTo) - Number(item.percentFrom))}%`,
+                      left: `${clamp(Number(item.percentFrom), 0, 100)}%`,
+                      width: `${Math.max(0, clamp(Number(item.percentTo), 0, 100) - clamp(Number(item.percentFrom), 0, 100))}%`,
                       background: colorFromBackend(item.color),
                     }}
                   />
@@ -212,7 +215,13 @@ function ResultDetailSheet({
               scaleItems.map((item, idx) => (
                 <span
                   key={`label-${item.percentFrom}-${item.percentTo}-${idx}`}
-                  style={{ width: `${Math.max(0, Number(item.percentTo) - Number(item.percentFrom))}%` }}
+                  style={{
+                    left: `${clamp(Number(item.percentFrom), 0, 100)}%`,
+                    width: `${Math.max(
+                      0,
+                      clamp(Number(item.percentTo), 0, 100) - clamp(Number(item.percentFrom), 0, 100),
+                    )}%`,
+                  }}
                 >
                   {formatRange(item.from)}–{formatRange(item.to)}
                 </span>

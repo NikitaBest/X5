@@ -133,7 +133,7 @@ function getCardThemeByColor(color) {
 function getStatusByColor(color) {
   const key = String(color || '').toLowerCase()
   if (key === 'green') return 'В норме'
-  if (key === 'yellow') return 'Повышено'
+  if (key === 'yellow') return 'Небольшое отклонение'
   if (key === 'red') return 'Требует внимания'
   return ''
 }
