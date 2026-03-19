@@ -114,3 +114,25 @@ export async function postExcludeProducts(token, products = []) {
   const data = await res.json().catch(() => ({}))
   return data
 }
+
+/**
+ * GET /exclude-products/get-for-user — получить сохранённые исключения пользователя.
+ * @param {string} token - JWT из auth/login
+ */
+export async function getExcludeProductsForUser(token) {
+  const url = `${BASE_URL.replace(/\/$/, '')}/exclude-products/get-for-user`
+  const res = await fetch(url, {
+    method: 'GET',
+    headers: {
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+  })
+
+  if (!res.ok) {
+    const errText = await res.text()
+    throw new Error(`exclude-products get-for-user failed: ${res.status} ${errText}`)
+  }
+
+  const data = await res.json().catch(() => ({}))
+  return data
+}

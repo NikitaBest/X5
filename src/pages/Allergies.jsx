@@ -3,7 +3,11 @@ import { useNavigate } from 'react-router-dom'
 import Page from '../layout/Page.jsx'
 import Header from '../layout/Header.jsx'
 import ProgressBar from '../ui/ProgressBar.jsx'
-import { getExcludeProducts, postExcludeProducts } from '../api/client.js'
+import {
+  getExcludeProducts,
+  getExcludeProductsForUser,
+  postExcludeProducts,
+} from '../api/client.js'
 import { useAuth } from '../contexts/AuthContext.jsx'
 import './Allergies.css'
 
@@ -30,6 +34,22 @@ function normalizeProduct(item, idx) {
   }
 }
 
+function getUserExcludeItemsFromResponse(data) {
+  if (Array.isArray(data)) return data
+  if (Array.isArray(data?.value)) return data.value
+  if (Array.isArray(data?.data)) return data.data
+  if (Array.isArray(data?.items)) return data.items
+  if (Array.isArray(data?.value?.data)) return data.value.data
+  if (Array.isArray(data?.value?.items)) return data.value.items
+  if (Array.isArray(data?.result)) return data.result
+  return []
+}
+
+function normalizeExcludeValue(item) {
+  if (typeof item === 'string') return item.trim()
+  return String(item?.productName ?? item?.name ?? item?.title ?? item?.label ?? '').trim()
+}
+
 function Allergies() {
   const navigate = useNavigate()
   const { token } = useAuth()
@@ -41,6 +61,27 @@ function Allergies() {
   const [loadError, setLoadError] = useState('')
   const [isSaving, setIsSaving] = useState(false)
   const [saveError, setSaveError] = useState('')
+
+  useEffect(() => {
+    let cancelled = false
+    ;(async () => {
+      try {
+        const data = await getExcludeProductsForUser(token)
+        if (cancelled) return
+        const values = getUserExcludeItemsFromResponse(data)
+          .map(normalizeExcludeValue)
+          .filter(Boolean)
+        if (values.length === 0) return
+        setSelectedTags(new Set(values))
+      } catch {
+        // Если сохранённых исключений нет или endpoint вернул ошибку — молча игнорируем.
+      }
+    })()
+
+    return () => {
+      cancelled = true
+    }
+  }, [token])
 
   useEffect(() => {
     let cancelled = false
