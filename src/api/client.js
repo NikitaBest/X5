@@ -140,7 +140,7 @@ export async function getExcludeProductsForUser(token) {
 /**
  * POST /scan/save-rppg — сохранить результат сканирования rPPG.
  * @param {string} token - JWT из auth/login
- * @param {string} scanResult - JSON-строка результата сканирования
+ * @param {object} scanResult - объект результата сканирования
  */
 export async function postScanSaveRppg(token, scanResult) {
   const url = `${BASE_URL.replace(/\/$/, '')}/scan/save-rppg`
@@ -151,7 +151,7 @@ export async function postScanSaveRppg(token, scanResult) {
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
     body: JSON.stringify({
-      scanResult: String(scanResult ?? ''),
+      scanResult: scanResult ?? {},
     }),
   })
 

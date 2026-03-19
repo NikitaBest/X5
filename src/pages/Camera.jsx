@@ -593,13 +593,6 @@ function Camera() {
       const payload = {
         takenAt: new Date().toISOString(),
         source: 'web_sdk',
-        userInfo: {
-          sex: userData?.gender || null,
-          age: userData?.age ?? null,
-          heightCm: userData?.height ?? null,
-          weightKg: userData?.weight ?? null,
-          smokingStatus: userData?.smokingStatus || null,
-        },
         metrics: {
           pulseRate: {
             value: getMetricValue(pulseRate),
@@ -631,8 +624,7 @@ function Camera() {
         sdkRaw: vitalSignsResults,
       }
 
-      const scanResult = JSON.stringify(payload)
-      postScanSaveRppg(token, scanResult)
+      postScanSaveRppg(token, payload)
         .then(() => {
           logger.info('scan/save-rppg: результат успешно сохранён')
         })
