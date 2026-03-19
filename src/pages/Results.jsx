@@ -262,6 +262,9 @@ function Results() {
                     value: card.value ?? '—',
                     unit: card.unit || '',
                     statusText,
+                    commentText: card.statusText || '',
+                    statusBg: theme.statusBg,
+                    statusColor: theme.statusColor,
                     description: card.description || '',
                   })
                 }
@@ -318,6 +321,9 @@ function Results() {
           value={activeDetail?.value}
           unit={activeDetail?.unit}
           statusText={activeDetail?.statusText}
+          commentText={activeDetail?.commentText}
+          statusBg={activeDetail?.statusBg}
+          statusColor={activeDetail?.statusColor}
           description={activeDetail?.description}
         />
       </div>

@@ -106,6 +106,13 @@
   font-weight: 500;
 }
 
+.result-sheet-comment {
+  margin-top: 8px;
+  font-size: clamp(12px, 3.2vw, 13px);
+  line-height: 1.35;
+  color: #8a8a8a;
+}
+
 .result-sheet-scale {
   margin-top: 12px;
   flex-shrink: 0;

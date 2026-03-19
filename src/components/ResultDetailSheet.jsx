@@ -1,7 +1,19 @@
 import { useEffect, useRef, useState } from 'react'
 import './ResultDetailSheet.css'
 
-function ResultDetailSheet({ open, onClose, onSelectPlan, title, value, unit, statusText, description }) {
+function ResultDetailSheet({
+  open,
+  onClose,
+  onSelectPlan,
+  title,
+  value,
+  unit,
+  statusText,
+  commentText,
+  statusBg,
+  statusColor,
+  description,
+}) {
   const sheetRef = useRef(null)
   const startYRef = useRef(null)
   const [isClosing, setIsClosing] = useState(false)
@@ -91,7 +103,18 @@ function ResultDetailSheet({ open, onClose, onSelectPlan, title, value, unit, st
             <div className="result-sheet-value">{value}</div>
             {unit && <div className="result-sheet-unit">{unit}</div>}
           </div>
-          {statusText && <div className="result-sheet-status">{statusText}</div>}
+          {statusText && (
+            <div
+              className="result-sheet-status"
+              style={{
+                ...(statusBg ? { background: statusBg } : {}),
+                ...(statusColor ? { color: statusColor } : {}),
+              }}
+            >
+              {statusText}
+            </div>
+          )}
+          {commentText ? <div className="result-sheet-comment">{commentText}</div> : null}
         </div>
 
         <div className="result-sheet-scale">
