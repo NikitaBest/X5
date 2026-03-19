@@ -323,8 +323,11 @@
 .result-label {
   font-size: clamp(11px, 3.2vw, 12px);
   letter-spacing: 0.02em;
-  text-transform: uppercase;
+  text-transform: none;
   color: var(--color-fg-secondary, #777777);
+  text-align: left;
+  width: 100%;
+  line-height: 1.2;
 }
 
 .result-value {
