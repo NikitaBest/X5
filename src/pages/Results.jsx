@@ -66,6 +66,7 @@ function normalizeTranscript(t) {
     description: t.descriptionUser || '',
     comment: t.commentUser || '',
     confidenceLevel: t.confidenceLevel ?? null,
+    scaleMetadata: t.scaleMetadata ?? null,
   }
 }
 
@@ -89,6 +90,7 @@ function getCardsFromBackend(transcripts = []) {
       description: tr.description || '',
       color: tr.color,
       confidenceLevel: tr.confidenceLevel,
+      scaleMetadata: tr.scaleMetadata ?? null,
     })
   })
 
@@ -102,6 +104,7 @@ function getCardsFromBackend(transcripts = []) {
       description: systolic.description || diastolic.description || '',
       color: systolic.color || diastolic.color || '',
       confidenceLevel: systolic.confidenceLevel ?? diastolic.confidenceLevel ?? null,
+      scaleMetadata: systolic.scaleMetadata ?? diastolic.scaleMetadata ?? null,
     })
   }
 
@@ -121,6 +124,7 @@ function getCardsFromBackend(transcripts = []) {
         description: tr.description || '',
         color: tr.color,
         confidenceLevel: tr.confidenceLevel,
+        scaleMetadata: tr.scaleMetadata ?? null,
       })
     })
 
@@ -266,6 +270,7 @@ function Results() {
                     statusBg: theme.statusBg,
                     statusColor: theme.statusColor,
                     description: card.description || '',
+                  scaleMetadata: card.scaleMetadata || null,
                   })
                 }
               >
@@ -325,6 +330,7 @@ function Results() {
           statusBg={activeDetail?.statusBg}
           statusColor={activeDetail?.statusColor}
           description={activeDetail?.description}
+          scaleMetadata={activeDetail?.scaleMetadata}
         />
       </div>
     </Page>

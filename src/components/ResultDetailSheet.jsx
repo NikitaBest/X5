@@ -1,6 +1,25 @@
 import { useEffect, useRef, useState } from 'react'
 import './ResultDetailSheet.css'
 
+function clamp(value, min, max) {
+  return Math.min(max, Math.max(min, value))
+}
+
+function colorFromBackend(color) {
+  const c = String(color || '').toLowerCase()
+  if (c === 'green') return '#30AD43'
+  if (c === 'yellow') return '#FEC014'
+  if (c === 'red') return '#FF6B6B'
+  return '#d9dee6'
+}
+
+function formatRange(value) {
+  if (value == null || Number.isNaN(Number(value))) return '—'
+  const num = Number(value)
+  const isInt = Math.abs(num - Math.round(num)) < 0.001
+  return isInt ? String(Math.round(num)) : num.toFixed(2).replace(/\.?0+$/, '')
+}
+
 function ResultDetailSheet({
   open,
   onClose,
@@ -13,6 +32,7 @@ function ResultDetailSheet({
   statusBg,
   statusColor,
   description,
+  scaleMetadata,
 }) {
   const sheetRef = useRef(null)
   const startYRef = useRef(null)
@@ -84,6 +104,14 @@ function ResultDetailSheet({
 
   if (!open) return null
 
+  const scaleItems = Array.isArray(scaleMetadata?.items)
+    ? [...scaleMetadata.items]
+        .filter((i) => i && Number.isFinite(Number(i.percentFrom)) && Number.isFinite(Number(i.percentTo)))
+        .sort((a, b) => Number(a.percentFrom) - Number(b.percentFrom))
+    : []
+  const hasDynamicScale = scaleItems.length > 0
+  const markerPercent = clamp(Number(scaleMetadata?.valuePercentLabel ?? 0), 0, 100)
+
   return (
     <div
       className={`result-sheet-backdrop${isClosing ? ' result-sheet-backdrop--closing' : ''}${isAnimatedOpen ? ' result-sheet-backdrop--open' : ''}`}
@@ -118,15 +146,48 @@ function ResultDetailSheet({
         </div>
 
         <div className="result-sheet-scale">
-          <div className="result-sheet-scale-bar">
-            <div className="result-sheet-scale-segment result-sheet-scale-segment--low" />
-            <div className="result-sheet-scale-segment result-sheet-scale-segment--medium" />
-            <div className="result-sheet-scale-segment result-sheet-scale-segment--high" />
+          <div className="result-sheet-scale-bar-wrap">
+            <div className="result-sheet-scale-marker" style={{ left: `${markerPercent}%` }} />
+
+            <div className="result-sheet-scale-bar">
+              {hasDynamicScale ? (
+                scaleItems.map((item, idx) => (
+                  <div
+                    key={`${item.percentFrom}-${item.percentTo}-${idx}`}
+                    className="result-sheet-scale-segment"
+                    style={{
+                      width: `${Math.max(0, Number(item.percentTo) - Number(item.percentFrom))}%`,
+                      background: colorFromBackend(item.color),
+                    }}
+                  />
+                ))
+              ) : (
+                <>
+                  <div className="result-sheet-scale-segment result-sheet-scale-segment--low" />
+                  <div className="result-sheet-scale-segment result-sheet-scale-segment--medium" />
+                  <div className="result-sheet-scale-segment result-sheet-scale-segment--high" />
+                </>
+              )}
+            </div>
           </div>
+
           <div className="result-sheet-scale-labels">
-            <span>до 30</span>
-            <span>31–37</span>
-            <span>37+</span>
+            {hasDynamicScale ? (
+              scaleItems.map((item, idx) => (
+                <span
+                  key={`label-${item.percentFrom}-${item.percentTo}-${idx}`}
+                  style={{ width: `${Math.max(0, Number(item.percentTo) - Number(item.percentFrom))}%` }}
+                >
+                  {formatRange(item.from)}–{formatRange(item.to)}
+                </span>
+              ))
+            ) : (
+              <>
+                <span>до 30</span>
+                <span>31–37</span>
+                <span>37+</span>
+              </>
+            )}
           </div>
         </div>
 

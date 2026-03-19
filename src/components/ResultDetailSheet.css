@@ -118,6 +118,22 @@
   flex-shrink: 0;
 }
 
+.result-sheet-scale-bar-wrap {
+  position: relative;
+  padding-top: 16px;
+}
+
+.result-sheet-scale-marker {
+  position: absolute;
+  top: 2px;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 7px solid #2b2b2b;
+}
+
 .result-sheet-scale-bar {
   display: flex;
   height: clamp(6px, 2vw, 8px);
@@ -143,10 +159,15 @@
 
 .result-sheet-scale-labels {
   display: flex;
-  justify-content: space-between;
+  align-items: flex-start;
   margin-top: 4px;
   font-size: clamp(9px, 2.5vw, 10px);
   color: #666666;
+}
+
+.result-sheet-scale-labels > span {
+  text-align: center;
+  white-space: nowrap;
 }
 
 .result-sheet-description {
