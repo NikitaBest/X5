@@ -16,7 +16,7 @@
   border-radius: 999px;
   background: #ff8e8e;
   color: #ffffff;
-  font-size: 20px;
+  font-size: 16px;
   font-weight: 600;
   white-space: nowrap;
 }
@@ -24,15 +24,16 @@
 .results-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
   gap: 1rem;
 }
 
-.results-title {
-  font-size: 1.75rem;
+.results-page .results-header .results-title {
+  font-size: 14px;
   font-weight: 600;
   margin: 0;
-  text-align: left;
+  text-align: center;
+  line-height: 1.25;
   color: var(--text-primary, #000000);
 }
 
@@ -455,6 +456,10 @@
 
 /* Дополнительная адаптация для очень узких экранов */
 @media (max-width: 360px) {
+  .results-page .results-header .results-title {
+    font-size: 13px;
+  }
+
   .result-card {
     padding: 0.7rem 0.6rem 0.6rem;
     border-radius: 10px;

@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { useUserData } from '../contexts/UserDataContext.jsx'
 import Page from '../layout/Page.jsx'
 import HeartRateGauge from '../components/HeartRateGauge.jsx'
 import ResultDetailSheet from '../components/ResultDetailSheet.jsx'
@@ -13,6 +12,55 @@ const CARD_CLASS_BY_KEY = {
   stressLevel: 'result-card--stress',
   bloodPressure: 'result-card--bp',
   sdnn: 'result-card--sdnn',
+}
+
+function clamp(value, min, max) {
+  return Math.min(max, Math.max(min, value))
+}
+
+function lerpColor(color1, color2, t) {
+  const c1 = {
+    r: parseInt(color1.slice(1, 3), 16),
+    g: parseInt(color1.slice(3, 5), 16),
+    b: parseInt(color1.slice(5, 7), 16),
+  }
+  const c2 = {
+    r: parseInt(color2.slice(1, 3), 16),
+    g: parseInt(color2.slice(3, 5), 16),
+    b: parseInt(color2.slice(5, 7), 16),
+  }
+  const r = Math.round(c1.r + (c2.r - c1.r) * t)
+  const g = Math.round(c1.g + (c2.g - c1.g) * t)
+  const b = Math.round(c1.b + (c2.b - c1.b) * t)
+  return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b
+    .toString(16)
+    .padStart(2, '0')}`
+}
+
+function getGaugeColorByScore(score) {
+  if (!Number.isFinite(score)) return '#ff8e8e'
+  const x = clamp(score / 100, 0, 1)
+  const stops = [
+    { pos: 0, color: '#FF6B6B' },
+    { pos: 0.33, color: '#FEC014' },
+    { pos: 0.66, color: '#C9F47A' },
+    { pos: 1, color: '#30AD43' },
+  ]
+  for (let i = 0; i < stops.length - 1; i += 1) {
+    const a = stops[i]
+    const b = stops[i + 1]
+    if (x >= a.pos && x <= b.pos) {
+      return lerpColor(a.color, b.color, (x - a.pos) / (b.pos - a.pos))
+    }
+  }
+  return stops[stops.length - 1].color
+}
+
+function getHealthBadgeText(score) {
+  if (!Number.isFinite(score)) return 'Ваши показатели'
+  if (score >= 66) return 'Все хорошо'
+  if (score >= 33) return 'Средний уровень'
+  return 'Требует особого внимания'
 }
 
 function normalizeTranscript(t) {
@@ -168,7 +216,6 @@ function Results() {
   const [activeDetail, setActiveDetail] = useState(null)
   const location = useLocation()
   const navigate = useNavigate()
-  const { userData } = useUserData()
   const backendScanResponse = location.state?.backendScanResponse
   const backendValue = backendScanResponse?.value ?? null
   const backendTranscripts = Array.isArray(backendValue?.transcripts)
@@ -179,6 +226,8 @@ function Results() {
   const visibleCards = showAllMetricsCards ? cards : cards.slice(0, 4)
   const hasAnyResults = cards.length > 0
   const healthScore = backendValue?.healthScore != null ? Number(backendValue.healthScore) : null
+  const healthScoreColor = getGaugeColorByScore(healthScore)
+  const healthBadgeText = getHealthBadgeText(healthScore)
 
   if (!hasAnyResults) {
     logger.warn('Results page accessed without backend results')
@@ -201,45 +250,11 @@ function Results() {
     totalCards: cards.length,
   })
 
-  const handleDownloadJson = () => {
-    // Данные пользователя, которые передавались в SDK (пол, возраст, рост, вес, курение)
-    const userInfo = (userData?.age != null || userData?.gender || userData?.weight != null || userData?.height != null || userData?.smokingStatus)
-      ? {
-          sex: userData.gender || null,
-          age: userData.age ?? null,
-          heightCm: userData.height ?? null,
-          weightKg: userData.weight ?? null,
-          smokingStatus: userData.smokingStatus || null,
-        }
-      : null
-
-    // Собираем полезный JSON: данные пользователя + метрики + сырой ответ SDK
-    const payload = {
-      takenAt: backendValue?.scan?.createdAt || new Date().toISOString(),
-      source: 'web_sdk',
-      ...(userInfo && { userInfo }),
-      backend: backendScanResponse ?? null,
-    }
-
-    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `binah-results-${new Date().toISOString()}.json`
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
-  }
-
   return (
     <Page>
       <div className="results-page">
         <div className="results-header">
           <h1 className="results-title">Результаты измерения</h1>
-          <button type="button" className="results-download-button" onClick={handleDownloadJson}>
-            Скачать JSON
-          </button>
         </div>
 
         {hasAnyResults && (
@@ -247,8 +262,8 @@ function Results() {
             <div className="results-gauge-wrapper">
               <HeartRateGauge value={healthScore} min={0} max={100} />
             </div>
-            <div className="results-gauge-badge">
-              {backendValue?.healthScore != null ? `Индекс здоровья: ${backendValue.healthScore}` : 'Ваши показатели'}
+            <div className="results-gauge-badge" style={{ background: healthScoreColor }}>
+              {healthBadgeText}
             </div>
           </>
         )}
