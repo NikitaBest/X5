@@ -211,7 +211,10 @@ function Results() {
     ? backendValue.transcripts.map(normalizeTranscript).filter(Boolean)
     : []
 
-  const cards = getCardsFromBackend(backendTranscripts)
+  // Если у показателя нет цвета (color === '' / null), значит он невалиден для отображения на UI
+  const validBackendTranscripts = backendTranscripts.filter((t) => Boolean(t?.color))
+
+  const cards = getCardsFromBackend(validBackendTranscripts)
   const visibleCards = showAllMetricsCards ? cards : cards.slice(0, 4)
   const hasAnyResults = cards.length > 0
   const healthScore = backendValue?.healthScore != null ? Number(backendValue.healthScore) : null
