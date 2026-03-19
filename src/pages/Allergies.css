@@ -6,6 +6,7 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
+  padding-bottom: 92px;
 }
 
 .allergies-title-block {
@@ -219,18 +220,29 @@
 }
 
 .allergies-footer {
-  margin-top: 24px;
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px));
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  z-index: 20;
 }
 
 .allergies-save-error {
-  margin-bottom: 10px;
+  margin: 0 auto 10px;
+  max-width: 480px;
   font-size: 12px;
   color: #c62828;
   text-align: left;
 }
 
 .allergies-next-button {
-  width: 100%;
+  width: min(480px, 100%);
+  margin: 0 auto;
+  display: block;
   padding: 14px;
   border-radius: 12px;
   border: none;
