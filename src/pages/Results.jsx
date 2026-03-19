@@ -6,14 +6,6 @@ import ResultDetailSheet from '../components/ResultDetailSheet.jsx'
 import logger from '../utils/logger.js'
 import './Results.css'
 
-const CARD_CLASS_BY_KEY = {
-  pulseRate: 'result-card--pulse',
-  respirationRate: 'result-card--respiration',
-  stressLevel: 'result-card--stress',
-  bloodPressure: 'result-card--bp',
-  sdnn: 'result-card--sdnn',
-}
-
 function clamp(value, min, max) {
   return Math.min(max, Math.max(min, value))
 }
@@ -77,13 +69,6 @@ function normalizeTranscript(t) {
   }
 }
 
-function getSdkValue(item) {
-  if (item == null) return null
-  if (typeof item === 'object' && 'value' in item) return item.value
-  if (typeof item === 'number' || typeof item === 'string') return item
-  return null
-}
-
 function getCardsFromBackend(transcripts = []) {
   const map = new Map(transcripts.map((t) => [t.key, t]))
 
@@ -142,73 +127,54 @@ function getCardsFromBackend(transcripts = []) {
   return cards
 }
 
-function getCardsFromSdk(sdkResults) {
-  if (!sdkResults || typeof sdkResults !== 'object') return []
-  const pulseRate = sdkResults.pulseRate
-  const respirationRate = sdkResults.respirationRate
-  const stressLevel = sdkResults.stressLevel
-  const sdnn = sdkResults.sdnn
-  const bloodPressure = sdkResults.bloodPressure
-
-  let bp = null
-  if (bloodPressure?.value && typeof bloodPressure.value === 'object') {
-    bp = `${bloodPressure.value.systolic}/${bloodPressure.value.diastolic}`
+function getCardThemeByColor(color) {
+  const key = String(color || '').toLowerCase()
+  if (key === 'green') {
+    return {
+      cardBg: 'rgba(149, 219, 109, 0.12)',
+      cardBorder: 'rgba(93, 175, 46, 0.55)',
+      iconBg: 'rgba(93, 175, 46, 0.16)',
+      iconColor: '#5DAF2E',
+      statusBg: 'rgba(93, 175, 46, 0.16)',
+      statusColor: '#4C9A24',
+    }
   }
+  if (key === 'yellow') {
+    return {
+      cardBg: 'rgba(254, 192, 20, 0.12)',
+      cardBorder: 'rgba(246, 175, 0, 0.55)',
+      iconBg: 'rgba(254, 192, 20, 0.18)',
+      iconColor: '#E6A100',
+      statusBg: 'rgba(254, 192, 20, 0.18)',
+      statusColor: '#B68200',
+    }
+  }
+  if (key === 'red') {
+    return {
+      cardBg: 'rgba(255, 107, 107, 0.12)',
+      cardBorder: 'rgba(255, 107, 107, 0.5)',
+      iconBg: 'rgba(255, 107, 107, 0.16)',
+      iconColor: '#E55656',
+      statusBg: 'rgba(255, 107, 107, 0.16)',
+      statusColor: '#C93C3C',
+    }
+  }
+  return {
+    cardBg: '#ffffff',
+    cardBorder: 'rgba(0, 0, 0, 0.08)',
+    iconBg: 'rgba(0, 0, 0, 0.06)',
+    iconColor: '#666666',
+    statusBg: 'rgba(0, 0, 0, 0.08)',
+    statusColor: '#555555',
+  }
+}
 
-  const cards = [
-    pulseRate && {
-      key: 'pulseRate',
-      title: 'Пульс',
-      value: getSdkValue(pulseRate),
-      unit: 'уд/мин',
-      statusText: '',
-      description: '',
-      color: '',
-      confidenceLevel: pulseRate.confidenceLevel ?? null,
-    },
-    respirationRate && {
-      key: 'respirationRate',
-      title: 'Частота дыхания',
-      value: getSdkValue(respirationRate),
-      unit: 'дых/мин',
-      statusText: '',
-      description: '',
-      color: '',
-      confidenceLevel: respirationRate.confidenceLevel ?? null,
-    },
-    stressLevel && {
-      key: 'stressLevel',
-      title: 'Уровень стресса',
-      value: getSdkValue(stressLevel),
-      unit: 'уровень',
-      statusText: '',
-      description: '',
-      color: '',
-      confidenceLevel: stressLevel.confidenceLevel ?? null,
-    },
-    bp && {
-      key: 'bloodPressure',
-      title: 'Артериальное давление',
-      value: bp,
-      unit: 'мм рт. ст.',
-      statusText: '',
-      description: '',
-      color: '',
-      confidenceLevel: bloodPressure?.confidenceLevel ?? null,
-    },
-    sdnn && {
-      key: 'sdnn',
-      title: 'SDNN',
-      value: getSdkValue(sdnn),
-      unit: 'мс',
-      statusText: '',
-      description: '',
-      color: '',
-      confidenceLevel: sdnn.confidenceLevel ?? null,
-    },
-  ].filter(Boolean)
-
-  return cards
+function getStatusByColor(color) {
+  const key = String(color || '').toLowerCase()
+  if (key === 'green') return 'В норме'
+  if (key === 'yellow') return 'Повышено'
+  if (key === 'red') return 'Требует внимания'
+  return ''
 }
 
 function Results() {
@@ -275,36 +241,45 @@ function Results() {
         )}
 
         <div className="results-grid">
-          {visibleCards.map((card) => (
-            <div
-              key={card.key}
-              className={`result-card ${CARD_CLASS_BY_KEY[card.key] || 'result-card--extra'}`.trim()}
-              onClick={() =>
-                setActiveDetail({
-                  title: card.title || card.key,
-                  value: card.value ?? '—',
-                  unit: card.unit || '',
-                  statusText: card.statusText || '',
-                  description: card.description || '',
-                })
-              }
-            >
-              <div className="result-card-top">
-                <div className="result-card-icon" aria-hidden="true">
-                  <span className="result-card-icon-dot" />
+          {visibleCards.map((card) => {
+            const theme = getCardThemeByColor(card.color)
+            const statusText = getStatusByColor(card.color)
+            return (
+              <div
+                key={card.key}
+                className="result-card result-card--backend"
+                style={{
+                  '--card-bg': theme.cardBg,
+                  '--border-color': theme.cardBorder,
+                  '--icon-bg': theme.iconBg,
+                  '--icon-color': theme.iconColor,
+                  '--status-bg': theme.statusBg,
+                  '--status-color': theme.statusColor,
+                }}
+                onClick={() =>
+                  setActiveDetail({
+                    title: card.title || card.key,
+                    value: card.value ?? '—',
+                    unit: card.unit || '',
+                    statusText,
+                    description: card.description || '',
+                  })
+                }
+              >
+                <div className="result-card-top">
+                  <div className="result-card-icon" aria-hidden="true">
+                    <span className="result-card-icon-dot" />
+                  </div>
+                  <div className="result-label">{card.title || card.key}</div>
                 </div>
-                <div className="result-label">{card.title || card.key}</div>
+                <div className="result-main">
+                  <div className="result-value">{card.value ?? '—'}</div>
+                  {card.unit ? <div className="result-unit">{card.unit}</div> : null}
+                </div>
+                {statusText ? <div className="result-status-pill">{statusText}</div> : null}
               </div>
-              <div className="result-main">
-                <div className="result-value">{card.value ?? '—'}</div>
-                {card.unit ? <div className="result-unit">{card.unit}</div> : null}
-              </div>
-              {card.statusText ? <div className="result-status-pill">{card.statusText}</div> : null}
-              {card.confidenceLevel != null ? (
-                <div className="result-confidence">Уверенность: {card.confidenceLevel}</div>
-              ) : null}
-            </div>
-          ))}
+            )
+          })}
         </div>
 
         {hasAnyResults && (
