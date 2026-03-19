@@ -20,6 +20,42 @@ function formatRange(value) {
   return isInt ? String(Math.round(num)) : num.toFixed(2).replace(/\.?0+$/, '')
 }
 
+function toFiniteNumberOrNull(value) {
+  const num = Number(value)
+  return Number.isFinite(num) ? num : null
+}
+
+function getMarkerPercent(scaleMetadata, metricValue) {
+  const items = Array.isArray(scaleMetadata?.items) ? scaleMetadata.items : []
+  const numericValue = toFiniteNumberOrNull(metricValue)
+
+  if (numericValue != null && items.length > 0) {
+    for (const item of items) {
+      const from = toFiniteNumberOrNull(item?.from)
+      const to = toFiniteNumberOrNull(item?.to)
+      const percentFrom = toFiniteNumberOrNull(item?.percentFrom)
+      const percentTo = toFiniteNumberOrNull(item?.percentTo)
+      if (from == null || to == null || percentFrom == null || percentTo == null) continue
+
+      const minBound = Math.min(from, to)
+      const maxBound = Math.max(from, to)
+      if (numericValue < minBound || numericValue > maxBound) continue
+
+      if (Math.abs(to - from) < 1e-6) return clamp(percentFrom, 0, 100)
+      const t = (numericValue - from) / (to - from)
+      return clamp(percentFrom + (percentTo - percentFrom) * t, 0, 100)
+    }
+  }
+
+  const fallbackPercent = toFiniteNumberOrNull(scaleMetadata?.valuePercentLabel)
+  if (fallbackPercent != null) return clamp(fallbackPercent, 0, 100)
+
+  const fallbackScore = toFiniteNumberOrNull(scaleMetadata?.biomarkerScore)
+  if (fallbackScore != null) return clamp(fallbackScore, 0, 100)
+
+  return 0
+}
+
 function ResultDetailSheet({
   open,
   onClose,
@@ -110,7 +146,7 @@ function ResultDetailSheet({
         .sort((a, b) => Number(a.percentFrom) - Number(b.percentFrom))
     : []
   const hasDynamicScale = scaleItems.length > 0
-  const markerPercent = clamp(Number(scaleMetadata?.valuePercentLabel ?? 0), 0, 100)
+  const markerPercent = getMarkerPercent(scaleMetadata, value)
 
   return (
     <div

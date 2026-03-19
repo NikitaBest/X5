@@ -71,18 +71,10 @@ function normalizeTranscript(t) {
 }
 
 function getCardsFromBackend(transcripts = []) {
-  const map = new Map(transcripts.map((t) => [t.key, t]))
-
-  const systolic = map.get('bloodPressureSystolic')
-  const diastolic = map.get('bloodPressureDiastolic')
-
-  const cards = []
-  const priorityKeys = ['pulseRate', 'respirationRate', 'stressLevel', 'sdnn']
-  priorityKeys.forEach((key) => {
-    const tr = map.get(key)
-    if (!tr) return
-    cards.push({
-      key,
+  return transcripts
+    .filter((t) => t?.key)
+    .map((tr) => ({
+      key: tr.key,
       title: tr.name,
       value: tr.value,
       unit: tr.unit,
@@ -91,44 +83,7 @@ function getCardsFromBackend(transcripts = []) {
       color: tr.color,
       confidenceLevel: tr.confidenceLevel,
       scaleMetadata: tr.scaleMetadata ?? null,
-    })
-  })
-
-  if (systolic && diastolic) {
-    cards.push({
-      key: 'bloodPressure',
-      title: 'Артериальное давление',
-      value: `${systolic.value}/${diastolic.value}`,
-      unit: systolic.unit || diastolic.unit || 'мм рт. ст.',
-      statusText: systolic.comment || diastolic.comment || '',
-      description: systolic.description || diastolic.description || '',
-      color: systolic.color || diastolic.color || '',
-      confidenceLevel: systolic.confidenceLevel ?? diastolic.confidenceLevel ?? null,
-      scaleMetadata: systolic.scaleMetadata ?? diastolic.scaleMetadata ?? null,
-    })
-  }
-
-  transcripts
-    .filter(
-      (t) =>
-        t.key &&
-        !['pulseRate', 'respirationRate', 'stressLevel', 'sdnn', 'bloodPressureSystolic', 'bloodPressureDiastolic'].includes(t.key),
-    )
-    .forEach((tr) => {
-      cards.push({
-        key: tr.key,
-        title: tr.name,
-        value: tr.value,
-        unit: tr.unit,
-        statusText: tr.comment || '',
-        description: tr.description || '',
-        color: tr.color,
-        confidenceLevel: tr.confidenceLevel,
-        scaleMetadata: tr.scaleMetadata ?? null,
-      })
-    })
-
-  return cards
+    }))
 }
 
 function getCardThemeByColor(color) {
