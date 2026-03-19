@@ -1,8 +1,10 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import Page from '../layout/Page.jsx'
 import HeartRateGauge from '../components/HeartRateGauge.jsx'
 import ResultDetailSheet from '../components/ResultDetailSheet.jsx'
+import { getScanHistory } from '../api/client.js'
+import { useAuth } from '../contexts/AuthContext.jsx'
 import logger from '../utils/logger.js'
 import './Results.css'
 
@@ -136,12 +138,74 @@ function getStatusByColor(color) {
   return ''
 }
 
+function hasTranscriptsInResponse(response) {
+  return Array.isArray(response?.value?.transcripts) && response.value.transcripts.length > 0
+}
+
+function extractLastScanResponse(data) {
+  if (hasTranscriptsInResponse(data)) return data
+
+  const list = Array.isArray(data?.value?.data)
+    ? data.value.data
+    : Array.isArray(data?.value?.items)
+      ? data.value.items
+      : Array.isArray(data?.data)
+        ? data.data
+        : []
+
+  const first = list[0]
+  if (hasTranscriptsInResponse(first)) return first
+  if (Array.isArray(first?.transcripts) && first.transcripts.length > 0) {
+    return { value: first }
+  }
+  return null
+}
+
 function Results() {
   const [showAllMetricsCards, setShowAllMetricsCards] = useState(false)
   const [activeDetail, setActiveDetail] = useState(null)
+  const [isLoadingLatestScan, setIsLoadingLatestScan] = useState(false)
+  const [didTryLoadLatestScan, setDidTryLoadLatestScan] = useState(false)
   const location = useLocation()
   const navigate = useNavigate()
-  const backendScanResponse = location.state?.backendScanResponse
+  const { token } = useAuth()
+  const [backendScanResponse, setBackendScanResponse] = useState(() => location.state?.backendScanResponse ?? null)
+
+  useEffect(() => {
+    if (location.state?.backendScanResponse) {
+      setBackendScanResponse(location.state.backendScanResponse)
+      setDidTryLoadLatestScan(false)
+    }
+  }, [location.state])
+
+  useEffect(() => {
+    if (hasTranscriptsInResponse(backendScanResponse)) return
+    if (didTryLoadLatestScan) return
+    if (!token) return
+
+    let cancelled = false
+    setDidTryLoadLatestScan(true)
+    setIsLoadingLatestScan(true)
+
+    getScanHistory(token, { pageNumber: 1, pageSize: 1 })
+      .then((data) => {
+        if (cancelled) return
+        const lastScan = extractLastScanResponse(data)
+        if (lastScan) setBackendScanResponse(lastScan)
+      })
+      .catch((error) => {
+        if (cancelled) return
+        logger.warn('Failed to fetch latest scan via /scan/get', error)
+      })
+      .finally(() => {
+        if (!cancelled) setIsLoadingLatestScan(false)
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [backendScanResponse, didTryLoadLatestScan, token])
+
   const backendValue = backendScanResponse?.value ?? null
   const backendTranscripts = Array.isArray(backendValue?.transcripts)
     ? backendValue.transcripts.map(normalizeTranscript).filter(Boolean)
@@ -160,8 +224,12 @@ function Results() {
       <Page>
         <div className="results-page">
           <div className="results-error">
-            <h2>Результаты ещё не готовы</h2>
-            <p>Подождите обработку на сервере и попробуйте открыть результаты снова.</p>
+            <h2>{isLoadingLatestScan ? 'Загружаем последний скан...' : 'Результаты ещё не готовы'}</h2>
+            <p>
+              {isLoadingLatestScan
+                ? 'Проверяем ваш последний результат на сервере.'
+                : 'Подождите обработку на сервере и попробуйте открыть результаты снова.'}
+            </p>
             <button onClick={() => navigate('/camera')} className="results-button">
               Вернуться к измерению
             </button>

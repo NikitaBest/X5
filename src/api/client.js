@@ -163,3 +163,31 @@ export async function postScanSaveRppg(token, scanResult) {
   const data = await res.json().catch(() => ({}))
   return data
 }
+
+/**
+ * GET /scan/get — получить историю сканов пользователя.
+ * Для последнего скана передайте pageNumber=1, pageSize=1.
+ * @param {string} token - JWT из auth/login
+ * @param {{ pageNumber?: number, pageSize?: number }} params
+ */
+export async function getScanHistory(token, params = {}) {
+  const { pageNumber = 1, pageSize = 1 } = params
+  const url = new URL(`${BASE_URL.replace(/\/$/, '')}/scan/get`)
+  url.searchParams.set('pageNumber', String(pageNumber))
+  url.searchParams.set('pageSize', String(pageSize))
+
+  const res = await fetch(url.toString(), {
+    method: 'GET',
+    headers: {
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+  })
+
+  if (!res.ok) {
+    const errText = await res.text()
+    throw new Error(`scan/get failed: ${res.status} ${errText}`)
+  }
+
+  const data = await res.json().catch(() => ({}))
+  return data
+}
