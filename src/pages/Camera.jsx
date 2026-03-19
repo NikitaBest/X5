@@ -8,6 +8,8 @@ import healthMonitorManager, {
   SmokingStatus,
 } from '@biosensesignal/web-sdk'
 import { useUserData } from '../contexts/UserDataContext.jsx'
+import { useAuth } from '../contexts/AuthContext.jsx'
+import { postScanSaveRppg } from '../api/client.js'
 import { SDK_CONFIG } from '../config/sdkConfig.js'
 import logger from '../utils/logger.js'
 import Page from '../layout/Page.jsx'
@@ -379,6 +381,7 @@ function getUserMessageForAlert(alertInfo) {
 function Camera() {
   const navigate = useNavigate()
   const { userData } = useUserData()
+  const { token } = useAuth()
   const videoRef = useRef(null)
   const ovalRef = useRef(null)
   const sessionRef = useRef(null)
@@ -414,6 +417,13 @@ function Camera() {
   const measurementStartTimeRef = useRef(null) // Ref для хранения времени начала измерения (избегаем проблем с замыканием)
   const sessionStateRef = useRef(SessionState.INIT) // Актуальное состояние сессии для проверки внутри таймера
   const hasAutoStartScheduledRef = useRef(false)   // Не планировать start() дважды за один ACTIVE
+
+  const getMetricValue = (item) => {
+    if (item === null || item === undefined) return null
+    if (typeof item === 'object' && 'value' in item) return item.value
+    if (typeof item === 'number' || typeof item === 'string') return item
+    return null
+  }
 
   // scanStages удален - используем только тексты, основанные на реальных состояниях SDK
 
@@ -558,12 +568,86 @@ function Camera() {
     
     // ВАЖНО: Устанавливаем флаг, чтобы предотвратить автоматический перезапуск после завершения
     measurementCompletedRef.current = true
+
+    // Сохраняем результат сканирования в бэкенд (не блокируем переход на экран результатов).
+    try {
+      const sdkResults = vitalSignsResults?.results || {}
+      const pulseRate = sdkResults?.pulseRate
+      const respirationRate = sdkResults?.respirationRate
+      const stressLevel = sdkResults?.stressLevel
+      const sdnn = sdkResults?.sdnn
+      const bloodPressure = sdkResults?.bloodPressure
+
+      let bloodPressureSystolic = null
+      let bloodPressureDiastolic = null
+      if (bloodPressure && typeof bloodPressure === 'object') {
+        if (bloodPressure.value && typeof bloodPressure.value === 'object') {
+          bloodPressureSystolic = getMetricValue(bloodPressure.value.systolic)
+          bloodPressureDiastolic = getMetricValue(bloodPressure.value.diastolic)
+        } else {
+          bloodPressureSystolic = getMetricValue(bloodPressure.systolic)
+          bloodPressureDiastolic = getMetricValue(bloodPressure.diastolic)
+        }
+      }
+
+      const payload = {
+        takenAt: new Date().toISOString(),
+        source: 'web_sdk',
+        userInfo: {
+          sex: userData?.gender || null,
+          age: userData?.age ?? null,
+          heightCm: userData?.height ?? null,
+          weightKg: userData?.weight ?? null,
+          smokingStatus: userData?.smokingStatus || null,
+        },
+        metrics: {
+          pulseRate: {
+            value: getMetricValue(pulseRate),
+            unit: 'bpm',
+            confidence: pulseRate?.confidence ?? pulseRate?.confidenceLevel ?? null,
+          },
+          respirationRate: {
+            value: getMetricValue(respirationRate),
+            unit: 'breaths_per_min',
+            confidence: respirationRate?.confidence ?? respirationRate?.confidenceLevel ?? null,
+          },
+          stressLevel: {
+            value: getMetricValue(stressLevel),
+            unit: 'ratio',
+            confidence: stressLevel?.confidence ?? stressLevel?.confidenceLevel ?? null,
+          },
+          sdnn: {
+            value: getMetricValue(sdnn),
+            unit: 'ms',
+            confidence: sdnn?.confidence ?? sdnn?.confidenceLevel ?? null,
+          },
+          bloodPressure: {
+            systolic: bloodPressureSystolic,
+            diastolic: bloodPressureDiastolic,
+            unit: 'mmHg',
+            confidence: bloodPressure?.confidence ?? bloodPressure?.confidenceLevel ?? null,
+          },
+        },
+        sdkRaw: vitalSignsResults,
+      }
+
+      const scanResult = JSON.stringify(payload)
+      postScanSaveRppg(token, scanResult)
+        .then(() => {
+          logger.info('scan/save-rppg: результат успешно сохранён')
+        })
+        .catch((err) => {
+          logger.warn('scan/save-rppg: не удалось сохранить результат', err)
+        })
+    } catch (err) {
+      logger.warn('scan/save-rppg: не удалось сериализовать результат', err)
+    }
     
     // Переход на страницу результатов через 1 секунду (пользователь видит уведомление «Готово»)
     setTimeout(() => {
       navigate('/results', { state: { results: vitalSignsResults } })
     }, 1000)
-  }, [navigate])
+  }, [navigate, token, userData])
 
   // Callback для обработки ошибок
   const onError = useCallback((errorData) => {

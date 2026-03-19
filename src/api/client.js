@@ -136,3 +136,30 @@ export async function getExcludeProductsForUser(token) {
   const data = await res.json().catch(() => ({}))
   return data
 }
+
+/**
+ * POST /scan/save-rppg — сохранить результат сканирования rPPG.
+ * @param {string} token - JWT из auth/login
+ * @param {string} scanResult - JSON-строка результата сканирования
+ */
+export async function postScanSaveRppg(token, scanResult) {
+  const url = `${BASE_URL.replace(/\/$/, '')}/scan/save-rppg`
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify({
+      scanResult: String(scanResult ?? ''),
+    }),
+  })
+
+  if (!res.ok) {
+    const errText = await res.text()
+    throw new Error(`scan/save-rppg failed: ${res.status} ${errText}`)
+  }
+
+  const data = await res.json().catch(() => ({}))
+  return data
+}
