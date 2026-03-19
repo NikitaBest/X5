@@ -100,7 +100,7 @@ function Welcome() {
 
   return (
     <Page className="welcome-page">
-      <Header title="Смарт анализ" showBack={false} />
+      <Header title="Цели" showBack={false} />
       <ProgressBar currentStep={1} totalSteps={3} />
       
       <div className="welcome-content">
