@@ -173,7 +173,7 @@ function AlgorithmSettings() {
   return (
     <Page className="algorithm-settings-page">
       <Header title="Настройка алгоритмов" />
-      <ProgressBar currentStep={3} totalSteps={5} />
+      <ProgressBar currentStep={2} totalSteps={3} />
       
       <div className="algorithm-settings-content">
         {/* Секция выбора пола */}

@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Page from '../layout/Page.jsx'
 import Header from '../layout/Header.jsx'
-import ProgressBar from '../ui/ProgressBar.jsx'
 import PrimaryButton from '../components/PrimaryButton.jsx'
 import './Preparation.css'
 
@@ -17,8 +16,7 @@ function Preparation() {
   return (
     <Page className="preparation-page">
       <Header title="Подготовка" />
-      <ProgressBar currentStep={5} totalSteps={5} />
-      
+
       <div className="preparation-content">
         <h2 className="preparation-title">Подготовьтесь к сканированию</h2>
         <p className="preparation-description">

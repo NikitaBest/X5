@@ -192,7 +192,7 @@ function Allergies() {
   return (
     <Page className="allergies-page">
       <Header title="Исключения" showBack />
-      <ProgressBar currentStep={4} totalSteps={5} />
+      <ProgressBar currentStep={3} totalSteps={3} />
 
       <div className="allergies-content">
         <div className="allergies-title-block">

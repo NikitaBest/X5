@@ -1,11 +1,10 @@
 import { useState, useEffect, useRef } from 'react'
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './contexts/AuthContext.jsx'
 import { UserDataProvider, useUserData } from './contexts/UserDataContext.jsx'
 import MobileAppShell from './layout/MobileAppShell.jsx'
 import LoadingScreen from './components/LoadingScreen.jsx'
 import Welcome from './pages/Welcome.jsx'
-import RecentActivity from './pages/RecentActivity.jsx'
 import PrioritySelection from './pages/PrioritySelection.jsx'
 import AlgorithmSettings from './pages/AlgorithmSettings.jsx'
 import Allergies from './pages/Allergies.jsx'
@@ -33,7 +32,7 @@ function App() {
         <Routes>
           <Route element={<MobileAppShell />}>
             <Route path="/" element={<Welcome />} />
-            <Route path="/recent-activity" element={<RecentActivity />} />
+            <Route path="/recent-activity" element={<Navigate to="/algorithm-settings" replace />} />
             <Route path="/priority" element={<PrioritySelection />} />
             <Route path="/algorithm-settings" element={<AlgorithmSettings />} />
             <Route path="/allergies" element={<Allergies />} />

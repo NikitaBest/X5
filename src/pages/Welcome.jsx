@@ -91,7 +91,7 @@ function Welcome() {
   const handleNext = () => {
     // сохраняем выбранные цели в контекст пользователя
     updateUserData({ goals: selectedGoals })
-    navigate('/recent-activity')
+    navigate('/algorithm-settings')
   }
 
   const selectedCount = selectedGoals.length
@@ -101,7 +101,7 @@ function Welcome() {
   return (
     <Page className="welcome-page">
       <Header title="Смарт анализ" showBack={false} />
-      <ProgressBar currentStep={1} totalSteps={5} />
+      <ProgressBar currentStep={1} totalSteps={3} />
       
       <div className="welcome-content">
         <h1 className="welcome-heading">Что сейчас важнее?</h1>
