@@ -5,18 +5,18 @@ function clamp(value, min, max) {
   return Math.min(max, Math.max(min, value))
 }
 
-// Маппим пульс на угол стрелки по всему полукругу: от левого края (-180°) до правого (0°)
-function getNeedleAngle(pulse) {
-  if (pulse == null || Number.isNaN(pulse)) {
+// Маппим значение на угол стрелки по всему полукругу: от левого края (-180°) до правого (0°)
+function getNeedleAngle(value, minValue, maxValue) {
+  if (value == null || Number.isNaN(value)) {
     return -180 // базовое положение, если данных нет — край слева
   }
 
-  // Расширенный рабочий диапазон: от 40 до 140 уд/мин,
-  // чтобы стрелка заметно двигалась на всём полукруге
-  const minPulse = 40
-  const maxPulse = 140
-  const clamped = clamp(pulse, minPulse, maxPulse)
-  const fraction = (clamped - minPulse) / (maxPulse - minPulse) // 0..1
+  const safeMin = Number.isFinite(minValue) ? minValue : 0
+  const safeMax = Number.isFinite(maxValue) ? maxValue : 100
+  const range = safeMax - safeMin
+  if (range <= 0) return -180
+  const clamped = clamp(value, safeMin, safeMax)
+  const fraction = (clamped - safeMin) / range // 0..1
 
   const minAngle = -180
   const maxAngle = 0
@@ -80,9 +80,10 @@ function getZoneColorByAngle(angle) {
   return stops[stops.length - 1].color
 }
 
-function HeartRateGauge({ pulse }) {
-  const numericPulse = typeof pulse === 'number' ? pulse : null
-  const targetAngle = getNeedleAngle(numericPulse)
+function HeartRateGauge({ pulse, value, min = 40, max = 140 }) {
+  const sourceValue = value ?? pulse
+  const numericValue = typeof sourceValue === 'number' ? sourceValue : null
+  const targetAngle = getNeedleAngle(numericValue, min, max)
   const [angle, setAngle] = useState(-180)
   const zoneColor = getZoneColorByAngle(angle)
 

@@ -7,22 +7,187 @@ import ResultDetailSheet from '../components/ResultDetailSheet.jsx'
 import logger from '../utils/logger.js'
 import './Results.css'
 
+const CARD_CLASS_BY_KEY = {
+  pulseRate: 'result-card--pulse',
+  respirationRate: 'result-card--respiration',
+  stressLevel: 'result-card--stress',
+  bloodPressure: 'result-card--bp',
+  sdnn: 'result-card--sdnn',
+}
+
+function normalizeTranscript(t) {
+  if (!t || !t.key) return null
+  return {
+    key: t.key,
+    name: t.name || t.key,
+    value: t.value,
+    unit: t.unit || '',
+    color: t.color || '',
+    description: t.descriptionUser || '',
+    comment: t.commentUser || '',
+    confidenceLevel: t.confidenceLevel ?? null,
+  }
+}
+
+function getSdkValue(item) {
+  if (item == null) return null
+  if (typeof item === 'object' && 'value' in item) return item.value
+  if (typeof item === 'number' || typeof item === 'string') return item
+  return null
+}
+
+function getCardsFromBackend(transcripts = []) {
+  const map = new Map(transcripts.map((t) => [t.key, t]))
+
+  const systolic = map.get('bloodPressureSystolic')
+  const diastolic = map.get('bloodPressureDiastolic')
+
+  const cards = []
+  const priorityKeys = ['pulseRate', 'respirationRate', 'stressLevel', 'sdnn']
+  priorityKeys.forEach((key) => {
+    const tr = map.get(key)
+    if (!tr) return
+    cards.push({
+      key,
+      title: tr.name,
+      value: tr.value,
+      unit: tr.unit,
+      statusText: tr.comment || '',
+      description: tr.description || '',
+      color: tr.color,
+      confidenceLevel: tr.confidenceLevel,
+    })
+  })
+
+  if (systolic && diastolic) {
+    cards.push({
+      key: 'bloodPressure',
+      title: 'Артериальное давление',
+      value: `${systolic.value}/${diastolic.value}`,
+      unit: systolic.unit || diastolic.unit || 'мм рт. ст.',
+      statusText: systolic.comment || diastolic.comment || '',
+      description: systolic.description || diastolic.description || '',
+      color: systolic.color || diastolic.color || '',
+      confidenceLevel: systolic.confidenceLevel ?? diastolic.confidenceLevel ?? null,
+    })
+  }
+
+  transcripts
+    .filter(
+      (t) =>
+        t.key &&
+        !['pulseRate', 'respirationRate', 'stressLevel', 'sdnn', 'bloodPressureSystolic', 'bloodPressureDiastolic'].includes(t.key),
+    )
+    .forEach((tr) => {
+      cards.push({
+        key: tr.key,
+        title: tr.name,
+        value: tr.value,
+        unit: tr.unit,
+        statusText: tr.comment || '',
+        description: tr.description || '',
+        color: tr.color,
+        confidenceLevel: tr.confidenceLevel,
+      })
+    })
+
+  return cards
+}
+
+function getCardsFromSdk(sdkResults) {
+  if (!sdkResults || typeof sdkResults !== 'object') return []
+  const pulseRate = sdkResults.pulseRate
+  const respirationRate = sdkResults.respirationRate
+  const stressLevel = sdkResults.stressLevel
+  const sdnn = sdkResults.sdnn
+  const bloodPressure = sdkResults.bloodPressure
+
+  let bp = null
+  if (bloodPressure?.value && typeof bloodPressure.value === 'object') {
+    bp = `${bloodPressure.value.systolic}/${bloodPressure.value.diastolic}`
+  }
+
+  const cards = [
+    pulseRate && {
+      key: 'pulseRate',
+      title: 'Пульс',
+      value: getSdkValue(pulseRate),
+      unit: 'уд/мин',
+      statusText: '',
+      description: '',
+      color: '',
+      confidenceLevel: pulseRate.confidenceLevel ?? null,
+    },
+    respirationRate && {
+      key: 'respirationRate',
+      title: 'Частота дыхания',
+      value: getSdkValue(respirationRate),
+      unit: 'дых/мин',
+      statusText: '',
+      description: '',
+      color: '',
+      confidenceLevel: respirationRate.confidenceLevel ?? null,
+    },
+    stressLevel && {
+      key: 'stressLevel',
+      title: 'Уровень стресса',
+      value: getSdkValue(stressLevel),
+      unit: 'уровень',
+      statusText: '',
+      description: '',
+      color: '',
+      confidenceLevel: stressLevel.confidenceLevel ?? null,
+    },
+    bp && {
+      key: 'bloodPressure',
+      title: 'Артериальное давление',
+      value: bp,
+      unit: 'мм рт. ст.',
+      statusText: '',
+      description: '',
+      color: '',
+      confidenceLevel: bloodPressure?.confidenceLevel ?? null,
+    },
+    sdnn && {
+      key: 'sdnn',
+      title: 'SDNN',
+      value: getSdkValue(sdnn),
+      unit: 'мс',
+      statusText: '',
+      description: '',
+      color: '',
+      confidenceLevel: sdnn.confidenceLevel ?? null,
+    },
+  ].filter(Boolean)
+
+  return cards
+}
+
 function Results() {
   const [showAllMetricsCards, setShowAllMetricsCards] = useState(false)
   const [activeDetail, setActiveDetail] = useState(null)
   const location = useLocation()
   const navigate = useNavigate()
   const { userData } = useUserData()
-  const results = location.state?.results
+  const backendScanResponse = location.state?.backendScanResponse
+  const backendValue = backendScanResponse?.value ?? null
+  const backendTranscripts = Array.isArray(backendValue?.transcripts)
+    ? backendValue.transcripts.map(normalizeTranscript).filter(Boolean)
+    : []
 
-  if (!results || !results.results) {
-    logger.warn('Results page accessed without results data')
+  const cards = getCardsFromBackend(backendTranscripts)
+  const visibleCards = showAllMetricsCards ? cards : cards.slice(0, 4)
+  const hasAnyResults = cards.length > 0
+  const healthScore = backendValue?.healthScore != null ? Number(backendValue.healthScore) : null
+
+  if (!hasAnyResults) {
+    logger.warn('Results page accessed without backend results')
     return (
       <Page>
         <div className="results-page">
           <div className="results-error">
-            <h2>Результаты не найдены</h2>
-            <p>Пожалуйста, пройдите измерение заново.</p>
+            <h2>Результаты ещё не готовы</h2>
+            <p>Подождите обработку на сервере и попробуйте открыть результаты снова.</p>
             <button onClick={() => navigate('/camera')} className="results-button">
               Вернуться к измерению
             </button>
@@ -31,183 +196,9 @@ function Results() {
       </Page>
     )
   }
-
-  const { pulseRate, stressLevel, respirationRate, bloodPressure, sdnn } = results.results
-
-  // Безопасное извлечение значений (SDK может возвращать объекты с value или прямые значения)
-  const getValue = (item) => {
-    if (item === null || item === undefined) return null
-    if (typeof item === 'object' && 'value' in item) {
-      return item.value
-    }
-    // Если это число (включая 0) или строка, возвращаем как есть
-    if (typeof item === 'number' || typeof item === 'string') {
-      return item
-    }
-    return item
-  }
-
-  const stressLevelValue = getValue(stressLevel)
-  const pulseRateValue = getValue(pulseRate)
-  const respirationRateValue = getValue(respirationRate)
-  const sdnnValue = getValue(sdnn)
-
-  // Для визуального статуса стресса (только для теста: 1 — зелёный, 2 — жёлтый, 3 — красный)
-  const rawStressNumeric =
-    typeof stressLevelValue === 'number'
-      ? stressLevelValue
-      : Number(stressLevelValue ?? (stressLevel && typeof stressLevel === 'object' ? stressLevel.value : stressLevel))
-
-  let stressVisualLevel = null // 'low' | 'medium' | 'high'
-  let stressVisualLabel = null
-
-  if (!Number.isNaN(rawStressNumeric) && rawStressNumeric != null) {
-    if (rawStressNumeric === 1) {
-      stressVisualLevel = 'low'
-      stressVisualLabel = 'Низкий'
-    } else if (rawStressNumeric === 2) {
-      stressVisualLevel = 'medium'
-      stressVisualLabel = 'Повышен'
-    } else if (rawStressNumeric === 3) {
-      stressVisualLevel = 'high'
-      stressVisualLabel = 'Высокий'
-    }
-  }
-
-  // Детальное логирование для отладки
-  console.log('🔍 ДЕТАЛЬНАЯ ОТЛАДКА ИЗВЛЕЧЕНИЯ ЗНАЧЕНИЙ:', {
-    pulseRate: { raw: pulseRate, extracted: pulseRateValue, type: typeof pulseRate },
-    stressLevel: { raw: stressLevel, extracted: stressLevelValue, type: typeof stressLevel },
-    respirationRate: { raw: respirationRate, extracted: respirationRateValue, type: typeof respirationRate },
-    sdnn: { raw: sdnn, extracted: sdnnValue, type: typeof sdnn },
-    bloodPressure: { raw: bloodPressure, type: typeof bloodPressure },
-  })
-
-  // Обработка bloodPressure (может быть объектом с systolic и diastolic)
-  // ВАЖНО: По логам структура: bloodPressure.value.systolic и bloodPressure.value.diastolic
-  let bloodPressureSystolic = null
-  let bloodPressureDiastolic = null
-  if (bloodPressure) {
-    if (typeof bloodPressure === 'object') {
-      // Сначала проверяем структуру bloodPressure.value.systolic (как в логах)
-      if ('value' in bloodPressure && typeof bloodPressure.value === 'object') {
-        const bpValue = bloodPressure.value
-        if ('systolic' in bpValue && 'diastolic' in bpValue) {
-          bloodPressureSystolic = typeof bpValue.systolic === 'object' && 'value' in bpValue.systolic 
-            ? bpValue.systolic.value 
-            : bpValue.systolic
-          bloodPressureDiastolic = typeof bpValue.diastolic === 'object' && 'value' in bpValue.diastolic 
-            ? bpValue.diastolic.value 
-            : bpValue.diastolic
-        }
-      } else if ('systolic' in bloodPressure && 'diastolic' in bloodPressure) {
-        // Если это объект с systolic и diastolic напрямую
-        bloodPressureSystolic = typeof bloodPressure.systolic === 'object' && 'value' in bloodPressure.systolic 
-          ? bloodPressure.systolic.value 
-          : bloodPressure.systolic
-        bloodPressureDiastolic = typeof bloodPressure.diastolic === 'object' && 'value' in bloodPressure.diastolic 
-          ? bloodPressure.diastolic.value 
-          : bloodPressure.diastolic
-      }
-    }
-  }
-
-  // Формируем список всех показателей SDK для пользовательского отображения
-  const allMetrics = Object.entries(results.results || {}).map(([key, value]) => {
-    let displayValue = value
-    let extra = null
-
-    if (value && typeof value === 'object') {
-      if ('value' in value) {
-        displayValue = value.value
-      } else if ('systolic' in value || 'diastolic' in value) {
-        // Обработка bloodPressure
-        const s = typeof value.systolic === 'object' && value.systolic && 'value' in value.systolic
-          ? value.systolic.value
-          : value.systolic
-        const d = typeof value.diastolic === 'object' && value.diastolic && 'value' in value.diastolic
-          ? value.diastolic.value
-          : value.diastolic
-        displayValue = `${s}/${d}`
-      } else if (value.value && typeof value.value === 'object' && ('systolic' in value.value || 'diastolic' in value.value)) {
-        // Обработка bloodPressure.value.systolic/diastolic
-        const s = value.value.systolic
-        const d = value.value.diastolic
-        displayValue = `${s}/${d}`
-      } else {
-        displayValue = JSON.stringify(value)
-      }
-
-      const rawConfidence = value.confidence ?? value.confidenceLevel
-      if (rawConfidence !== undefined) {
-        if (typeof rawConfidence === 'number') {
-          extra = `${Math.round(rawConfidence * 100)}%`
-        } else {
-          extra = String(rawConfidence)
-        }
-      }
-    }
-
-    return { key, value: displayValue, extra }
-  })
-
-  // Основные метрики, для которых уже есть "большие" карточки
-  const primaryMetricKeys = new Set(['pulseRate', 'respirationRate', 'stressLevel', 'bloodPressure', 'sdnn'])
-  // Дополнительные метрики SDK, которые покажем отдельными карточками при раскрытии
-  const additionalMetrics = allMetrics.filter((metric) => !primaryMetricKeys.has(metric.key))
-
-  // Выводим полные данные в консоль для отладки
-  console.log('📊📊📊 РЕЗУЛЬТАТЫ НА СТРАНИЦЕ RESULTS (можно развернуть в консоли):', {
-    fullResults: results,
-    extractedResults: results.results,
-    pulseRate,
-    stressLevel,
-    respirationRate,
-    bloodPressure,
-    sdnn,
-    allMetrics,
-  })
-  
   logger.info('Results page displayed', {
-    hasPulseRate: !!pulseRate,
-    hasStressLevel: stressLevelValue !== null && stressLevelValue !== undefined,
-    hasRespirationRate: !!respirationRate,
-    hasBloodPressure: !!bloodPressure,
-    hasSdnn: !!sdnn,
-    stressLevelValue,
-    pulseRateValue,
-    respirationRateValue,
-    sdnnValue,
-    bloodPressureSystolic,
-    bloodPressureDiastolic,
-    note: 'Полные данные можно увидеть в console.log выше'
-  })
-
-  // Проверяем, есть ли хотя бы одно значение для отображения
-  const hasAnyResults = (pulseRateValue !== null && pulseRateValue !== undefined) || 
-                       (respirationRateValue !== null && respirationRateValue !== undefined) ||
-                       (stressLevelValue !== null && stressLevelValue !== undefined) ||
-                       (bloodPressureSystolic !== null && bloodPressureDiastolic !== null) ||
-                       (sdnnValue !== null && sdnnValue !== undefined) ||
-                       (pulseRate && (pulseRate.value !== undefined || typeof pulseRate === 'number')) ||
-                       (respirationRate && (respirationRate.value !== undefined || typeof respirationRate === 'number')) ||
-                       (stressLevel !== undefined && stressLevel !== null) ||
-                       (bloodPressure && (bloodPressure.systolic || bloodPressure.diastolic)) ||
-                       (sdnn && (sdnn.value !== undefined || typeof sdnn === 'number'))
-
-  console.log('🔍 ПРОВЕРКА ОТОБРАЖЕНИЯ:', {
-    hasAnyResults,
-    pulseRateValue,
-    respirationRateValue,
-    stressLevelValue,
-    bloodPressureSystolic,
-    bloodPressureDiastolic,
-    sdnnValue,
-    willRenderPulse: pulseRateValue !== null && pulseRateValue !== undefined || pulseRate,
-    willRenderRespiration: respirationRateValue !== null && respirationRateValue !== undefined || respirationRate,
-    willRenderStress: stressLevelValue !== null && stressLevelValue !== undefined || stressLevel !== undefined,
-    willRenderBP: (bloodPressureSystolic !== null && bloodPressureDiastolic !== null) || bloodPressure,
-    willRenderSdnn: sdnnValue !== null && sdnnValue !== undefined || sdnn,
+    hasBackendTranscripts: backendTranscripts.length > 0,
+    totalCards: cards.length,
   })
 
   const handleDownloadJson = () => {
@@ -224,38 +215,10 @@ function Results() {
 
     // Собираем полезный JSON: данные пользователя + метрики + сырой ответ SDK
     const payload = {
-      takenAt: results?.measurementTime || new Date().toISOString(),
+      takenAt: backendValue?.scan?.createdAt || new Date().toISOString(),
       source: 'web_sdk',
       ...(userInfo && { userInfo }),
-      metrics: {
-        pulseRate: {
-          value: pulseRateValue ?? (pulseRate?.value ?? pulseRate ?? null),
-          unit: 'bpm',
-          confidence: pulseRate && typeof pulseRate === 'object' ? pulseRate.confidence ?? null : null,
-        },
-        respirationRate: {
-          value: respirationRateValue ?? (respirationRate?.value ?? respirationRate ?? null),
-          unit: 'breaths_per_min',
-          confidence: respirationRate && typeof respirationRate === 'object' ? respirationRate.confidence ?? null : null,
-        },
-        stressLevel: {
-          value: stressLevelValue ?? (stressLevel?.value ?? stressLevel ?? null),
-          unit: 'ratio',
-          confidence: stressLevel && typeof stressLevel === 'object' ? stressLevel.confidence ?? null : null,
-        },
-        sdnn: {
-          value: sdnnValue ?? (sdnn?.value ?? sdnn ?? null),
-          unit: 'ms',
-          confidence: sdnn && typeof sdnn === 'object' ? sdnn.confidence ?? null : null,
-        },
-        bloodPressure: {
-          systolic: bloodPressureSystolic,
-          diastolic: bloodPressureDiastolic,
-          unit: 'mmHg',
-          confidence: bloodPressure && typeof bloodPressure === 'object' ? bloodPressure.confidence ?? null : null,
-        },
-      },
-      sdkRaw: results,
+      backend: backendScanResponse ?? null,
     }
 
     const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' })
@@ -282,9 +245,11 @@ function Results() {
         {hasAnyResults && (
           <>
             <div className="results-gauge-wrapper">
-              <HeartRateGauge pulse={pulseRateValue} />
+              <HeartRateGauge value={healthScore} min={0} max={100} />
             </div>
-            <div className="results-gauge-badge">Тест ваших показателей</div>
+            <div className="results-gauge-badge">
+              {backendValue?.healthScore != null ? `Индекс здоровья: ${backendValue.healthScore}` : 'Ваши показатели'}
+            </div>
           </>
         )}
 
@@ -295,264 +260,36 @@ function Results() {
         )}
 
         <div className="results-grid">
-          {/* Пульс */}
-          {((pulseRateValue !== null && pulseRateValue !== undefined) || (pulseRate && (pulseRate.value !== undefined || typeof pulseRate === 'number'))) ? (
+          {visibleCards.map((card) => (
             <div
-              className="result-card result-card--pulse"
+              key={card.key}
+              className={`result-card ${CARD_CLASS_BY_KEY[card.key] || 'result-card--extra'}`.trim()}
               onClick={() =>
                 setActiveDetail({
-                  title: 'Пульс',
-                  value: pulseRateValue ?? (pulseRate?.value ?? pulseRate ?? '—'),
-                  unit: 'уд/мин',
-                  statusText: 'Тестовый статус',
-                  description:
-                    'Показывает частоту сокращений сердца. Оптимальный пульс в покое — один из ключевых показателей здоровья сердечно‑сосудистой системы.',
+                  title: card.title || card.key,
+                  value: card.value ?? '—',
+                  unit: card.unit || '',
+                  statusText: card.statusText || '',
+                  description: card.description || '',
                 })
               }
             >
               <div className="result-card-top">
-                <div className="result-card-icon result-card-icon--pulse" aria-hidden="true">
-                  <svg width="20" height="20" viewBox="0 0 20 20">
-                    <path
-                      d="M3.33331 10.0003C5.27775 10.0003 6.23818 10.0003 7.08331 10.0003L8.33331 6.66699L10.4166 14.167L12.0833 9.16699L13.0416 11.667H16.6666"
-                      stroke="currentColor"
-                      strokeWidth="1.7"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
+                <div className="result-card-icon" aria-hidden="true">
+                  <span className="result-card-icon-dot" />
                 </div>
-                <div className="result-label">Пульс</div>
+                <div className="result-label">{card.title || card.key}</div>
               </div>
               <div className="result-main">
-                <div className="result-value">{pulseRateValue ?? (pulseRate?.value ?? pulseRate ?? '—')}</div>
-                <div className="result-unit">уд/мин</div>
+                <div className="result-value">{card.value ?? '—'}</div>
+                {card.unit ? <div className="result-unit">{card.unit}</div> : null}
               </div>
-              <div className="result-status-pill">Тестовый статус</div>
-              {pulseRate && typeof pulseRate === 'object' && pulseRate.confidence && (
-                <div className="result-confidence">
-                  Уверенность: {Math.round(pulseRate.confidence * 100)}%
-                </div>
-              )}
+              {card.statusText ? <div className="result-status-pill">{card.statusText}</div> : null}
+              {card.confidenceLevel != null ? (
+                <div className="result-confidence">Уверенность: {card.confidenceLevel}</div>
+              ) : null}
             </div>
-          ) : null}
-
-          {/* Частота дыхания */}
-          {((respirationRateValue !== null && respirationRateValue !== undefined) || (respirationRate && (respirationRate.value !== undefined || typeof respirationRate === 'number'))) ? (
-            <div
-              className="result-card result-card--respiration"
-              onClick={() =>
-                setActiveDetail({
-                  title: 'Частота дыхания',
-                  value: respirationRateValue ?? (respirationRate?.value ?? respirationRate ?? '—'),
-                  unit: 'дых/мин',
-                  statusText: 'Тестовый статус',
-                  description:
-                    'Отражает, насколько ровно и спокойно вы дышите. Учащённое дыхание может говорить о стрессе или нагрузке.',
-                })
-              }
-            >
-              <div className="result-card-top">
-                <div className="result-card-icon result-card-icon--respiration" aria-hidden="true">
-                  <svg width="20" height="20" viewBox="0 0 20 20">
-                    <path
-                      d="M4 12.5C5.2 11.6667 6.4 11.25 7.6 11.25C8.8 11.25 10 11.6667 11.2 12.5C12.4 13.3333 13.6 13.75 14.8 13.75C16 13.75 17.2 13.3333 18.4 12.5"
-                      stroke="currentColor"
-                      strokeWidth="1.5"
-                      strokeLinecap="round"
-                    />
-                    <path
-                      d="M4 7.5C5.2 6.66667 6.4 6.25 7.6 6.25C8.8 6.25 10 6.66667 11.2 7.5C12.4 8.33333 13.6 8.75 14.8 8.75C16 8.75 17.2 8.33333 18.4 7.5"
-                      stroke="currentColor"
-                      strokeWidth="1.5"
-                      strokeLinecap="round"
-                      opacity="0.6"
-                    />
-                  </svg>
-                </div>
-                <div className="result-label">Частота дыхания</div>
-              </div>
-              <div className="result-main">
-                <div className="result-value">
-                  {respirationRateValue ?? (respirationRate?.value ?? respirationRate ?? '—')}
-                </div>
-                <div className="result-unit">дых/мин</div>
-              </div>
-              <div className="result-status-pill">Тестовый статус</div>
-              {respirationRate && typeof respirationRate === 'object' && respirationRate.confidence && (
-                <div className="result-confidence">
-                  Уверенность: {Math.round(respirationRate.confidence * 100)}%
-                </div>
-              )}
-            </div>
-          ) : null}
-
-        {/* Уровень стресса — оформлен как обычная карточка результата */}
-        {((stressLevelValue !== null && stressLevelValue !== undefined) ||
-          (stressLevel && (stressLevel.value !== undefined || stressLevel !== null))) ? (
-            <div
-              className={`result-card result-card--stress${
-                stressVisualLevel ? ` result-card--stress-${stressVisualLevel}` : ''
-              }`}
-              onClick={() =>
-                setActiveDetail({
-                  title: 'Стресс',
-                  value: stressLevelValue ?? (stressLevel?.value ?? stressLevel ?? '—'),
-                  unit: 'из 10',
-                  statusText: 'Тестовый статус',
-                  description:
-                    'Стресс‑индекс учитывает вариабельность сердечного ритма. Высокие значения могут говорить о перегрузке нервной системы.',
-                })
-              }
-            >
-              <div className="result-card-top">
-                <div className="result-card-icon result-card-icon--stress" aria-hidden="true">
-                  <img src="/Frame 4.svg" alt="" />
-                </div>
-                <div className="result-label">Стресс</div>
-              </div>
-              <div className="result-main">
-                <div className="result-value">
-                  {stressLevelValue ?? (stressLevel?.value ?? stressLevel ?? '—')}
-                </div>
-                <div className="result-unit">из 10</div>
-              </div>
-              <div className="result-status-pill">Тестовый статус</div>
-              {stressLevel && typeof stressLevel === 'object' && stressLevel.confidence && (
-                <div className="result-confidence">
-                  Уверенность: {Math.round(stressLevel.confidence * 100)}%
-                </div>
-              )}
-            </div>
-          ) : null}
-
-          {/* Артериальное давление */}
-          {((bloodPressureSystolic !== null && bloodPressureDiastolic !== null) ||
-            (bloodPressure && bloodPressure.value && bloodPressure.value.systolic && bloodPressure.value.diastolic) ||
-            (bloodPressure && bloodPressure.systolic && bloodPressure.diastolic)) ? (
-              <div
-                className="result-card result-card--bp"
-                onClick={() =>
-                  setActiveDetail({
-                    title: 'Артериальное давление',
-                    value:
-                      bloodPressureSystolic !== null && bloodPressureDiastolic !== null
-                        ? `${bloodPressureSystolic}/${bloodPressureDiastolic}`
-                        : bloodPressure?.value?.systolic && bloodPressure?.value?.diastolic
-                          ? `${bloodPressure.value.systolic}/${bloodPressure.value.diastolic}`
-                          : bloodPressure?.systolic && bloodPressure?.diastolic
-                            ? `${bloodPressure.systolic}/${bloodPressure.diastolic}`
-                            : '—',
-                    unit: 'мм рт. ст.',
-                    statusText: 'Тестовый статус',
-                    description:
-                      'Показывает нагрузку на сосуды и сердце. Важно отслеживать давление в динамике, особенно при повышенных значениях.',
-                  })
-                }
-              >
-                <div className="result-card-top">
-                  <div className="result-card-icon result-card-icon--bp" aria-hidden="true">
-                    <svg width="20" height="20" viewBox="0 0 20 20">
-                      <path
-                        d="M10 3.33337C7.23858 3.33337 5 5.57195 5 8.33337C5 11.6667 8.33333 14.5834 9.58333 15.5834C9.72462 15.6968 9.86006 15.7871 10 15.7871C10.1399 15.7871 10.2754 15.6968 10.4167 15.5834C11.6667 14.5834 15 11.6667 15 8.33337C15 5.57195 12.7614 3.33337 10 3.33337Z"
-                        stroke="currentColor"
-                        strokeWidth="1.5"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                      <path
-                        d="M10 10.4167C11.1506 10.4167 12.0833 9.48401 12.0833 8.33337C12.0833 7.18273 11.1506 6.25004 10 6.25004C8.84938 6.25004 7.91669 7.18273 7.91669 8.33337C7.91669 9.48401 8.84938 10.4167 10 10.4167Z"
-                        stroke="currentColor"
-                        strokeWidth="1.5"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                  </div>
-                  <div className="result-label">Артериальное давление</div>
-                </div>
-                <div className="result-main">
-                  <div className="result-value">
-                    {bloodPressureSystolic !== null && bloodPressureDiastolic !== null
-                      ? `${bloodPressureSystolic}/${bloodPressureDiastolic}`
-                      : bloodPressure?.value?.systolic && bloodPressure?.value?.diastolic
-                        ? `${bloodPressure.value.systolic}/${bloodPressure.value.diastolic}`
-                        : bloodPressure?.systolic && bloodPressure?.diastolic
-                          ? `${bloodPressure.systolic}/${bloodPressure.diastolic}`
-                          : '—'}
-                  </div>
-                  <div className="result-unit">мм рт. ст.</div>
-                </div>
-                <div className="result-status-pill">Тестовый статус</div>
-                {bloodPressure && typeof bloodPressure === 'object' && bloodPressure.confidence && (
-                  <div className="result-confidence">
-                    Уверенность: {Math.round(bloodPressure.confidence * 100)}%
-                  </div>
-                )}
-              </div>
-            ) : null}
-
-          {/* SDNN */}
-          {showAllMetricsCards &&
-            (((sdnnValue !== null && sdnnValue !== undefined) ||
-              (sdnn && (sdnn.value !== undefined || typeof sdnn === 'number'))) ? (
-                <div className="result-card result-card--sdnn">
-                  <div className="result-card-top">
-                    <div className="result-card-icon result-card-icon--sdnn" aria-hidden="true">
-                      <svg width="20" height="20" viewBox="0 0 20 20">
-                        <path
-                          d="M3.33331 13.3334C4.55553 12.5 5.77775 12.0834 6.99998 12.0834C8.2222 12.0834 9.44442 12.5 10.6666 13.3334C11.8889 14.1667 13.1111 14.5834 14.3333 14.5834C15.5555 14.5834 16.7778 14.1667 18 13.3334"
-                          stroke="currentColor"
-                          strokeWidth="1.5"
-                          strokeLinecap="round"
-                        />
-                        <path
-                          d="M6.25 5.83337H7.08331"
-                          stroke="currentColor"
-                          strokeWidth="1.5"
-                          strokeLinecap="round"
-                        />
-                        <path
-                          d="M12.9167 5.83337H13.75"
-                          stroke="currentColor"
-                          strokeWidth="1.5"
-                          strokeLinecap="round"
-                        />
-                      </svg>
-                    </div>
-                    <div className="result-label">SDNN</div>
-                  </div>
-                  <div className="result-main">
-                    <div className="result-value">{sdnnValue ?? (sdnn?.value ?? sdnn ?? '—')}</div>
-                    <div className="result-unit">мс</div>
-                  </div>
-                  <div className="result-status-pill">Тестовый статус</div>
-                  {sdnn && typeof sdnn === 'object' && sdnn.confidence && (
-                    <div className="result-confidence">
-                      Уверенность: {Math.round(sdnn.confidence * 100)}%
-                    </div>
-                  )}
-                </div>
-            ) : null)}
-
-          {/* Дополнительные показатели SDK — как отдельные карточки */}
-          {showAllMetricsCards &&
-            additionalMetrics.map((metric) => (
-              <div key={metric.key} className="result-card result-card--extra">
-                <div className="result-card-top">
-                  <div className="result-card-icon" aria-hidden="true">
-                    <span className="result-card-icon-dot" />
-                  </div>
-                  <div className="result-label">{metric.key}</div>
-                </div>
-                <div className="result-main">
-                  <div className="result-value">
-                    {metric.value !== undefined && metric.value !== null ? String(metric.value) : '—'}
-                  </div>
-                  {metric.extra && <div className="result-unit">conf: {metric.extra}</div>}
-                </div>
-              </div>
-            ))}
+          ))}
         </div>
 
         {hasAnyResults && (

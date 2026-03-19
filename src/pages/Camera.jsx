@@ -417,6 +417,7 @@ function Camera() {
   const measurementStartTimeRef = useRef(null) // Ref для хранения времени начала измерения (избегаем проблем с замыканием)
   const sessionStateRef = useRef(SessionState.INIT) // Актуальное состояние сессии для проверки внутри таймера
   const hasAutoStartScheduledRef = useRef(false)   // Не планировать start() дважды за один ACTIVE
+  const saveScanPromiseRef = useRef(null)
 
   const getMetricValue = (item) => {
     if (item === null || item === undefined) return null
@@ -624,20 +625,40 @@ function Camera() {
         sdkRaw: vitalSignsResults,
       }
 
-      postScanSaveRppg(token, payload)
-        .then(() => {
+      saveScanPromiseRef.current = postScanSaveRppg(token, payload)
+        .then((response) => {
           logger.info('scan/save-rppg: результат успешно сохранён')
+          return response
         })
         .catch((err) => {
           logger.warn('scan/save-rppg: не удалось сохранить результат', err)
+          return null
         })
     } catch (err) {
       logger.warn('scan/save-rppg: не удалось сериализовать результат', err)
+      saveScanPromiseRef.current = null
     }
     
     // Переход на страницу результатов через 1 секунду (пользователь видит уведомление «Готово»)
-    setTimeout(() => {
-      navigate('/results', { state: { results: vitalSignsResults } })
+    setTimeout(async () => {
+      let backendScanResponse = null
+      try {
+        if (saveScanPromiseRef.current) {
+          backendScanResponse = await Promise.race([
+            saveScanPromiseRef.current,
+            new Promise((resolve) => setTimeout(() => resolve(null), 1200)),
+          ])
+        }
+      } catch {
+        backendScanResponse = null
+      }
+
+      navigate('/results', {
+        state: {
+          results: vitalSignsResults,
+          backendScanResponse,
+        },
+      })
     }, 1000)
   }, [navigate, token, userData])
 
