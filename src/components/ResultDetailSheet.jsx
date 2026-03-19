@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import './ResultDetailSheet.css'
 
 function clamp(value, min, max) {
@@ -148,7 +149,7 @@ function ResultDetailSheet({
   const hasDynamicScale = scaleItems.length > 0
   const markerPercent = getMarkerPercent(scaleMetadata, value)
 
-  return (
+  const sheetMarkup = (
     <div
       className={`result-sheet-backdrop${isClosing ? ' result-sheet-backdrop--closing' : ''}${isAnimatedOpen ? ' result-sheet-backdrop--open' : ''}`}
       onClick={handleBackdropClick}
@@ -260,6 +261,14 @@ function ResultDetailSheet({
       </div>
     </div>
   )
+
+  // Портал в `document.body` гарантирует корректное позиционирование `fixed`,
+  // даже если родительский экран скроллится или имеет `transform`/анимации.
+  if (typeof document !== 'undefined') {
+    return createPortal(sheetMarkup, document.body)
+  }
+
+  return sheetMarkup
 }
 
 export default ResultDetailSheet
