@@ -139,6 +139,19 @@ function ResultDetailSheet({
     startYRef.current = null
   }
 
+  const handleTouchMove = (event) => {
+    // Закрываем по свайпу “вниз” даже если touchend сработал неудачно:
+    const startY = startYRef.current
+    if (startY == null) return
+    const currentY = event.touches?.[0]?.clientY
+    if (currentY == null) return
+    const deltaY = currentY - startY
+    if (deltaY > 70) {
+      startYRef.current = null
+      handleClose()
+    }
+  }
+
   if (!open) return null
 
   const scaleItems = Array.isArray(scaleMetadata?.items)
@@ -158,6 +171,7 @@ function ResultDetailSheet({
         ref={sheetRef}
         className={`result-sheet${isClosing ? ' result-sheet--closing' : ''}${isAnimatedOpen ? ' result-sheet--open' : ''}`}
         onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
       >
         <div className="result-sheet-handle" />
