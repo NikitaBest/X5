@@ -54,3 +54,63 @@ export async function putUserUpdate(token, body) {
   const data = await res.json().catch(() => ({}))
   return data
 }
+
+/**
+ * GET /exclude-products/get — список продуктов-исключений.
+ * @param {string} token - JWT из auth/login
+ * @param {{ search?: string, pageNumber?: number, pageSize?: number }} params
+ */
+export async function getExcludeProducts(token, params = {}) {
+  const {
+    search = '',
+    pageNumber = 1,
+    pageSize = 100,
+  } = params
+
+  const url = new URL(`${BASE_URL.replace(/\/$/, '')}/exclude-products/get`)
+  if (search?.trim()) url.searchParams.set('search', search.trim())
+  url.searchParams.set('pageNumber', String(pageNumber))
+  url.searchParams.set('pageSize', String(pageSize))
+
+  const res = await fetch(url.toString(), {
+    method: 'GET',
+    headers: {
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+  })
+
+  if (!res.ok) {
+    const errText = await res.text()
+    throw new Error(`exclude-products failed: ${res.status} ${errText}`)
+  }
+
+  const data = await res.json().catch(() => ({}))
+  return data
+}
+
+/**
+ * POST /exclude-products/save-for-user — сохранить исключения пользователя.
+ * @param {string} token - JWT из auth/login
+ * @param {string[]} products - список исключений
+ */
+export async function postExcludeProducts(token, products = []) {
+  const url = `${BASE_URL.replace(/\/$/, '')}/exclude-products/save-for-user`
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify({
+      products: Array.isArray(products) ? products : [],
+    }),
+  })
+
+  if (!res.ok) {
+    const errText = await res.text()
+    throw new Error(`exclude-products create failed: ${res.status} ${errText}`)
+  }
+
+  const data = await res.json().catch(() => ({}))
+  return data
+}

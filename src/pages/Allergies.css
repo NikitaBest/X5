@@ -222,6 +222,13 @@
   margin-top: 24px;
 }
 
+.allergies-save-error {
+  margin-bottom: 10px;
+  font-size: 12px;
+  color: #c62828;
+  text-align: left;
+}
+
 .allergies-next-button {
   width: 100%;
   padding: 14px;
@@ -232,5 +239,10 @@
   font-size: 15px;
   font-weight: 600;
   cursor: pointer;
+}
+
+.allergies-next-button:disabled {
+  opacity: 0.7;
+  cursor: default;
 }
 
