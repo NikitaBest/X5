@@ -21,6 +21,12 @@ function formatRange(value) {
   return isInt ? String(Math.round(num)) : num.toFixed(2).replace(/\.?0+$/, '')
 }
 
+function getRangeLabel(item) {
+  const alias = String(item?.fromToAlias ?? '').trim()
+  if (alias) return alias
+  return `${formatRange(item?.from)}–${formatRange(item?.to)}`
+}
+
 function toFiniteNumberOrNull(value) {
   const num = Number(value)
   return Number.isFinite(num) ? num : null
@@ -238,7 +244,7 @@ function ResultDetailSheet({
                     )}%`,
                   }}
                 >
-                  {formatRange(item.from)}–{formatRange(item.to)}
+                  {getRangeLabel(item)}
                 </span>
               ))
             ) : (
