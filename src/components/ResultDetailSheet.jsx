@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from 'react'
-import { createPortal } from 'react-dom'
 import './ResultDetailSheet.css'
 
 function clamp(value, min, max) {
@@ -281,12 +280,6 @@ function ResultDetailSheet({
       </div>
     </div>
   )
-
-  // Портал в `document.body` гарантирует корректное позиционирование `fixed`,
-  // даже если родительский экран скроллится или имеет `transform`/анимации.
-  if (typeof document !== 'undefined') {
-    return createPortal(sheetMarkup, document.body)
-  }
 
   return sheetMarkup
 }
