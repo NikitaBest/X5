@@ -138,6 +138,89 @@ function getStatusByColor(color) {
   return ''
 }
 
+function getSpecialIconType(card) {
+  const key = String(card?.key || '')
+  const title = String(card?.title || '').toLowerCase()
+
+  if (key === 'pulseRate' || key === 'heartAge') {
+    return 'heart'
+  }
+
+  const pressureKeys = new Set([
+    'bloodPressure',
+    'bloodPressureSystolic',
+    'bloodPressureDiastolic',
+    'highBloodPressureRisk',
+    'meanArterialPressure',
+  ])
+
+  if (
+    pressureKeys.has(key) ||
+    title.includes('давление') ||
+    title.includes('систолическое') ||
+    title.includes('диастолическое')
+  ) {
+    return 'pressure'
+  }
+
+  const stressKeys = new Set([
+    'stressLevel',
+    'stressIndex',
+    'wellnessLevel',
+    'wellnessIndex',
+    'normalizedStressIndex',
+  ])
+
+  if (
+    stressKeys.has(key) ||
+    title.includes('стресс') ||
+    title.includes('самочувств')
+  ) {
+    return 'stress'
+  }
+
+  if (key === 'respirationRate' || title.includes('дыхан')) {
+    return 'respiration'
+  }
+
+  const hemoKeys = new Set([
+    'hemoglobin',
+    'hemoglobinA1c',
+    'highHemoglobinA1CRisk',
+    'highFastingGlucoseRisk',
+    'highTotalCholesterolRisk',
+    'lowHemoglobinRisk',
+  ])
+
+  if (
+    hemoKeys.has(key) ||
+    title.includes('гемоглобин') ||
+    title.includes('hba1c') ||
+    title.includes('глюкоз') ||
+    title.includes('холестерин')
+  ) {
+    return 'hemo'
+  }
+
+  const cardioKeys = new Set([
+    'prq',
+    'ascvdRisk',
+    'ascvdRiskLevel',
+    'cardiacWorkload',
+  ])
+
+  if (
+    cardioKeys.has(key) ||
+    title.includes('prq') ||
+    title.includes('ascvd') ||
+    title.includes('кардиаль')
+  ) {
+    return 'cardio'
+  }
+
+  return null
+}
+
 function hasTranscriptsInResponse(response) {
   return Array.isArray(response?.value?.transcripts) && response.value.transcripts.length > 0
 }
@@ -291,6 +374,7 @@ function Results() {
           {visibleCards.map((card) => {
             const theme = getCardThemeByColor(card.color)
             const statusText = getStatusByColor(card.color)
+            const specialIconType = getSpecialIconType(card)
             return (
               <div
                 key={card.key}
@@ -319,7 +403,13 @@ function Results() {
               >
                 <div className="result-card-top">
                   <div className="result-card-icon" aria-hidden="true">
-                    <span className="result-card-icon-dot" />
+                    {specialIconType ? (
+                      <span
+                        className={`result-card-icon-special result-card-icon-special--${specialIconType}`}
+                      />
+                    ) : (
+                      <span className="result-card-icon-dot" />
+                    )}
                   </div>
                   <div className="result-label">{card.title || card.key}</div>
                 </div>

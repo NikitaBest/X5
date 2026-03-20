@@ -342,6 +342,43 @@
   background-color: currentColor;
 }
 
+.result-card-icon-special {
+  width: 18px;
+  height: 18px;
+  display: inline-block;
+  background-color: currentColor;
+}
+
+.result-card-icon-special--heart {
+  -webkit-mask: url('/Icon.svg') center / contain no-repeat;
+  mask: url('/Icon.svg') center / contain no-repeat;
+}
+
+.result-card-icon-special--pressure {
+  -webkit-mask: url('/davlen.svg') center / contain no-repeat;
+  mask: url('/davlen.svg') center / contain no-repeat;
+}
+
+.result-card-icon-special--stress {
+  -webkit-mask: url('/stressblo.svg') center / contain no-repeat;
+  mask: url('/stressblo.svg') center / contain no-repeat;
+}
+
+.result-card-icon-special--respiration {
+  -webkit-mask: url('/dox.svg') center / contain no-repeat;
+  mask: url('/dox.svg') center / contain no-repeat;
+}
+
+.result-card-icon-special--hemo {
+  -webkit-mask: url('/gemo.svg') center / contain no-repeat;
+  mask: url('/gemo.svg') center / contain no-repeat;
+}
+
+.result-card-icon-special--cardio {
+  -webkit-mask: url('/serd.svg') center / contain no-repeat;
+  mask: url('/serd.svg') center / contain no-repeat;
+}
+
 .result-label {
   font-size: clamp(11px, 3.2vw, 12px);
   letter-spacing: 0.02em;
