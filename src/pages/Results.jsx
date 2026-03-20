@@ -245,7 +245,7 @@ function extractLastScanResponse(data) {
 }
 
 function Results() {
-  const [showAllMetricsCards, setShowAllMetricsCards] = useState(true)
+  const [showAllMetricsCards, setShowAllMetricsCards] = useState(false)
   const [activeDetail, setActiveDetail] = useState(null)
   const [isLoadingLatestScan, setIsLoadingLatestScan] = useState(false)
   const [didTryLoadLatestScan, setDidTryLoadLatestScan] = useState(false)
