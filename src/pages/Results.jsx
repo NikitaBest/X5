@@ -312,8 +312,14 @@ function Results() {
   const healthBadgeText = getHealthBadgeText(healthScore)
 
   const firstRedCard = cards.find((c) => String(c?.color ?? '').toLowerCase() === 'red') ?? null
-  // commentUser (у нас хранится в statusText карточки)
-  const firstRedComment = truncateText(firstRedCard?.statusText || '')
+  const firstYellowCard = cards.find((c) => String(c?.color ?? '').toLowerCase() === 'yellow') ?? null
+
+  // Приоритет текста под заголовком:
+  // 1) первый красный, 2) первый жёлтый, 3) статичный "всё хорошо".
+  const priorityCard = firstRedCard ?? firstYellowCard ?? null
+  const priorityCommentText = priorityCard
+    ? truncateText(priorityCard?.statusText || '')
+    : 'Все показатели в пределах нормы. Продолжайте в том же духе.'
 
   if (!hasAnyResults) {
     logger.warn('Results page accessed without backend results')
@@ -346,11 +352,11 @@ function Results() {
         <div className="results-header">
           <h1 className="results-title">Результаты</h1>
           <div className="results-subtitle">rPPG-сканирование и анализ показателей по шкалам</div>
-          {firstRedCard && firstRedComment ? (
-            <div className="results-first-red-hint">
-              {firstRedCard.title}: {firstRedComment}
-            </div>
-          ) : null}
+          <div className="results-first-red-hint">
+            {priorityCard && priorityCommentText
+              ? `${priorityCard.title}: ${priorityCommentText}`
+              : 'Все показатели в пределах нормы. Продолжайте в том же духе.'}
+          </div>
         </div>
 
         {hasAnyResults && (
