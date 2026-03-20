@@ -25,16 +25,38 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 1rem;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .results-page .results-header .results-title {
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 600;
   margin: 0;
   text-align: center;
   line-height: 1.25;
   color: var(--text-primary, #000000);
+}
+
+.results-header .results-subtitle {
+  margin: 0;
+  margin-top: 6px;
+  font-size: 20px;
+  font-weight: 500;
+  line-height: 1.25;
+  text-align: center;
+  color: var(--text-primary, #000000);
+}
+
+.results-first-red-hint {
+  margin: 0;
+  margin-top: 2px;
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 1.35;
+  text-align: center;
+  color: var(--color-fg-secondary, #666666);
+  max-width: 320px;
 }
 
 .results-download-button {
@@ -459,10 +481,28 @@
   gap: 1rem;
 }
 
+.results-actions-disclaimer {
+  margin: 0 0 -6px;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.35;
+  text-align: center;
+  color: #7b7b7b;
+}
+
 /* Дополнительная адаптация для очень узких экранов */
 @media (max-width: 360px) {
   .results-page .results-header .results-title {
-    font-size: 13px;
+    font-size: 14px;
+  }
+
+  .results-header .results-subtitle {
+    font-size: 18px;
+  }
+
+  .results-first-red-hint {
+    font-size: 10px;
+    max-width: 280px;
   }
 
   .result-card {

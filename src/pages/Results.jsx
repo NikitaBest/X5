@@ -52,8 +52,8 @@ function getGaugeColorByScore(score) {
 
 function getHealthBadgeText(score) {
   if (!Number.isFinite(score)) return 'Ваши показатели'
-  if (score >= 66) return 'Все хорошо'
-  if (score >= 33) return 'Средний уровень'
+  if (score >= 66) return 'В норме'
+  if (score >= 33) return 'Есть отклонения'
   return 'Требует особого внимания'
 }
 
@@ -162,7 +162,7 @@ function extractLastScanResponse(data) {
 }
 
 function Results() {
-  const [showAllMetricsCards, setShowAllMetricsCards] = useState(false)
+  const [showAllMetricsCards, setShowAllMetricsCards] = useState(true)
   const [activeDetail, setActiveDetail] = useState(null)
   const [isLoadingLatestScan, setIsLoadingLatestScan] = useState(false)
   const [didTryLoadLatestScan, setDidTryLoadLatestScan] = useState(false)
@@ -170,6 +170,13 @@ function Results() {
   const navigate = useNavigate()
   const { token } = useAuth()
   const [backendScanResponse, setBackendScanResponse] = useState(() => location.state?.backendScanResponse ?? null)
+
+  const truncateText = (text, maxLen = 90) => {
+    const s = String(text ?? '').trim()
+    if (!s) return ''
+    if (s.length <= maxLen) return s
+    return `${s.slice(0, maxLen).trim()}…`
+  }
 
   useEffect(() => {
     if (location.state?.backendScanResponse) {
@@ -221,6 +228,10 @@ function Results() {
   const healthScoreColor = getGaugeColorByScore(healthScore)
   const healthBadgeText = getHealthBadgeText(healthScore)
 
+  const firstRedCard = cards.find((c) => String(c?.color ?? '').toLowerCase() === 'red') ?? null
+  // commentUser (у нас хранится в statusText карточки)
+  const firstRedComment = truncateText(firstRedCard?.statusText || '')
+
   if (!hasAnyResults) {
     logger.warn('Results page accessed without backend results')
     return (
@@ -250,7 +261,13 @@ function Results() {
     <Page>
       <div className="results-page">
         <div className="results-header">
-          <h1 className="results-title">Результаты измерения</h1>
+          <h1 className="results-title">Результаты</h1>
+          <div className="results-subtitle">rPPG-сканирование и анализ показателей по шкалам</div>
+          {firstRedCard && firstRedComment ? (
+            <div className="results-first-red-hint">
+              {firstRedCard.title}: {firstRedComment}
+            </div>
+          ) : null}
         </div>
 
         {hasAnyResults && (
@@ -330,6 +347,9 @@ function Results() {
         )}
 
         <div className="results-actions">
+          <p className="results-actions-disclaimer">
+            Данный анализ не заменяет медицинскую консультацию.
+          </p>
           <button onClick={() => navigate('/nutrition')} className="results-button">
             Подобрать рацион
           </button>
