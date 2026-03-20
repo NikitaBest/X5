@@ -65,7 +65,6 @@
   flex-direction: column;
   align-items: center;
   gap: 12px;
-  position: relative;
 }
 
 .welcome-consent {
@@ -99,10 +98,6 @@
 }
 
 .welcome-success-message {
-  position: absolute;
-  left: 50%;
-  bottom: calc(100% + 8px);
-  transform: translateX(-50%);
   display: flex;
   align-items: center;
   gap: 4px;
