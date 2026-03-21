@@ -21,6 +21,10 @@
 }
 
 .camera-preview {
+  --oval-width: min(298px, 80vw, 43.7vh);
+  --oval-height: calc(var(--oval-width) * 409 / 298);
+  --oval-mask-rx: calc(var(--oval-width) / 2 - 2px);
+  --oval-mask-ry: calc(var(--oval-height) / 2 - 2px);
   width: 100%;
   height: 100%;
   background: #000;
@@ -153,17 +157,16 @@
   pointer-events: none;
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
-  /* Маска блюра синхронизирована с пунктирным SVG-овалом (298x409).
-     На мобильном овал обычно рендерится в ~298px шириной, что даёт
-     радиусы около 38% по X и 24% по Y от экрана. */
+  /* Маска блюра синхронизирована с реальными размерами SVG-овала.
+     Это сохраняет совпадение на разных мобильных экранах и высотах. */
   mask-image: radial-gradient(
-    ellipse 38% 24.2% at center,
-    transparent 0 99.2%,
+    ellipse var(--oval-mask-rx) var(--oval-mask-ry) at center,
+    transparent 0 99.4%,
     black 100%
   );
   -webkit-mask-image: radial-gradient(
-    ellipse 38% 24.2% at center,
-    transparent 0 99.2%,
+    ellipse var(--oval-mask-rx) var(--oval-mask-ry) at center,
+    transparent 0 99.4%,
     black 100%
   );
 }
@@ -181,9 +184,8 @@
 }
 
 .face-oval {
-  width: min(298px, 80vw);
-  height: auto;
-  max-height: 60vh;
+  width: var(--oval-width);
+  height: var(--oval-height);
   object-fit: contain;
   color: #D3E8F4;
   transition: color 0.3s ease;
