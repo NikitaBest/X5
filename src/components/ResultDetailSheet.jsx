@@ -65,7 +65,6 @@ function getMarkerPercent(scaleMetadata, metricValue) {
 function ResultDetailSheet({
   open,
   onClose,
-  onSelectPlan,
   title,
   value,
   unit,
@@ -263,15 +262,9 @@ function ResultDetailSheet({
         <button
           type="button"
           className="result-sheet-action-button"
-          onClick={() => {
-            if (onSelectPlan) {
-              onSelectPlan()
-            } else {
-              onClose?.()
-            }
-          }}
+          onClick={() => onClose?.()}
         >
-          Подобрать рацион
+          Понятно
         </button>
 
         <p className="result-sheet-disclaimer">
