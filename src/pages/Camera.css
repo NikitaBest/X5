@@ -153,10 +153,19 @@
   pointer-events: none;
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
-  /* Маска: внутри овала фон остаётся резким, за овалом — размытый.
-     Используем одинаковую форму для всех движков, чтобы блюр не «заходил» внутрь круга. */
-  mask-image: radial-gradient(ellipse 52% 42% at center, transparent 60%, black 62%);
-  -webkit-mask-image: radial-gradient(ellipse 52% 42% at center, transparent 60%, black 62%);
+  /* Маска блюра синхронизирована с пунктирным SVG-овалом (298x409).
+     На мобильном овал обычно рендерится в ~298px шириной, что даёт
+     радиусы около 38% по X и 24% по Y от экрана. */
+  mask-image: radial-gradient(
+    ellipse 38% 24.2% at center,
+    transparent 0 99.2%,
+    black 100%
+  );
+  -webkit-mask-image: radial-gradient(
+    ellipse 38% 24.2% at center,
+    transparent 0 99.2%,
+    black 100%
+  );
 }
 
 .face-oval-container {
