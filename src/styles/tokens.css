@@ -1,12 +1,12 @@
 :root {
-  /* Базовые токены (по умолчанию тёмная тема) */
-  --color-bg-main: #000000;
-  --color-bg-surface: #111111;
+  /* Базовые токены (светлая тема по умолчанию) */
+  --color-bg-main: #ffffff;
+  --color-bg-surface: #ffffff;
   --color-bg-accent: #0078ff;
-  --color-bg-accent-soft: #1a1a1a;
+  --color-bg-accent-soft: #f2f2f2;
 
-  --color-fg-primary: rgba(255, 255, 255, 0.92);
-  --color-fg-secondary: rgba(255, 255, 255, 0.72);
+  --color-fg-primary: #111111;
+  --color-fg-secondary: #555555;
   --color-fg-error: #ff6b6b;
 
   /* Радиусы */
@@ -35,7 +35,7 @@
   --color-fg-secondary: #555555;
 }
 
-/* Тёмная тема: почти чёрный фон страниц */
+/* Тёмная тема отключена в продукте, блок оставлен только для совместимости */
 :root[data-theme='dark'] {
   --color-bg-main: #000000;
   --color-bg-surface: #111111;
