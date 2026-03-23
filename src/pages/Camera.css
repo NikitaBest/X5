@@ -132,11 +132,58 @@
   font-weight: 400;
 }
 
+.camera-error-instruction {
+  margin-top: 12px;
+  text-align: left;
+}
+
+.camera-error-instruction-title {
+  margin: 0 0 6px 0;
+  color: #1f2937;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.35;
+}
+
+.camera-error-instruction-list {
+  margin: 0;
+  padding-left: 18px;
+  color: #374151;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.camera-error-instruction-list li + li {
+  margin-top: 4px;
+}
+
 .camera-error-details {
   margin: 12px 0 0 0;
   color: #6b7280;
   font-size: 13px;
   line-height: 1.35;
+}
+
+.camera-error-action-button {
+  margin-top: 14px;
+  width: 100%;
+  min-height: 44px;
+  border: none;
+  border-radius: 12px;
+  background: #5daf2e;
+  color: #fff;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.2;
+  cursor: pointer;
+}
+
+.camera-error-action-button:hover {
+  background: #4f9e27;
+}
+
+.camera-error-action-button:active {
+  transform: scale(0.98);
 }
 
 /* Уведомление «Готово» при 100% — компактная плашка, затем переход на результаты */

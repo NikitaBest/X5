@@ -400,6 +400,14 @@ function getFriendlyCameraError(rawError) {
     return {
       title: 'Нет доступа к камере',
       description: 'Разрешите доступ к камере в настройках браузера и попробуйте снова.',
+      instructionTitle: 'Как включить доступ (iOS и Android):',
+      instructionSteps: [
+        'Откройте настройки текущего сайта в адресной строке браузера.',
+        'В разделе разрешений установите для камеры значение «Разрешить».',
+        'Перезагрузите страницу и повторно запустите сканирование.',
+      ],
+      actionLabel: 'Понятно',
+      actionTarget: '/preparation',
     }
   }
 
@@ -1721,8 +1729,29 @@ function Camera() {
             <div className="camera-error-card" role="alert" aria-live="assertive">
               <h2 className="camera-error-title">{friendlyError.title}</h2>
               <p className="camera-error-text">{friendlyError.description}</p>
+              {Array.isArray(friendlyError.instructionSteps) && friendlyError.instructionSteps.length > 0 ? (
+                <div className="camera-error-instruction">
+                  {friendlyError.instructionTitle ? (
+                    <p className="camera-error-instruction-title">{friendlyError.instructionTitle}</p>
+                  ) : null}
+                  <ol className="camera-error-instruction-list">
+                    {friendlyError.instructionSteps.map((step, index) => (
+                      <li key={`${index}-${step}`}>{step}</li>
+                    ))}
+                  </ol>
+                </div>
+              ) : null}
               {friendlyError.details ? (
                 <p className="camera-error-details">{friendlyError.details}</p>
+              ) : null}
+              {friendlyError.actionLabel && friendlyError.actionTarget ? (
+                <button
+                  type="button"
+                  className="camera-error-action-button"
+                  onClick={() => navigate(friendlyError.actionTarget)}
+                >
+                  {friendlyError.actionLabel}
+                </button>
               ) : null}
             </div>
           )}
