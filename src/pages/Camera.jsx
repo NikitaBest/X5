@@ -415,7 +415,6 @@ function getFriendlyCameraError(rawError) {
     return {
       title: 'Ошибка конфигурации приложения',
       description: 'Камера временно недоступна из-за настроек безопасности. Попробуйте позже.',
-      details: text,
     }
   }
 
@@ -423,7 +422,6 @@ function getFriendlyCameraError(rawError) {
     return {
       title: 'Проблема с лицензией сервиса',
       description: 'Сканирование временно недоступно. Попробуйте позже или обратитесь в поддержку.',
-      details: text,
     }
   }
 
@@ -431,14 +429,12 @@ function getFriendlyCameraError(rawError) {
     return {
       title: 'Ошибка инициализации сканирования',
       description: 'Не удалось запустить модуль измерения. Попробуйте еще раз.',
-      details: text,
     }
   }
 
   return {
     title: 'Не удалось запустить камеру',
     description: 'Попробуйте снова через несколько секунд.',
-    details: text,
   }
 }
 
