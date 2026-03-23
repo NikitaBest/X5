@@ -20,6 +20,10 @@
   box-sizing: border-box;
 }
 
+.camera-page-error {
+  background: #fff;
+}
+
 .camera-preview {
   --oval-width: min(298px, 80vw, 43.7vh);
   --oval-height: calc(var(--oval-width) * 409 / 298);
@@ -33,6 +37,11 @@
   align-items: center;
   justify-content: center;
   position: relative;
+}
+
+.camera-preview-error {
+  background: #fff;
+  padding: 24px;
 }
 
 .camera-video {
@@ -96,12 +105,38 @@
   padding: 0 20px;
 }
 
-.error-text {
-  color: #ff6b6b;
-  font-weight: 600;
-  text-align: center;
+.camera-error-card {
   z-index: 10;
-  padding: 20px;
+  width: min(100%, 420px);
+  background: #fff;
+  border: 1px solid #e6e7eb;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(17, 24, 39, 0.08);
+  padding: 20px 18px;
+  text-align: center;
+}
+
+.camera-error-title {
+  margin: 0 0 10px 0;
+  color: #111827;
+  font-size: clamp(20px, 5vw, 24px);
+  line-height: 1.25;
+  font-weight: 600;
+}
+
+.camera-error-text {
+  margin: 0;
+  color: #374151;
+  font-size: clamp(15px, 3.8vw, 17px);
+  line-height: 1.45;
+  font-weight: 400;
+}
+
+.camera-error-details {
+  margin: 12px 0 0 0;
+  color: #6b7280;
+  font-size: 13px;
+  line-height: 1.35;
 }
 
 /* Уведомление «Готово» при 100% — компактная плашка, затем переход на результаты */

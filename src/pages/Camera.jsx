@@ -378,6 +378,62 @@ function getUserMessageForAlert(alertInfo) {
   return messages[alertInfo.code] || alertInfo.solution
 }
 
+function getFriendlyCameraError(rawError) {
+  const text = String(rawError || '').trim()
+  const lower = text.toLowerCase()
+
+  if (!text) {
+    return {
+      title: 'Не удалось запустить камеру',
+      description: 'Попробуйте открыть страницу заново.',
+    }
+  }
+
+  if (lower.includes('safari version must be at least 16.7')) {
+    return {
+      title: 'Нужна более новая версия Safari',
+      description: 'Для сканирования обновите Safari до версии 16.7 или выше.',
+    }
+  }
+
+  if (lower.includes('не удалось получить доступ к камере') || lower.includes('permission') || lower.includes('getusermedia')) {
+    return {
+      title: 'Нет доступа к камере',
+      description: 'Разрешите доступ к камере в настройках браузера и попробуйте снова.',
+    }
+  }
+
+  if (lower.includes('cross-origin') || lower.includes('coop') || lower.includes('coep')) {
+    return {
+      title: 'Ошибка конфигурации приложения',
+      description: 'Камера временно недоступна из-за настроек безопасности. Попробуйте позже.',
+      details: text,
+    }
+  }
+
+  if (lower.includes('license') || lower.includes('лиценз')) {
+    return {
+      title: 'Проблема с лицензией сервиса',
+      description: 'Сканирование временно недоступно. Попробуйте позже или обратитесь в поддержку.',
+      details: text,
+    }
+  }
+
+  if (lower.includes('sdk')) {
+    return {
+      title: 'Ошибка инициализации сканирования',
+      description: 'Не удалось запустить модуль измерения. Попробуйте еще раз.',
+      details: text,
+    }
+  }
+
+  return {
+    title: 'Не удалось запустить камеру',
+    description: 'Попробуйте снова через несколько секунд.',
+    details: text,
+  }
+}
+
 function Camera() {
   const navigate = useNavigate()
   const { userData } = useUserData()
@@ -418,6 +474,7 @@ function Camera() {
   const sessionStateRef = useRef(SessionState.INIT) // Актуальное состояние сессии для проверки внутри таймера
   const hasAutoStartScheduledRef = useRef(false)   // Не планировать start() дважды за один ACTIVE
   const saveScanPromiseRef = useRef(null)
+  const friendlyError = getFriendlyCameraError(error)
 
   const getMetricValue = (item) => {
     if (item === null || item === undefined) return null
@@ -1658,9 +1715,17 @@ function Camera() {
   return (
     <>
       {isLoading && <LoadingScreen text="Инициализация камеры..." />}
-      <div className="camera-page">
-        <div className="camera-preview">
-          {error && <p className="error-text">{error}</p>}
+      <div className={`camera-page ${error ? 'camera-page-error' : ''}`.trim()}>
+        <div className={`camera-preview ${error ? 'camera-preview-error' : ''}`.trim()}>
+          {error && (
+            <div className="camera-error-card" role="alert" aria-live="assertive">
+              <h2 className="camera-error-title">{friendlyError.title}</h2>
+              <p className="camera-error-text">{friendlyError.description}</p>
+              {friendlyError.details ? (
+                <p className="camera-error-details">{friendlyError.details}</p>
+              ) : null}
+            </div>
+          )}
         <video
           ref={videoRef}
           autoPlay
