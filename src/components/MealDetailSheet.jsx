@@ -98,6 +98,7 @@ function MealDetailSheet({ open, onClose, meal, mealType, slotIndex, alternative
   }
 
   const isSelected = (alt) => meal && (alt.id === meal.id || (alt.title === meal.title && !alt.id && !meal.id))
+  const fallbackImage = '/meal-placeholder.svg'
 
   if (!open) return null
 
@@ -132,7 +133,14 @@ function MealDetailSheet({ open, onClose, meal, mealType, slotIndex, alternative
             </div>
             <div className="meal-sheet-image-wrap">
               <div className="meal-sheet-image" aria-hidden="true">
-                {previewMeal?.imageUrl ? <img src={previewMeal.imageUrl} alt="" /> : null}
+                <img
+                  src={previewMeal?.imageUrl || fallbackImage}
+                  alt=""
+                  onError={(e) => {
+                    e.currentTarget.onerror = null
+                    e.currentTarget.src = fallbackImage
+                  }}
+                />
               </div>
             </div>
             <h2 className="meal-sheet-title">{previewMeal?.title}</h2>
@@ -195,8 +203,18 @@ function MealDetailSheet({ open, onClose, meal, mealType, slotIndex, alternative
                       aria-hidden="true"
                       style={
                         alt.imageUrl
-                          ? { backgroundImage: `url(${alt.imageUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' }
-                          : undefined
+                          ? {
+                              backgroundImage: `url("${alt.imageUrl}"), url("${fallbackImage}")`,
+                              backgroundSize: 'cover, 36px 36px',
+                              backgroundPosition: 'center, center',
+                              backgroundRepeat: 'no-repeat, no-repeat',
+                            }
+                          : {
+                              backgroundImage: `url("${fallbackImage}")`,
+                              backgroundSize: '36px 36px',
+                              backgroundPosition: 'center',
+                              backgroundRepeat: 'no-repeat',
+                            }
                       }
                     />
                     <div className="meal-sheet-alt-content">
@@ -228,7 +246,14 @@ function MealDetailSheet({ open, onClose, meal, mealType, slotIndex, alternative
           <>
             <div className="meal-sheet-image-wrap">
               <div className="meal-sheet-image" aria-hidden="true">
-                {meal?.imageUrl ? <img src={meal.imageUrl} alt="" /> : null}
+                <img
+                  src={meal?.imageUrl || fallbackImage}
+                  alt=""
+                  onError={(e) => {
+                    e.currentTarget.onerror = null
+                    e.currentTarget.src = fallbackImage
+                  }}
+                />
               </div>
             </div>
 

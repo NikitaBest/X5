@@ -1,6 +1,20 @@
 import './MealCard.css'
 
 function MealCard({ mealType, time, title, description, tag, imageUrl, onClick, onReplaceClick }) {
+  const imageStyle = imageUrl
+    ? {
+        backgroundImage: `url("${imageUrl}"), url("/meal-placeholder.svg")`,
+        backgroundSize: 'cover, 36px 36px',
+        backgroundPosition: 'center, center',
+        backgroundRepeat: 'no-repeat, no-repeat',
+      }
+    : {
+        backgroundImage: 'url("/meal-placeholder.svg")',
+        backgroundSize: '36px 36px',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+      }
+
   return (
     <section className="meal-section">
       <header className="meal-section-header">
@@ -9,9 +23,11 @@ function MealCard({ mealType, time, title, description, tag, imageUrl, onClick, 
       </header>
 
       <div className={`meal-card${onClick ? ' meal-card--clickable' : ''}`} role={onClick ? 'button' : undefined} tabIndex={onClick ? 0 : undefined} onClick={onClick} onKeyDown={onClick ? (e) => { if (e.key === 'Enter' || e.key === ' ') e.preventDefault(); if (e.key === 'Enter') onClick(); } : undefined}>
-        <div className={`meal-card-image${imageUrl ? ' meal-card-image--photo' : ''}`} aria-hidden="true">
-          {imageUrl ? <img src={imageUrl} alt="" className="meal-card-image-img" /> : null}
-        </div>
+        <div
+          className={`meal-card-image${imageUrl ? ' meal-card-image--photo' : ''}`}
+          aria-hidden="true"
+          style={imageStyle}
+        />
         <div className="meal-card-content">
           <div className="meal-card-text">
             <div className="meal-card-title">{title}</div>
