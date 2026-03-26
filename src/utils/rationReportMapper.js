@@ -38,6 +38,33 @@ function weekdayMetaByDay(dayNum) {
   return { short, full, id }
 }
 
+function formatFullDateRu(date) {
+  try {
+    return date.toLocaleDateString('ru-RU', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+    })
+  } catch {
+    return ''
+  }
+}
+
+function addDays(date, days) {
+  const d = new Date(date)
+  d.setDate(d.getDate() + Number(days || 0))
+  return d
+}
+
+function weekdayMetaByDate(date) {
+  // JS: 0=Sun..6=Sat. Нужно 0=Mon..6=Sun.
+  const idx = (date.getDay() + 6) % 7
+  const short = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'][idx]
+  const full = ['Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота', 'Воскресенье'][idx]
+  const id = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'][idx]
+  return { short, full, id }
+}
+
 function goalLabel(goal) {
   const key = String(goal ?? '').trim().toLowerCase()
   if (!key) return ''
@@ -63,14 +90,25 @@ export function mapRationToNutritionReport(payload) {
       ? value.items
       : []
 
+  // Для PDF/публичной страницы показываем "День 1" как завтрашнюю дату
+  // относительно даты формирования рациона (createdAt), чтобы в заголовке была реальная дата.
+  const createdAt = value?.createdAt ? new Date(value.createdAt) : new Date()
+  const planStartDate = (() => {
+    const d = new Date(createdAt)
+    d.setHours(0, 0, 0, 0)
+    d.setDate(d.getDate() + 1)
+    return d
+  })()
+
   const dayMap = new Map()
   for (const row of rationRows) {
     const day = Number(row?.day) || 1
     if (!dayMap.has(day)) {
-      const weekday = weekdayMetaByDay(day)
+      const dateForDay = addDays(planStartDate, day - 1)
+      const weekday = weekdayMetaByDate(dateForDay)
       dayMap.set(day, {
         id: weekday.id,
-        title: `День ${day} (${weekday.full})`,
+        title: `День ${day} — ${formatFullDateRu(dateForDay) || weekday.full}`,
         totalKcal: 0,
         meals: [],
         macros: { proteinGrams: 0, fatGrams: 0, carbsGrams: 0 },

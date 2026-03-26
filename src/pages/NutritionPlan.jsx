@@ -48,19 +48,18 @@ function parseRationStatus(payload) {
   return Number.isFinite(n) ? n : null
 }
 
-function getWeekStartMonday(date) {
+function getPlanStartDateTomorrow(date) {
   const tmp = new Date(date)
-  const day = tmp.getDay() || 7
-  tmp.setDate(tmp.getDate() - (day - 1))
+  tmp.setDate(tmp.getDate() + 1)
   tmp.setHours(0, 0, 0, 0)
   return tmp
 }
 
 function planDayFromSelectedCalendarDate(selectedDate) {
-  const weekStart = getWeekStartMonday(new Date())
+  const planStart = getPlanStartDateTomorrow(new Date())
   const d1 = new Date(selectedDate)
   d1.setHours(0, 0, 0, 0)
-  return Math.round((d1.getTime() - weekStart.getTime()) / 86400000) + 1
+  return Math.round((d1.getTime() - planStart.getTime()) / 86400000) + 1
 }
 
 function truncateText(text, maxLen) {
@@ -243,7 +242,8 @@ function NutritionPlan() {
     d.setHours(0, 0, 0, 0)
     return d
   }, [])
-  const [selectedDate, setSelectedDate] = useState(today)
+  const planStartDate = useMemo(() => getPlanStartDateTomorrow(new Date()), [])
+  const [selectedDate, setSelectedDate] = useState(planStartDate)
 
   const [ration, setRation] = useState([])
   const [rationId, setRationId] = useState(null)
@@ -444,7 +444,7 @@ function NutritionPlan() {
       <div className="nutrition-plan-intro">
         <p className="nutrition-plan-intro-title">Рацион подобран на основе ваших показателей</p>
       </div>
-      <DayCalendar selectedDate={selectedDate} onSelectDate={setSelectedDate} />
+      <DayCalendar startDate={planStartDate} selectedDate={selectedDate} onSelectDate={setSelectedDate} />
 
       {(isLoading || isRegenerating) && (
         <div className="nutrition-plan-loading">

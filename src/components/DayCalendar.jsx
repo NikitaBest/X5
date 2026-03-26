@@ -20,10 +20,10 @@ function getWeekStart(date) {
 }
 
 /**
- * @param {{ selectedDate?: Date, onSelectDate?: (d: Date) => void }} props
+ * @param {{ selectedDate?: Date, onSelectDate?: (d: Date) => void, startDate?: Date }} props
  * Если переданы selectedDate и onSelectDate — календарь контролируется снаружи.
  */
-function DayCalendar({ selectedDate: selectedDateProp, onSelectDate } = {}) {
+function DayCalendar({ selectedDate: selectedDateProp, onSelectDate, startDate } = {}) {
   const today = useMemo(() => {
     const d = new Date()
     d.setHours(0, 0, 0, 0)
@@ -34,23 +34,30 @@ function DayCalendar({ selectedDate: selectedDateProp, onSelectDate } = {}) {
   const selectedDate = selectedDateProp ?? internalSelected
   const setSelectedDate = onSelectDate ?? setInternalSelected
 
-  const weekStart = useMemo(() => getWeekStart(today), [today])
+  const baseStart = useMemo(() => {
+    if (startDate instanceof Date && Number.isFinite(startDate.getTime())) {
+      const d = new Date(startDate)
+      d.setHours(0, 0, 0, 0)
+      return d
+    }
+    return getWeekStart(today)
+  }, [startDate, today])
   const days = useMemo(
     () =>
       Array.from({ length: 7 }, (_, index) => {
-        const d = new Date(weekStart)
-        d.setDate(weekStart.getDate() + index)
+        const d = new Date(baseStart)
+        d.setDate(baseStart.getDate() + index)
         return d
       }),
-    [weekStart],
+    [baseStart],
   )
 
   return (
     <div className="day-calendar">
       <div className="day-calendar-row">
-        {days.map((date, index) => {
+        {days.map((date) => {
           const isSelected = date.getTime() === selectedDate.getTime()
-          const weekdayLabel = WEEKDAY_LABELS[index]
+          const weekdayLabel = WEEKDAY_LABELS[(date.getDay() + 6) % 7]
           return (
             <button
               key={date.toISOString()}
