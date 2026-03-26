@@ -23,7 +23,7 @@ function getWeekStart(date) {
  * @param {{ selectedDate?: Date, onSelectDate?: (d: Date) => void, startDate?: Date }} props
  * Если переданы selectedDate и onSelectDate — календарь контролируется снаружи.
  */
-function DayCalendar({ selectedDate: selectedDateProp, onSelectDate, startDate } = {}) {
+function DayCalendar({ selectedDate: selectedDateProp, onSelectDate, startDate, belowDateText } = {}) {
   const today = useMemo(() => {
     const d = new Date()
     d.setHours(0, 0, 0, 0)
@@ -71,7 +71,10 @@ function DayCalendar({ selectedDate: selectedDateProp, onSelectDate, startDate }
           )
         })}
       </div>
-      <div className="day-calendar-date">{formatFullDate(selectedDate)}</div>
+      <div className="day-calendar-date-block">
+        <div className="day-calendar-date">{formatFullDate(selectedDate)}</div>
+        {belowDateText ? <div className="day-calendar-note">{belowDateText}</div> : null}
+      </div>
     </div>
   )
 }

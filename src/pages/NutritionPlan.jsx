@@ -444,7 +444,12 @@ function NutritionPlan() {
       <div className="nutrition-plan-intro">
         <p className="nutrition-plan-intro-title">Рацион подобран на основе ваших показателей</p>
       </div>
-      <DayCalendar startDate={planStartDate} selectedDate={selectedDate} onSelectDate={setSelectedDate} />
+      <DayCalendar
+        startDate={planStartDate}
+        selectedDate={selectedDate}
+        onSelectDate={setSelectedDate}
+        belowDateText="Рацион на неделю вперёд — начинаем со следующего дня."
+      />
 
       {(isLoading || isRegenerating) && (
         <div className="nutrition-plan-loading">

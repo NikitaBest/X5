@@ -655,7 +655,7 @@
 }
 
 .nutrition-plan-intro {
-  margin: 2px 0 10px;
+  margin: 2px 0 6px;
 }
 
 .nutrition-plan-intro-title {
@@ -664,6 +664,15 @@
   line-height: 1.35;
   font-weight: 500;
   color: #111111;
+  text-align: center;
+}
+
+.nutrition-plan-intro-subtitle {
+  margin: 6px 0 0;
+  font-size: 11px;
+  line-height: 1.35;
+  font-weight: 400;
+  color: #7d8088;
   text-align: center;
 }
 
