@@ -403,9 +403,10 @@ function NutritionPlan() {
       <DayCalendar selectedDate={selectedDate} onSelectDate={setSelectedDate} />
 
       {(isLoading || isRegenerating) && (
-        <p className="nutrition-plan-loading">
+        <div className="nutrition-plan-loading">
+          <span className="nutrition-plan-loading-spinner" aria-hidden="true" />
           {isRegenerating ? 'Обновляем рацион…' : 'Загружаем рацион…'}
-        </p>
+        </div>
       )}
 
       {loadError && !isLoading && !isRegenerating && (

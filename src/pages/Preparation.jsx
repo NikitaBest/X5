@@ -23,20 +23,11 @@ function Preparation() {
           Следуйте рекомендациям для точного результата.
         </p>
 
-        <div className="preparation-video-container">
-          <img 
-            src="/imgvideo.png" 
-            alt="Инструкция по сканированию" 
-            className="preparation-video-image"
-          />
-          <button className="preparation-play-button" type="button">
-            <img 
-              src="/octicon_play-16.svg" 
-              alt="Play" 
-              className="play-icon"
-            />
-          </button>
-        </div>
+        <img
+          src="/podgotovka.png"
+          alt="Подготовка к сканированию"
+          className="preparation-hero-image"
+        />
 
         <div className="preparation-info-cards">
           <div className="preparation-info-card">
