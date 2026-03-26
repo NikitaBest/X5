@@ -205,7 +205,13 @@ function MealDetailSheet({ open, onClose, meal, mealType, slotIndex, alternative
                         {(alt.composition || '').length > 80 ? `${(alt.composition || '').slice(0, 80)}...` : (alt.composition || '')}
                       </div>
                       <div className="meal-sheet-alt-tags">
-                        {(alt.tags || (alt.statusTag ? [alt.statusTag] : [])).slice(0, 2).join(', ')}
+                        {(
+                          Array.isArray(alt.tags) && alt.tags.length > 0
+                            ? alt.tags
+                            : (alt.statusTag ? [alt.statusTag] : [])
+                        )
+                          .slice(0, 2)
+                          .join(', ')}
                       </div>
                       {!selected && (
                         <button type="button" className="meal-sheet-alt-select" onClick={(e) => { e.stopPropagation(); handleSelectAlternative(alt); }}>
