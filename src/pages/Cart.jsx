@@ -5,10 +5,26 @@ import html2pdf from 'html2pdf.js'
 import Page from '../layout/Page.jsx'
 import Header from '../layout/Header.jsx'
 import NutritionReport from '../components/NutritionReport.jsx'
-import { getRationById, getUserMe } from '../api/client.js'
+import { getExcludeProductsForUser, getRationById, getUserMe } from '../api/client.js'
 import { useAuth } from '../contexts/AuthContext.jsx'
 import { mapRationToNutritionReport } from '../utils/rationReportMapper.js'
 import './Cart.css'
+
+function getUserExcludeItemsFromResponse(data) {
+  if (Array.isArray(data)) return data
+  if (Array.isArray(data?.value)) return data.value
+  if (Array.isArray(data?.data)) return data.data
+  if (Array.isArray(data?.items)) return data.items
+  if (Array.isArray(data?.value?.data)) return data.value.data
+  if (Array.isArray(data?.value?.items)) return data.value.items
+  if (Array.isArray(data?.result)) return data.result
+  return []
+}
+
+function normalizeExcludeValue(item) {
+  if (typeof item === 'string') return item.trim()
+  return String(item?.productName ?? item?.name ?? item?.title ?? item?.label ?? '').trim()
+}
 
 function Cart() {
   const navigate = useNavigate()
@@ -37,11 +53,23 @@ function Cart() {
     setIsLoadingReport(true)
     const rationPromise = getRationById(token, resolvedRationId)
     const mePromise = token ? getUserMe(token).catch(() => null) : Promise.resolve(null)
+    const excludePromise = token ? getExcludeProductsForUser(token).catch(() => null) : Promise.resolve(null)
 
-    Promise.all([rationPromise, mePromise])
-      .then(([rationData, meData]) => {
+    Promise.all([rationPromise, mePromise, excludePromise])
+      .then(([rationData, meData, excludeData]) => {
         if (cancelled) return
-        setReport(mapRationToNutritionReport(rationData, meData))
+        const exclusions = getUserExcludeItemsFromResponse(excludeData)
+          .map(normalizeExcludeValue)
+          .filter(Boolean)
+        const meEnvelope = meData?.value && typeof meData.value === 'object' ? meData : { value: meData ?? {} }
+        const mergedMe = {
+          ...meEnvelope,
+          value: {
+            ...(meEnvelope.value ?? {}),
+            exclusions,
+          },
+        }
+        setReport(mapRationToNutritionReport(rationData, mergedMe))
       })
       .catch(() => {
         if (cancelled) return
