@@ -1,12 +1,58 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import Page from '../layout/Page.jsx'
 import HeartRateGauge from '../components/HeartRateGauge.jsx'
 import ResultDetailSheet from '../components/ResultDetailSheet.jsx'
-import { getScanHistory } from '../api/client.js'
+import {
+  getScanHistory,
+  extractScanIdFromEnvelope,
+  getRationByScan,
+  getRationGenerationStatus,
+} from '../api/client.js'
 import { useAuth } from '../contexts/AuthContext.jsx'
 import logger from '../utils/logger.js'
 import './Results.css'
+
+const RATION_STATUS_POLL_MS = 2500
+const RATION_STATUS_MAX_WAIT_MS = 180000
+
+/**
+ * WeekRationGenerationStatus (бэкенд):
+ * None=0, Pending=1, InProgress=2, Completed=3, Failed=4
+ */
+const WEEK_RATION_GEN_STATUS = {
+  None: 0,
+  Pending: 1,
+  InProgress: 2,
+  Completed: 3,
+  Failed: 4,
+}
+
+function parseWeekRationStatus(payload) {
+  if (!payload?.value || typeof payload.value !== 'object') return null
+  const v = payload.value
+  const raw = v.status ?? v.weekRationGenerationStatus
+  if (raw === null || raw === undefined) return null
+  const n = typeof raw === 'number' ? raw : Number.parseInt(String(raw), 10)
+  return Number.isFinite(n) ? n : null
+}
+
+/** Остановить опрос и разрешить переход: Completed или Failed (чтобы не блокировать UX). */
+function shouldStopRationStatusPolling(payload) {
+  if (!payload || typeof payload !== 'object' || payload.isSuccess !== true) return false
+  const n = parseWeekRationStatus(payload)
+  if (n === null) return false
+  return n === WEEK_RATION_GEN_STATUS.Completed || n === WEEK_RATION_GEN_STATUS.Failed
+}
+
+function logRationTerminalStatus(payload) {
+  const n = parseWeekRationStatus(payload)
+  if (n === WEEK_RATION_GEN_STATUS.Failed) {
+    logger.warn('Генерация рациона: ошибка на сервере', {
+      statusMessage: payload?.value?.statusMessage,
+    })
+  }
+}
 
 function clamp(value, min, max) {
   return Math.min(max, Math.max(min, value))
@@ -253,6 +299,10 @@ function Results() {
   const navigate = useNavigate()
   const { token } = useAuth()
   const [backendScanResponse, setBackendScanResponse] = useState(() => location.state?.backendScanResponse ?? null)
+  const [isRationReady, setIsRationReady] = useState(
+    () =>
+      !(location.state?.scanId ?? extractScanIdFromEnvelope(location.state?.backendScanResponse ?? null)),
+  )
 
   const truncateText = (text, maxLen = 90) => {
     const s = String(text ?? '').trim()
@@ -296,6 +346,85 @@ function Results() {
     }
   }, [backendScanResponse, didTryLoadLatestScan, token])
 
+  const resolvedScanId = useMemo(
+    () => location.state?.scanId ?? extractScanIdFromEnvelope(backendScanResponse) ?? null,
+    [location.state?.scanId, backendScanResponse],
+  )
+
+  useEffect(() => {
+    if (!resolvedScanId) {
+      setIsRationReady(true)
+      return
+    }
+    setIsRationReady(false)
+  }, [resolvedScanId])
+
+  useEffect(() => {
+    if (!token || !resolvedScanId) return undefined
+    if (!hasTranscriptsInResponse(backendScanResponse)) return undefined
+
+    let cancelled = false
+    let intervalId = null
+    const startedAt = Date.now()
+
+    const finish = (allowNavigate) => {
+      if (cancelled) return
+      if (intervalId != null) {
+        window.clearInterval(intervalId)
+        intervalId = null
+      }
+      setIsRationReady(allowNavigate)
+    }
+
+    const poll = async () => {
+      try {
+        const data = await getRationGenerationStatus(token, resolvedScanId)
+        if (cancelled) return true
+        if (shouldStopRationStatusPolling(data)) {
+          logRationTerminalStatus(data)
+          finish(true)
+          return true
+        }
+      } catch (error) {
+        if (!cancelled) logger.warn('ration generation-status poll failed', error)
+      }
+      if (cancelled) return true
+      if (Date.now() - startedAt > RATION_STATUS_MAX_WAIT_MS) {
+        logger.warn('ration generation-status: timeout, разрешаем переход к рациону')
+        finish(true)
+        return true
+      }
+      return false
+    }
+
+    ;(async () => {
+      try {
+        await getRationByScan(token, resolvedScanId)
+      } catch (error) {
+        if (!cancelled) logger.warn('ration/scan kickoff failed', error)
+      }
+      if (cancelled) return
+      const done = await poll()
+      if (cancelled || done) return
+      intervalId = window.setInterval(() => {
+        void poll().then((stopped) => {
+          if (stopped && intervalId != null) {
+            window.clearInterval(intervalId)
+            intervalId = null
+          }
+        })
+      }, RATION_STATUS_POLL_MS)
+    })()
+
+    return () => {
+      cancelled = true
+      if (intervalId != null) {
+        window.clearInterval(intervalId)
+        intervalId = null
+      }
+    }
+  }, [token, resolvedScanId, backendScanResponse])
+
   const backendValue = backendScanResponse?.value ?? null
   const backendTranscripts = Array.isArray(backendValue?.transcripts)
     ? backendValue.transcripts.map(normalizeTranscript).filter(Boolean)
@@ -320,6 +449,8 @@ function Results() {
   const priorityCommentText = priorityCard
     ? truncateText(priorityCard?.statusText || '')
     : 'Все показатели в пределах нормы. Продолжайте в том же духе.'
+
+  const rationNavigateEnabled = !resolvedScanId || isRationReady
 
   if (!hasAnyResults) {
     logger.warn('Results page accessed without backend results')
@@ -446,8 +577,24 @@ function Results() {
           <p className="results-actions-disclaimer">
             Данный анализ не заменяет медицинскую консультацию.
           </p>
-          <button onClick={() => navigate('/nutrition')} className="results-button">
-            Подобрать рацион
+          <button
+            type="button"
+            onClick={() =>
+              navigate('/nutrition', {
+                state: resolvedScanId ? { scanId: resolvedScanId } : {},
+              })
+            }
+            className={`results-button ${!rationNavigateEnabled ? 'results-button--ration-pending' : ''}`.trim()}
+            disabled={!rationNavigateEnabled}
+          >
+            {!rationNavigateEnabled ? (
+              <span className="results-button-ration-pending-inner">
+                <span className="results-button-spinner" aria-hidden="true" />
+                Рацион ещё генерируется…
+              </span>
+            ) : (
+              'Подобрать рацион'
+            )}
           </button>
           <button onClick={() => navigate('/camera')} className="results-button secondary">
             Измерить снова

@@ -190,7 +190,15 @@ function MealDetailSheet({ open, onClose, meal, mealType, slotIndex, alternative
                         <svg width="12" height="10" viewBox="0 0 12 10" fill="none"><path d="M1 5l3.5 3.5L11 1" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
                       </div>
                     )}
-                    <div className="meal-sheet-alt-image" aria-hidden="true" />
+                    <div
+                      className={`meal-sheet-alt-image${alt.imageUrl ? ' meal-sheet-alt-image--photo' : ''}`}
+                      aria-hidden="true"
+                      style={
+                        alt.imageUrl
+                          ? { backgroundImage: `url(${alt.imageUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' }
+                          : undefined
+                      }
+                    />
                     <div className="meal-sheet-alt-content">
                       <div className="meal-sheet-alt-title">{alt.title}</div>
                       <div className="meal-sheet-alt-desc">

@@ -191,3 +191,71 @@ export async function getScanHistory(token, params = {}) {
   const data = await res.json().catch(() => ({}))
   return data
 }
+
+/**
+ * Достаёт идентификатор скана из ответа save-rppg / scan/get (разные формы value).
+ * @param {unknown} envelope
+ * @returns {string|null}
+ */
+export function extractScanIdFromEnvelope(envelope) {
+  if (envelope == null || typeof envelope !== 'object') return null
+  const v = envelope.value != null && typeof envelope.value === 'object' ? envelope.value : envelope
+  const scan = v.scan != null && typeof v.scan === 'object' ? v.scan : null
+  const candidates = [
+    scan?.id,
+    scan?.scanId,
+    scan?.scanID,
+    v.scanId,
+    v.scanID,
+    v.scan_id,
+    v.id,
+    envelope.scanId,
+    envelope.id,
+  ]
+  for (const c of candidates) {
+    if (c != null && String(c).trim() !== '') return String(c).trim()
+  }
+  return null
+}
+
+/**
+ * GET /ration/scan/{scanId} — запросить подбор рациона по скану.
+ * @param {string} token
+ * @param {string} scanId
+ */
+export async function getRationByScan(token, scanId) {
+  const id = encodeURIComponent(String(scanId))
+  const url = `${BASE_URL.replace(/\/$/, '')}/ration/scan/${id}`
+  const res = await fetch(url, {
+    method: 'GET',
+    headers: {
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+  })
+  if (!res.ok) {
+    const errText = await res.text()
+    throw new Error(`ration/scan failed: ${res.status} ${errText}`)
+  }
+  return res.json().catch(() => ({}))
+}
+
+/**
+ * GET /ration/scan/{scanId}/generation-status — статус генерации рациона.
+ * @param {string} token
+ * @param {string} scanId
+ */
+export async function getRationGenerationStatus(token, scanId) {
+  const id = encodeURIComponent(String(scanId))
+  const url = `${BASE_URL.replace(/\/$/, '')}/ration/scan/${id}/generation-status`
+  const res = await fetch(url, {
+    method: 'GET',
+    headers: {
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+  })
+  if (!res.ok) {
+    const errText = await res.text()
+    throw new Error(`ration generation-status failed: ${res.status} ${errText}`)
+  }
+  return res.json().catch(() => ({}))
+}

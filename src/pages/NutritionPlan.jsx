@@ -1,131 +1,360 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 import Page from '../layout/Page.jsx'
 import Header from '../layout/Header.jsx'
 import DayCalendar from '../components/DayCalendar.jsx'
 import MealCard from '../components/MealCard.jsx'
 import MealDetailSheet from '../components/MealDetailSheet.jsx'
+import { getRationByScan } from '../api/client.js'
+import { useAuth } from '../contexts/AuthContext.jsx'
+import logger from '../utils/logger.js'
+import { proxiedProductImageUrl } from '../utils/productImageProxy.js'
 import './Results.css'
 
-const MEALS_MOCK = [
-  {
-    id: 'oatmeal',
-    title: 'Овсяная каша на молоке Пятеро...',
-    shortTitle: 'Овсяная каша на молоке',
-    statusTag: 'Медленные углеводы, стабильный сахар',
-    tags: ['Медленные углеводы', 'стабильный сахар'],
-    composition: 'Молоко 2,5%, вода питьевая, хлопья овсяные, сахар, масло сливочное, соль, крахмал, ароматизатор.',
-    calories: '280 ккал',
-    protein: 12,
-    fat: 8,
-    carbs: 45,
-  },
-  {
-    id: 'chicken',
-    title: 'Куриное филе с гречкой и овощами',
-    shortTitle: 'Куриное филе с гречкой и овощами',
-    statusTag: 'Белок + клетчатка, контроль аппетита',
-    tags: ['Белок + клетчатка', 'контроль аппетита'],
-    composition: 'Куриное филе, гречка, томаты, огурцы, оливковое масло, зелень, соль, перец.',
-    calories: '420 ккал',
-    protein: 38,
-    fat: 14,
-    carbs: 32,
-  },
-  {
-    id: 'fish',
-    title: 'Рыба на пару с овощами',
-    shortTitle: 'Рыба на пару с овощами',
-    statusTag: 'Лёгкий ужин, поддержка сердца',
-    tags: ['Лёгкий ужин', 'поддержка сердца'],
-    composition: 'Филе рыбы, брокколи, стручковая фасоль, морковь, оливковое масло, лимон, зелень.',
-    calories: '290 ккал',
-    protein: 28,
-    fat: 10,
-    carbs: 18,
-  },
+const MEAL_TYPES = [
+  { key: 'breakfast', label: 'Завтрак' },
+  { key: 'lunch', label: 'Обед' },
+  { key: 'dinner', label: 'Ужин' },
 ]
 
-const ALTERNATIVES_BREAKFAST = [
-  { ...MEALS_MOCK[0], title: 'Овсяная каша на молоке Пятерочка Кафе 200г', composition: 'Молоко 2,5%, вода питьевая, хлопья овсяные, сахар, масло сливочное, соль, крахмал, ароматизатор.' },
-  { id: 'toast', title: 'Тост с авокадо и яйцом', shortTitle: 'Тост с авокадо и яйцом', statusTag: 'Медленные углеводы, стабильный сахар', tags: ['Медленные углеводы', 'стабильный сахар'], composition: 'Хлеб цельнозерновой, авокадо, яйцо куриное, оливковое масло, соль, перец.', calories: '320 ккал', protein: 14, fat: 22, carbs: 18 },
-  { id: 'omelette', title: 'Омлет с овощами и зеленью', shortTitle: 'Омлет с овощами и зеленью', statusTag: 'Медленные углеводы, стабильный сахар', tags: ['Медленные углеводы', 'стабильный сахар'], composition: 'Яйца куриные, перец болгарский, помидор, шпинат, оливковое масло, зелень.', calories: '260 ккал', protein: 16, fat: 18, carbs: 8 },
-]
+function getWeekStartMonday(date) {
+  const tmp = new Date(date)
+  const day = tmp.getDay() || 7
+  tmp.setDate(tmp.getDate() - (day - 1))
+  tmp.setHours(0, 0, 0, 0)
+  return tmp
+}
 
-const ALTERNATIVES_LUNCH = [
-  MEALS_MOCK[1],
-  { id: 'borscht', title: 'Борщ с говядиной и сметаной', shortTitle: 'Борщ с говядиной', statusTag: 'Белок + клетчатка', tags: ['Белок + клетчатка'], composition: 'Говядина, свёкла, капуста, картофель, морковь, лук, сметана.', calories: '350 ккал', protein: 20, fat: 12, carbs: 38 },
-  { id: 'salad', title: 'Салат с курицей и киноа', shortTitle: 'Салат с курицей и киноа', statusTag: 'Белок + клетчатка', tags: ['Белок + клетчатка'], composition: 'Куриная грудка, киноа, огурец, томаты, зелень, оливковое масло.', calories: '380 ккал', protein: 32, fat: 14, carbs: 32 },
-]
+function planDayFromSelectedCalendarDate(selectedDate) {
+  const weekStart = getWeekStartMonday(new Date())
+  const d1 = new Date(selectedDate)
+  d1.setHours(0, 0, 0, 0)
+  return Math.round((d1.getTime() - weekStart.getTime()) / 86400000) + 1
+}
 
-const ALTERNATIVES_DINNER = [
-  MEALS_MOCK[2],
-  { id: 'cottage', title: 'Творог с зеленью и овощами', shortTitle: 'Творог с зеленью', statusTag: 'Лёгкий ужин', tags: ['Лёгкий ужин'], composition: 'Творог 5%, огурец, укроп, соль.', calories: '180 ккал', protein: 24, fat: 6, carbs: 10 },
-  { id: 'turkey', title: 'Индейка с тушёными овощами', shortTitle: 'Индейка с овощами', statusTag: 'Лёгкий ужин', tags: ['Лёгкий ужин'], composition: 'Филе индейки, кабачок, баклажан, томаты, зелень.', calories: '250 ккал', protein: 30, fat: 8, carbs: 14 },
-]
+function truncateText(text, maxLen) {
+  const s = String(text ?? '').trim()
+  if (!s) return ''
+  if (s.length <= maxLen) return s
+  return `${s.slice(0, maxLen).trim()}…`
+}
 
-const SLOT_LABELS = ['Завтрак', 'Обед', 'Ужин']
-const ALTERNATIVES_BY_SLOT = [ALTERNATIVES_BREAKFAST, ALTERNATIVES_LUNCH, ALTERNATIVES_DINNER]
+function gramsToMacros(product, grams) {
+  const g = Number(grams) || 0
+  const factor = g / 100
+  return {
+    kcal: (Number(product?.kcalPer100G) || 0) * factor,
+    protein: (Number(product?.proteinsGPer100G) || 0) * factor,
+    fat: (Number(product?.fatsGPer100G) || 0) * factor,
+    carbs: (Number(product?.carbsGPer100G) || 0) * factor,
+  }
+}
+
+function mapReplaceToAlternatives(food) {
+  const list = Array.isArray(food?.replace) ? food.replace : []
+  return list.map((r) => {
+    const p = r.product
+    if (!p) return null
+    const w = Number(r.weigth ?? r.weight ?? p.weightG) || 100
+    const m = gramsToMacros(p, w)
+    return {
+      id: r.id,
+      title: p.title || '',
+      shortTitle: truncateText(p.title, 72),
+      statusTag: food.reason ? truncateText(food.reason, 90) : '',
+      tags: [],
+      composition: p.mainIngrediants || p.fullIngrediants || '',
+      calories: `${Math.round(m.kcal)} ккал`,
+      protein: Math.round(m.protein * 10) / 10,
+      fat: Math.round(m.fat * 10) / 10,
+      carbs: Math.round(m.carbs * 10) / 10,
+      imageUrl: proxiedProductImageUrl(
+        Array.isArray(p.images) && p.images[0] ? p.images[0] : '',
+      ) || null,
+    }
+  }).filter(Boolean)
+}
+
+function foodItemToMealPartial(food) {
+  const p = food.product
+  if (!p) return null
+  const w = Number(food.weigth ?? food.weight ?? p.weightG) || 100
+  const m = gramsToMacros(p, w)
+  return {
+    id: food.id,
+    title: p.title || '',
+    shortTitle: truncateText(p.title, 72),
+    statusTag: food.reason ? truncateText(food.reason, 90) : '',
+    tags: food.reason
+      ? food.reason
+          .split(/[,;]/)
+          .map((s) => s.trim())
+          .filter(Boolean)
+          .slice(0, 3)
+      : [],
+    composition: p.mainIngrediants || p.fullIngrediants || '',
+    calories: `${Math.round(m.kcal)} ккал`,
+    protein: Math.round(m.protein * 10) / 10,
+    fat: Math.round(m.fat * 10) / 10,
+    carbs: Math.round(m.carbs * 10) / 10,
+    imageUrl: proxiedProductImageUrl(
+      Array.isArray(p.images) && p.images[0] ? p.images[0] : '',
+    ) || null,
+  }
+}
+
+function mergeFoodsForSlot(foods) {
+  if (!Array.isArray(foods) || foods.length === 0) return null
+  if (foods.length === 1) {
+    const one = foodItemToMealPartial(foods[0])
+    return one ? { ...one, slotFoodCount: 1 } : null
+  }
+  let kcal = 0
+  let protein = 0
+  let fat = 0
+  let carbs = 0
+  const partials = []
+  for (const f of foods) {
+    const p = f.product
+    if (!p) continue
+    const w = Number(f.weigth ?? f.weight ?? p.weightG) || 100
+    const m = gramsToMacros(p, w)
+    kcal += m.kcal
+    protein += m.protein
+    fat += m.fat
+    carbs += m.carbs
+    const part = foodItemToMealPartial(f)
+    if (part) partials.push(part)
+  }
+  if (partials.length === 0) return null
+  const first = partials[0]
+  const shortTitle =
+    partials.length > 1
+      ? `${first.shortTitle} и ещё ${partials.length - 1}`
+      : first.shortTitle
+  return {
+    id: `merged-${foods[0].id}`,
+    title: partials.map((x) => x.title).join(' · '),
+    shortTitle,
+    statusTag: partials
+      .map((x) => x.statusTag)
+      .filter(Boolean)
+      .join(' · ')
+      .slice(0, 120),
+    tags: partials.flatMap((x) => x.tags).slice(0, 4),
+    composition: partials
+      .map((x) => x.composition)
+      .filter(Boolean)
+      .join('\n\n'),
+    calories: `${Math.round(kcal)} ккал`,
+    protein: Math.round(protein * 10) / 10,
+    fat: Math.round(fat * 10) / 10,
+    carbs: Math.round(carbs * 10) / 10,
+    imageUrl: first.imageUrl,
+    slotFoodCount: foods.length,
+  }
+}
+
+function extractRationRows(data) {
+  if (!data || typeof data !== 'object') return []
+  const v = data.value != null && typeof data.value === 'object' ? data.value : data
+  if (!Array.isArray(v.ration)) return []
+  return v.ration
+}
+
+function buildSlotsForPlanDay(ration, planDay) {
+  const dayNum = Number(planDay)
+  const rows = ration.filter((r) => Number(r.day) === dayNum)
+  const byType = {}
+  for (const row of rows) {
+    const t = String(row.type || '').toLowerCase()
+    if (!byType[t]) byType[t] = []
+    const foods = Array.isArray(row.food) ? row.food : []
+    byType[t].push(...foods)
+  }
+
+  return MEAL_TYPES.map(({ key, label }) => {
+    const foods = byType[key] || []
+    const meal = mergeFoodsForSlot(foods)
+    const alternatives = (() => {
+      const all = foods.flatMap((f) => mapReplaceToAlternatives(f))
+      const seen = new Set()
+      return all.filter((x) => {
+        const k = String(x?.title || x?.id || '')
+        if (!k || seen.has(k)) return false
+        seen.add(k)
+        return true
+      })
+    })()
+    return { key, label, meal, alternatives }
+  })
+}
 
 function NutritionPlan() {
   const navigate = useNavigate()
-  const [meals, setMeals] = useState([...MEALS_MOCK])
+  const location = useLocation()
+  const { token } = useAuth()
+  const scanId = location.state?.scanId ?? null
+
+  const today = useMemo(() => {
+    const d = new Date()
+    d.setHours(0, 0, 0, 0)
+    return d
+  }, [])
+  const [selectedDate, setSelectedDate] = useState(today)
+
+  const [ration, setRation] = useState([])
+  const [loadError, setLoadError] = useState(null)
+  const [isLoading, setIsLoading] = useState(Boolean(scanId && token))
+
+  const [meals, setMeals] = useState([null, null, null])
+  const [alternativesBySlot, setAlternativesBySlot] = useState([[], [], []])
+
   const [activeSlot, setActiveSlot] = useState(null)
   const [openReplaceView, setOpenReplaceView] = useState(false)
 
-  const activeMeal = activeSlot != null ? meals[activeSlot] : null
-  const mealType = activeSlot != null ? SLOT_LABELS[activeSlot] : null
+  useEffect(() => {
+    if (!scanId || !token) {
+      setIsLoading(false)
+      setRation([])
+      return undefined
+    }
 
-  const handleReplaceMeal = (slotIndex, newMeal) => {
+    let cancelled = false
+    setIsLoading(true)
+    setLoadError(null)
+
+    getRationByScan(token, scanId)
+      .then((data) => {
+        if (cancelled) return
+        if (data && typeof data === 'object' && data.isSuccess === false) {
+          setLoadError(data.error ? String(data.error) : 'Не удалось получить рацион.')
+          setRation([])
+          return
+        }
+        const rows = extractRationRows(data)
+        if (!rows.length) {
+          setLoadError('Рацион пока пуст. Попробуйте обновить позже.')
+          setRation([])
+          return
+        }
+        setRation(rows)
+      })
+      .catch((err) => {
+        if (cancelled) return
+        logger.warn('nutrition: getRationByScan failed', err)
+        setLoadError('Не удалось загрузить рацион. Попробуйте ещё раз.')
+        setRation([])
+      })
+      .finally(() => {
+        if (!cancelled) setIsLoading(false)
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [scanId, token])
+
+  const planDay = useMemo(
+    () => planDayFromSelectedCalendarDate(selectedDate),
+    [selectedDate],
+  )
+
+  useEffect(() => {
+    const slots = buildSlotsForPlanDay(ration, planDay)
+    setMeals(slots.map((s) => s.meal))
+    setAlternativesBySlot(slots.map((s) => s.alternatives))
+  }, [ration, planDay])
+
+  const handleReplaceMeal = useCallback((slotIndex, newMeal) => {
     setMeals((prev) => {
       const next = [...prev]
-      next[slotIndex] = { ...newMeal, id: newMeal.id || next[slotIndex].id }
+      next[slotIndex] = {
+        ...newMeal,
+        id: newMeal.id ?? next[slotIndex]?.id,
+      }
       return next
     })
-  }
+  }, [])
 
   const handleCloseSheet = () => {
     setActiveSlot(null)
     setOpenReplaceView(false)
   }
 
+  const activeMeal = activeSlot != null ? meals[activeSlot] : null
+  const mealType = activeSlot != null ? MEAL_TYPES[activeSlot]?.label : null
+  const activeAlternatives = activeSlot != null ? alternativesBySlot[activeSlot] ?? [] : []
+
+  if (!scanId) {
+    return (
+      <Page className="results-page">
+        <Header title="Ваш рацион" showBack />
+        <div className="nutrition-plan-empty">
+          <p className="nutrition-plan-empty-text">
+            Чтобы увидеть персональный рацион, сначала пройдите сканирование и откройте эту страницу из блока результатов.
+          </p>
+          <button type="button" className="results-button" onClick={() => navigate('/results')}>
+            К результатам
+          </button>
+        </div>
+      </Page>
+    )
+  }
+
+  if (!token) {
+    return (
+      <Page className="results-page">
+        <Header title="Ваш рацион" showBack />
+        <div className="nutrition-plan-empty">
+          <p className="nutrition-plan-empty-text">Требуется авторизация для загрузки рациона.</p>
+        </div>
+      </Page>
+    )
+  }
+
   return (
     <Page className="results-page">
       <Header title="Ваш рацион" showBack />
-      <DayCalendar />
+      <DayCalendar selectedDate={selectedDate} onSelectDate={setSelectedDate} />
 
-      <MealCard
-        mealType="Завтрак"
-        title={meals[0].shortTitle}
-        description={meals[0].composition}
-        tag={meals[0].statusTag}
-        onClick={() => { setOpenReplaceView(false); setActiveSlot(0); }}
-        onReplaceClick={() => { setOpenReplaceView(true); setActiveSlot(0); }}
-      />
+      {isLoading && (
+        <p className="nutrition-plan-loading">Загружаем рацион…</p>
+      )}
 
-      <MealCard
-        mealType="Обед"
-        title={meals[1].shortTitle}
-        description={meals[1].composition}
-        tag={meals[1].statusTag}
-        onClick={() => { setOpenReplaceView(false); setActiveSlot(1); }}
-        onReplaceClick={() => { setOpenReplaceView(true); setActiveSlot(1); }}
-      />
+      {loadError && !isLoading && (
+        <p className="nutrition-plan-error" role="alert">
+          {loadError}
+        </p>
+      )}
 
-      <MealCard
-        mealType="Ужин"
-        title={meals[2].shortTitle}
-        description={meals[2].composition}
-        tag={meals[2].statusTag}
-        onClick={() => { setOpenReplaceView(false); setActiveSlot(2); }}
-        onReplaceClick={() => { setOpenReplaceView(true); setActiveSlot(2); }}
-      />
+      {!isLoading && !loadError && ration.length > 0 && MEAL_TYPES.map((slot, index) => {
+        const m = meals[index]
+        return (
+          <MealCard
+            key={slot.key}
+            mealType={slot.label}
+            title={m?.shortTitle || 'Нет позиций на этот приём пищи'}
+            description={m ? truncateText(m.composition, 140) : 'Выберите другой день в календаре или дождитесь обновления плана.'}
+            tag={m?.statusTag || null}
+            imageUrl={m?.imageUrl || null}
+            onClick={m ? () => { setOpenReplaceView(false); setActiveSlot(index); } : undefined}
+            onReplaceClick={
+              m
+                ? () => { setOpenReplaceView(true); setActiveSlot(index); }
+                : undefined
+            }
+          />
+        )
+      })}
 
-      <div className="nutrition-plan-footer">
-        <button type="button" className="nutrition-plan-cart-btn" onClick={() => navigate('/cart')}>
-          Добавить в корзину
-        </button>
-      </div>
+      {!isLoading && !loadError && ration.length > 0 ? (
+        <div className="nutrition-plan-footer">
+          <button type="button" className="nutrition-plan-cart-btn" onClick={() => navigate('/cart')}>
+            Добавить в корзину
+          </button>
+        </div>
+      ) : null}
 
       <MealDetailSheet
         open={activeSlot != null}
@@ -133,7 +362,7 @@ function NutritionPlan() {
         meal={activeMeal}
         mealType={mealType}
         slotIndex={activeSlot}
-        alternatives={activeSlot != null ? ALTERNATIVES_BY_SLOT[activeSlot] : []}
+        alternatives={activeAlternatives}
         onReplaceMeal={handleReplaceMeal}
         initialView={openReplaceView ? 'alternatives' : 'detail'}
       />
@@ -142,4 +371,3 @@ function NutritionPlan() {
 }
 
 export default NutritionPlan
-

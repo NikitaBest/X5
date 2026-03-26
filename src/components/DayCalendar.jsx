@@ -19,14 +19,20 @@ function getWeekStart(date) {
   return tmp
 }
 
-function DayCalendar() {
+/**
+ * @param {{ selectedDate?: Date, onSelectDate?: (d: Date) => void }} props
+ * Если переданы selectedDate и onSelectDate — календарь контролируется снаружи.
+ */
+function DayCalendar({ selectedDate: selectedDateProp, onSelectDate } = {}) {
   const today = useMemo(() => {
     const d = new Date()
     d.setHours(0, 0, 0, 0)
     return d
   }, [])
 
-  const [selectedDate, setSelectedDate] = useState(today)
+  const [internalSelected, setInternalSelected] = useState(today)
+  const selectedDate = selectedDateProp ?? internalSelected
+  const setSelectedDate = onSelectDate ?? setInternalSelected
 
   const weekStart = useMemo(() => getWeekStart(today), [today])
   const days = useMemo(

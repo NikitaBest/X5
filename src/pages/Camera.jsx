@@ -9,7 +9,7 @@ import healthMonitorManager, {
 } from '@biosensesignal/web-sdk'
 import { useUserData } from '../contexts/UserDataContext.jsx'
 import { useAuth } from '../contexts/AuthContext.jsx'
-import { postScanSaveRppg } from '../api/client.js'
+import { postScanSaveRppg, extractScanIdFromEnvelope } from '../api/client.js'
 import { SDK_CONFIG } from '../config/sdkConfig.js'
 import logger from '../utils/logger.js'
 import Page from '../layout/Page.jsx'
@@ -707,17 +707,20 @@ function Camera() {
         if (saveScanPromiseRef.current) {
           backendScanResponse = await Promise.race([
             saveScanPromiseRef.current,
-            new Promise((resolve) => setTimeout(() => resolve(null), 1200)),
+            new Promise((resolve) => setTimeout(() => resolve(null), 4000)),
           ])
         }
       } catch {
         backendScanResponse = null
       }
 
+      const scanId = extractScanIdFromEnvelope(backendScanResponse)
+
       navigate('/results', {
         state: {
           results: vitalSignsResults,
           backendScanResponse,
+          ...(scanId ? { scanId } : {}),
         },
       })
     }, 1000)

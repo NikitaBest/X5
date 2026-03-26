@@ -1,6 +1,6 @@
 import './MealCard.css'
 
-function MealCard({ mealType, time, title, description, tag, onClick, onReplaceClick }) {
+function MealCard({ mealType, time, title, description, tag, imageUrl, onClick, onReplaceClick }) {
   return (
     <section className="meal-section">
       <header className="meal-section-header">
@@ -9,7 +9,9 @@ function MealCard({ mealType, time, title, description, tag, onClick, onReplaceC
       </header>
 
       <div className={`meal-card${onClick ? ' meal-card--clickable' : ''}`} role={onClick ? 'button' : undefined} tabIndex={onClick ? 0 : undefined} onClick={onClick} onKeyDown={onClick ? (e) => { if (e.key === 'Enter' || e.key === ' ') e.preventDefault(); if (e.key === 'Enter') onClick(); } : undefined}>
-        <div className="meal-card-image" aria-hidden="true" />
+        <div className={`meal-card-image${imageUrl ? ' meal-card-image--photo' : ''}`} aria-hidden="true">
+          {imageUrl ? <img src={imageUrl} alt="" className="meal-card-image-img" /> : null}
+        </div>
         <div className="meal-card-content">
           <div className="meal-card-text">
             <div className="meal-card-title">{title}</div>
