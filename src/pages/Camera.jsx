@@ -1666,6 +1666,10 @@ function Camera() {
   // Показываем индикатор ожидания когда измерение запущено, но SDK еще не обрабатывает данные
   // Это помогает пользователю понять, что происходит (ожидание ~8 секунд до первого onVitalSign)
   const showWaitingIndicator = isMeasuring && !isProcessingFrames
+  const shouldShowFreezeHint =
+    ovalColorClass === 'face-oval-success' &&
+    instructionText === 'Отлично! Лицо обнаружено, начинаем измерение...' &&
+    !showCompletionSuccess
   
   // Логируем только при изменении состояния овала или прогресс-бара
   const lastOvalStateRef = useRef({ color: null, progress: false })
@@ -1771,6 +1775,17 @@ function Camera() {
               </div>
             )}
             <div className="face-oval-container">
+              {shouldShowFreezeHint ? (
+                <div className="camera-freeze-hint" aria-live="polite">
+                  <span className="camera-freeze-hint-main">
+                    <span className="camera-freeze-hint-dot" aria-hidden="true" />
+                    Замрите, не двигайтесь
+                  </span>
+                  <span className="camera-freeze-hint-wait" aria-hidden="true">
+                    Ожидайте...
+                  </span>
+                </div>
+              ) : null}
               <svg 
                 ref={ovalRef}
                 className={`face-oval ${ovalColorClass}`}
