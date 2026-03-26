@@ -38,6 +38,19 @@ function weekdayMetaByDay(dayNum) {
   return { short, full, id }
 }
 
+function goalLabel(goal) {
+  const key = String(goal ?? '').trim().toLowerCase()
+  if (!key) return ''
+  const map = {
+    sugar: 'Взять сахар под контроль',
+    lightness: 'Обрести лёгкость',
+    energy: 'Получить заряд бодрости',
+    immunity: 'Укрепить иммунитет',
+    shopping: 'Выгодно покупать полезное',
+  }
+  return map[key] || goal
+}
+
 /**
  * Маппит ответ GET /ration/{rationId} в структуру NutritionReport.
  * @param {any} payload
@@ -124,7 +137,10 @@ export function mapRationToNutritionReport(payload) {
 
   const profile = raw?.profile && typeof raw.profile === 'object' ? raw.profile : null
 
-  const goals = Array.isArray(profile?.goals) && profile.goals.length > 0 ? profile.goals : ['Сбалансированное питание']
+  const goals =
+    Array.isArray(profile?.goals) && profile.goals.length > 0
+      ? profile.goals.map(goalLabel).filter(Boolean)
+      : ['Сбалансированное питание']
 
   const normalizeExclusionValue = (item) => {
     if (item == null) return null
