@@ -30,6 +30,14 @@ function weekdayLabelByDay(dayNum) {
   return labels[Math.max(1, Math.min(7, Number(dayNum) || 1)) - 1]
 }
 
+function weekdayMetaByDay(dayNum) {
+  const index = Math.max(1, Math.min(7, Number(dayNum) || 1)) - 1
+  const short = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'][index]
+  const full = ['Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота', 'Воскресенье'][index]
+  const id = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'][index]
+  return { short, full, id }
+}
+
 /**
  * Маппит ответ GET /ration/{rationId} в структуру NutritionReport.
  * @param {any} payload
@@ -42,9 +50,10 @@ export function mapRationToNutritionReport(payload) {
   for (const row of rationRows) {
     const day = Number(row?.day) || 1
     if (!dayMap.has(day)) {
+      const weekday = weekdayMetaByDay(day)
       dayMap.set(day, {
-        id: String(day),
-        title: `День ${day}`,
+        id: weekday.id,
+        title: `День ${day} (${weekday.full})`,
         totalKcal: 0,
         meals: [],
         macros: { proteinGrams: 0, fatGrams: 0, carbsGrams: 0 },

@@ -21,6 +21,27 @@ function NutritionWeekDayCard({ day }) {
   const totalKcal = day?.totalKcal ?? 0
   const id = String(day?.id ?? '')
   const isGreenDay = id === 'mon' || id === 'wed' || id === 'fri' || id === 'sun'
+  const meals = Array.isArray(day?.meals) ? day.meals : []
+
+  const slotTotals = meals.reduce((acc, meal) => {
+    const slot = String(meal?.slot ?? 'Приём пищи')
+    acc[slot] = (acc[slot] || 0) + 1
+    return acc
+  }, {})
+
+  const slotCounters = {}
+  const normalizedMeals = meals.map((meal) => {
+    const slot = String(meal?.slot ?? 'Приём пищи')
+    const nextIndex = (slotCounters[slot] || 0) + 1
+    slotCounters[slot] = nextIndex
+    return {
+      ...meal,
+      slot,
+      dishIndex: nextIndex,
+      hasMultipleInSlot: (slotTotals[slot] || 0) > 1,
+      showSlot: nextIndex === 1,
+    }
+  })
 
   return (
     <section className={`nutrition-week-day ${isGreenDay ? 'nutrition-week-day--green' : 'nutrition-week-day--blue'}`}>
@@ -34,10 +55,13 @@ function NutritionWeekDayCard({ day }) {
         </div>
 
         <div className="nutrition-week-day-meals">
-          {(day?.meals ?? []).map((m) => (
+          {normalizedMeals.map((m) => (
             <div key={m.key} className="nutrition-week-day-meal">
-              <div className="nutrition-week-day-meal-slot">{m.slot}</div>
-              <div className="nutrition-week-day-meal-text">{m.text}</div>
+              <div className="nutrition-week-day-meal-slot">{m.showSlot ? m.slot : ''}</div>
+              <div className="nutrition-week-day-meal-text">
+                {m.hasMultipleInSlot ? `Блюдо ${m.dishIndex}. ` : ''}
+                {m.text}
+              </div>
               <div className="nutrition-week-day-meal-kcal">{m.kcal}</div>
             </div>
           ))}
