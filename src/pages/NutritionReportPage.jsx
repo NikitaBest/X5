@@ -13,6 +13,8 @@ function NutritionReportPage() {
   const reportRef = useRef(null)
   const { token } = useAuth()
   const [report, setReport] = useState(null)
+  const [isLoadingReport, setIsLoadingReport] = useState(false)
+  const [loadError, setLoadError] = useState('')
 
   const params = new URLSearchParams(location.search)
   const isPublic = params.get('public') === '1'
@@ -21,6 +23,8 @@ function NutritionReportPage() {
   useEffect(() => {
     if (!rationId) return
     let cancelled = false
+    setIsLoadingReport(true)
+    setLoadError('')
     getRationById(token, rationId)
       .then((data) => {
         if (cancelled) return
@@ -29,6 +33,10 @@ function NutritionReportPage() {
       .catch(() => {
         if (cancelled) return
         setReport(null)
+        setLoadError('Не удалось загрузить рацион по ссылке.')
+      })
+      .finally(() => {
+        if (!cancelled) setIsLoadingReport(false)
       })
     return () => {
       cancelled = true
@@ -68,7 +76,13 @@ function NutritionReportPage() {
   return (
     <Page className={`nutrition-report-page${isPublic ? ' nutrition-report-page--public' : ''}`}>
       {!isPublic && <Header title="Ваш рацион" showBack />}
-      <NutritionReport ref={reportRef} report={report || undefined} isPublic={isPublic} />
+      {rationId && isLoadingReport ? (
+        <div className="nutrition-plan-loading">Загружаем рацион...</div>
+      ) : rationId && !report ? (
+        <div className="nutrition-plan-error">{loadError || 'Рацион временно недоступен.'}</div>
+      ) : (
+        <NutritionReport ref={reportRef} report={rationId ? (report || undefined) : undefined} isPublic={isPublic} />
+      )}
     </Page>
   )
 }

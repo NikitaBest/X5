@@ -1,5 +1,5 @@
 import { useNavigate, useLocation } from 'react-router-dom'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import html2pdf from 'html2pdf.js'
 import Page from '../layout/Page.jsx'
@@ -18,14 +18,24 @@ function Cart() {
   const [isGenerating, setIsGenerating] = useState(false)
   const [toastMessage, setToastMessage] = useState('')
   const [report, setReport] = useState(null)
+  const [isLoadingReport, setIsLoadingReport] = useState(false)
   const toastTimerRef = useRef(null)
   const surveyTimerRef = useRef(null)
   const rationId = location.state?.rationId ?? null
+  const resolvedRationId = useMemo(() => {
+    if (rationId) return rationId
+    try {
+      return window.localStorage.getItem('lastRationId')
+    } catch {
+      return null
+    }
+  }, [rationId])
 
   useEffect(() => {
-    if (!rationId) return
+    if (!resolvedRationId) return
     let cancelled = false
-    getRationById(token, rationId)
+    setIsLoadingReport(true)
+    getRationById(token, resolvedRationId)
       .then((data) => {
         if (cancelled) return
         setReport(mapRationToNutritionReport(data))
@@ -34,10 +44,13 @@ function Cart() {
         if (cancelled) return
         setReport(null)
       })
+      .finally(() => {
+        if (!cancelled) setIsLoadingReport(false)
+      })
     return () => {
       cancelled = true
     }
-  }, [rationId, token])
+  }, [resolvedRationId, token])
 
   const showToast = (message, { goSurveyAfter = false } = {}) => {
     setToastMessage(message)
@@ -59,6 +72,10 @@ function Cart() {
 
   const handleDownload = () => {
     if (!reportRef.current || isGenerating) return
+    if (resolvedRationId && !report) {
+      showToast('Рацион еще загружается')
+      return
+    }
 
     const element = reportRef.current
     setIsGenerating(true)
@@ -96,7 +113,7 @@ function Cart() {
   const handleCopyLink = async () => {
     const q = new URLSearchParams()
     q.set('public', '1')
-    if (rationId) q.set('rationId', String(rationId))
+    if (resolvedRationId) q.set('rationId', String(resolvedRationId))
     const url = `${window.location.origin}/nutrition-report?${q.toString()}`
 
     try {
@@ -168,6 +185,9 @@ function Cart() {
             Скопировать ссылку
           </button>
         </div>
+        {isLoadingReport ? (
+          <p className="cart-loading-note">Загружаем рацион для PDF...</p>
+        ) : null}
       </div>
 
       {/* Скрытый блок с отчётом для генерации PDF */}

@@ -233,7 +233,15 @@ function NutritionPlan() {
     if (!rows.length) {
       throw new Error('Рацион пока пуст. Попробуйте обновить позже.')
     }
-    setRationId(extractRationId(data))
+    const nextRationId = extractRationId(data)
+    setRationId(nextRationId)
+    if (nextRationId) {
+      try {
+        window.localStorage.setItem('lastRationId', nextRationId)
+      } catch {
+        // ignore
+      }
+    }
     setRation(rows)
     return true
   }, [scanId, token])
