@@ -125,58 +125,6 @@ function foodItemToMealPartial(food) {
   }
 }
 
-function mergeFoodsForSlot(foods) {
-  if (!Array.isArray(foods) || foods.length === 0) return null
-  if (foods.length === 1) {
-    const one = foodItemToMealPartial(foods[0])
-    return one ? { ...one, slotFoodCount: 1 } : null
-  }
-  let kcal = 0
-  let protein = 0
-  let fat = 0
-  let carbs = 0
-  const partials = []
-  for (const f of foods) {
-    const p = f.product
-    if (!p) continue
-    const w = Number(f.weigth ?? f.weight ?? p.weightG) || 100
-    const m = gramsToMacros(p, w)
-    kcal += m.kcal
-    protein += m.protein
-    fat += m.fat
-    carbs += m.carbs
-    const part = foodItemToMealPartial(f)
-    if (part) partials.push(part)
-  }
-  if (partials.length === 0) return null
-  const first = partials[0]
-  const shortTitle =
-    partials.length > 1
-      ? `${first.shortTitle} и ещё ${partials.length - 1}`
-      : first.shortTitle
-  return {
-    id: `merged-${foods[0].id}`,
-    title: partials.map((x) => x.title).join(' · '),
-    shortTitle,
-    statusTag: partials
-      .map((x) => x.statusTag)
-      .filter(Boolean)
-      .join(' · ')
-      .slice(0, 120),
-    tags: partials.flatMap((x) => x.tags).slice(0, 4),
-    composition: partials
-      .map((x) => x.composition)
-      .filter(Boolean)
-      .join('\n\n'),
-    calories: `${Math.round(kcal)} ккал`,
-    protein: Math.round(protein * 10) / 10,
-    fat: Math.round(fat * 10) / 10,
-    carbs: Math.round(carbs * 10) / 10,
-    imageUrl: first.imageUrl,
-    slotFoodCount: foods.length,
-  }
-}
-
 function extractRationRows(data) {
   if (!data || typeof data !== 'object') return []
   const v = data.value != null && typeof data.value === 'object' ? data.value : data
@@ -194,7 +142,7 @@ function getVisibleMealTypesForDay(ration, planDay) {
   return BASE_MEAL_TYPES.filter((x) => present.has(x.key))
 }
 
-function buildSlotsForPlanDay(ration, planDay, mealTypes) {
+function buildEntriesForPlanDay(ration, planDay, mealTypes) {
   const dayNum = Number(planDay)
   const rows = ration.filter((r) => Number(r.day) === dayNum)
   const byType = {}
@@ -205,20 +153,22 @@ function buildSlotsForPlanDay(ration, planDay, mealTypes) {
     byType[t].push(...foods)
   }
 
-  return mealTypes.map(({ key, label }) => {
+  return mealTypes.flatMap(({ key, label }) => {
     const foods = byType[key] || []
-    const meal = mergeFoodsForSlot(foods)
-    const alternatives = (() => {
-      const all = foods.flatMap((f) => mapReplaceToAlternatives(f))
-      const seen = new Set()
-      return all.filter((x) => {
-        const k = String(x?.title || x?.id || '')
-        if (!k || seen.has(k)) return false
-        seen.add(k)
-        return true
+    return foods
+      .map((food, index) => {
+        const meal = foodItemToMealPartial(food)
+        if (!meal) return null
+        const alternatives = mapReplaceToAlternatives(food)
+        return {
+          key,
+          label,
+          meal,
+          alternatives,
+          showHeader: index === 0,
+        }
       })
-    })()
-    return { key, label, meal, alternatives }
+      .filter(Boolean)
   })
 }
 
@@ -239,8 +189,7 @@ function NutritionPlan() {
   const [loadError, setLoadError] = useState(null)
   const [isLoading, setIsLoading] = useState(Boolean(scanId && token))
 
-  const [meals, setMeals] = useState([])
-  const [alternativesBySlot, setAlternativesBySlot] = useState([])
+  const [mealEntries, setMealEntries] = useState([])
 
   const [activeSlot, setActiveSlot] = useState(null)
   const [openReplaceView, setOpenReplaceView] = useState(false)
@@ -297,17 +246,21 @@ function NutritionPlan() {
   )
 
   useEffect(() => {
-    const slots = buildSlotsForPlanDay(ration, planDay, visibleMealTypes)
-    setMeals(slots.map((s) => s.meal))
-    setAlternativesBySlot(slots.map((s) => s.alternatives))
+    const entries = buildEntriesForPlanDay(ration, planDay, visibleMealTypes)
+    setMealEntries(entries)
   }, [ration, planDay, visibleMealTypes])
 
-  const handleReplaceMeal = useCallback((slotIndex, newMeal) => {
-    setMeals((prev) => {
+  const handleReplaceMeal = useCallback((entryIndex, newMeal) => {
+    setMealEntries((prev) => {
       const next = [...prev]
-      next[slotIndex] = {
-        ...newMeal,
-        id: newMeal.id ?? next[slotIndex]?.id,
+      const oldEntry = next[entryIndex]
+      if (!oldEntry) return prev
+      next[entryIndex] = {
+        ...oldEntry,
+        meal: {
+          ...newMeal,
+          id: newMeal.id ?? oldEntry.meal?.id,
+        },
       }
       return next
     })
@@ -318,12 +271,13 @@ function NutritionPlan() {
     setOpenReplaceView(false)
   }
 
-  const activeMeal = activeSlot != null ? meals[activeSlot] : null
-  const mealType = activeSlot != null ? visibleMealTypes[activeSlot]?.label : null
-  const activeAlternatives = activeSlot != null ? alternativesBySlot[activeSlot] ?? [] : []
+  const activeMeal = activeSlot != null ? mealEntries[activeSlot]?.meal : null
+  const mealType = activeSlot != null ? mealEntries[activeSlot]?.label : null
+  const activeAlternatives = activeSlot != null ? mealEntries[activeSlot]?.alternatives ?? [] : []
   const dayTotals = useMemo(() => {
-    const totals = meals.reduce(
-      (acc, meal) => {
+    const totals = mealEntries.reduce(
+      (acc, entry) => {
+        const meal = entry?.meal
         if (!meal) return acc
         acc.kcal += kcalFromMeal(meal)
         acc.protein += toNumber(meal.protein)
@@ -341,7 +295,7 @@ function NutritionPlan() {
       fatShare: macroSum > 0 ? totals.fat / macroSum : 0,
       carbsShare: macroSum > 0 ? totals.carbs / macroSum : 0,
     }
-  }, [meals])
+  }, [mealEntries])
 
   if (!scanId) {
     return (
@@ -385,12 +339,12 @@ function NutritionPlan() {
         </p>
       )}
 
-      {!isLoading && !loadError && ration.length > 0 && visibleMealTypes.map((slot, index) => {
-        const m = meals[index]
+      {!isLoading && !loadError && ration.length > 0 && mealEntries.map((entry, index) => {
+        const m = entry.meal
         return (
           <MealCard
-            key={slot.key}
-            mealType={slot.label}
+            key={`${entry.key}-${m?.id ?? index}`}
+            mealType={entry.showHeader ? entry.label : ''}
             title={m?.shortTitle || 'Нет позиций на этот приём пищи'}
             description={m ? truncateText(m.composition, 140) : 'Выберите другой день в календаре или дождитесь обновления плана.'}
             tag={m?.statusTag || null}
