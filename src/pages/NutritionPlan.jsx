@@ -153,6 +153,12 @@ function extractRationRows(data) {
   return v.ration
 }
 
+function extractRationId(data) {
+  const v = data?.value != null && typeof data.value === 'object' ? data.value : data
+  const id = v?.id ?? data?.id ?? null
+  return id != null && String(id).trim() ? String(id).trim() : null
+}
+
 function getVisibleMealTypesForDay(ration, planDay) {
   const dayNum = Number(planDay)
   const present = new Set(
@@ -207,6 +213,7 @@ function NutritionPlan() {
   const [selectedDate, setSelectedDate] = useState(today)
 
   const [ration, setRation] = useState([])
+  const [rationId, setRationId] = useState(null)
   const [loadError, setLoadError] = useState(null)
   const [isLoading, setIsLoading] = useState(Boolean(scanId && token))
   const [isRegenerating, setIsRegenerating] = useState(false)
@@ -226,6 +233,7 @@ function NutritionPlan() {
     if (!rows.length) {
       throw new Error('Рацион пока пуст. Попробуйте обновить позже.')
     }
+    setRationId(extractRationId(data))
     setRation(rows)
     return true
   }, [scanId, token])
@@ -475,7 +483,11 @@ function NutritionPlan() {
 
       {!isLoading && !isRegenerating && !loadError && ration.length > 0 ? (
         <div className="nutrition-plan-footer">
-          <button type="button" className="nutrition-plan-cart-btn" onClick={() => navigate('/cart')}>
+          <button
+            type="button"
+            className="nutrition-plan-cart-btn"
+            onClick={() => navigate('/cart', { state: rationId ? { rationId } : {} })}
+          >
             Добавить в корзину
           </button>
         </div>

@@ -281,3 +281,24 @@ export async function getRationGenerationStatus(token, scanId) {
   }
   return res.json().catch(() => ({}))
 }
+
+/**
+ * GET /ration/{rationId} — получить рацион по идентификатору.
+ * @param {string | null | undefined} token
+ * @param {string} rationId
+ */
+export async function getRationById(token, rationId) {
+  const id = encodeURIComponent(String(rationId))
+  const url = `${BASE_URL.replace(/\/$/, '')}/ration/${id}`
+  const res = await fetch(url, {
+    method: 'GET',
+    headers: {
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+  })
+  if (!res.ok) {
+    const errText = await res.text()
+    throw new Error(`ration/{id} failed: ${res.status} ${errText}`)
+  }
+  return res.json().catch(() => ({}))
+}

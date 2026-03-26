@@ -1,19 +1,43 @@
-import { useNavigate } from 'react-router-dom'
-import { useRef, useState } from 'react'
+import { useNavigate, useLocation } from 'react-router-dom'
+import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import html2pdf from 'html2pdf.js'
 import Page from '../layout/Page.jsx'
 import Header from '../layout/Header.jsx'
 import NutritionReport from '../components/NutritionReport.jsx'
+import { getRationById } from '../api/client.js'
+import { useAuth } from '../contexts/AuthContext.jsx'
+import { mapRationToNutritionReport } from '../utils/rationReportMapper.js'
 import './Cart.css'
 
 function Cart() {
   const navigate = useNavigate()
+  const location = useLocation()
+  const { token } = useAuth()
   const reportRef = useRef(null)
   const [isGenerating, setIsGenerating] = useState(false)
   const [toastMessage, setToastMessage] = useState('')
+  const [report, setReport] = useState(null)
   const toastTimerRef = useRef(null)
   const surveyTimerRef = useRef(null)
+  const rationId = location.state?.rationId ?? null
+
+  useEffect(() => {
+    if (!rationId) return
+    let cancelled = false
+    getRationById(token, rationId)
+      .then((data) => {
+        if (cancelled) return
+        setReport(mapRationToNutritionReport(data))
+      })
+      .catch(() => {
+        if (cancelled) return
+        setReport(null)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [rationId, token])
 
   const showToast = (message, { goSurveyAfter = false } = {}) => {
     setToastMessage(message)
@@ -70,7 +94,10 @@ function Cart() {
   }
 
   const handleCopyLink = async () => {
-    const url = `${window.location.origin}/nutrition-report?public=1`
+    const q = new URLSearchParams()
+    q.set('public', '1')
+    if (rationId) q.set('rationId', String(rationId))
+    const url = `${window.location.origin}/nutrition-report?${q.toString()}`
 
     try {
       if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -145,7 +172,7 @@ function Cart() {
 
       {/* Скрытый блок с отчётом для генерации PDF */}
       <div style={{ position: 'absolute', left: '-99999px', top: 0, height: 0, overflow: 'hidden' }}>
-        <NutritionReport ref={reportRef} />
+        <NutritionReport ref={reportRef} report={report || undefined} />
       </div>
     </Page>
   )

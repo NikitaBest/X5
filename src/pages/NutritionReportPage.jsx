@@ -1,16 +1,39 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useLocation } from 'react-router-dom'
 import Page from '../layout/Page.jsx'
 import Header from '../layout/Header.jsx'
 import NutritionReport from '../components/NutritionReport.jsx'
 import html2pdf from 'html2pdf.js'
+import { getRationById } from '../api/client.js'
+import { mapRationToNutritionReport } from '../utils/rationReportMapper.js'
+import { useAuth } from '../contexts/AuthContext.jsx'
 
 function NutritionReportPage() {
   const location = useLocation()
   const reportRef = useRef(null)
+  const { token } = useAuth()
+  const [report, setReport] = useState(null)
 
   const params = new URLSearchParams(location.search)
   const isPublic = params.get('public') === '1'
+  const rationId = params.get('rationId')
+
+  useEffect(() => {
+    if (!rationId) return
+    let cancelled = false
+    getRationById(token, rationId)
+      .then((data) => {
+        if (cancelled) return
+        setReport(mapRationToNutritionReport(data))
+      })
+      .catch(() => {
+        if (cancelled) return
+        setReport(null)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [rationId, token])
 
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search)
@@ -45,7 +68,7 @@ function NutritionReportPage() {
   return (
     <Page className={`nutrition-report-page${isPublic ? ' nutrition-report-page--public' : ''}`}>
       {!isPublic && <Header title="Ваш рацион" showBack />}
-      <NutritionReport ref={reportRef} isPublic={isPublic} />
+      <NutritionReport ref={reportRef} report={report || undefined} isPublic={isPublic} />
     </Page>
   )
 }
