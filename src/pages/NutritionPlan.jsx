@@ -11,11 +11,21 @@ import logger from '../utils/logger.js'
 import { proxiedProductImageUrl } from '../utils/productImageProxy.js'
 import './Results.css'
 
-const MEAL_TYPES = [
+const BASE_MEAL_TYPES = [
   { key: 'breakfast', label: 'Завтрак' },
   { key: 'lunch', label: 'Обед' },
+  { key: 'snack', label: 'Перекус' },
   { key: 'dinner', label: 'Ужин' },
 ]
+
+function normalizeMealType(type) {
+  const t = String(type || '').toLowerCase().trim()
+  if (t === 'breakfast' || t === 'завтрак') return 'breakfast'
+  if (t === 'lunch' || t === 'обед') return 'lunch'
+  if (t === 'dinner' || t === 'ужин') return 'dinner'
+  if (t === 'snack' || t === 'перекус') return 'snack'
+  return t
+}
 
 function getWeekStartMonday(date) {
   const tmp = new Date(date)
@@ -174,18 +184,28 @@ function extractRationRows(data) {
   return v.ration
 }
 
-function buildSlotsForPlanDay(ration, planDay) {
+function getVisibleMealTypesForDay(ration, planDay) {
+  const dayNum = Number(planDay)
+  const present = new Set(
+    ration
+      .filter((r) => Number(r.day) === dayNum)
+      .map((r) => normalizeMealType(r.type)),
+  )
+  return BASE_MEAL_TYPES.filter((x) => present.has(x.key))
+}
+
+function buildSlotsForPlanDay(ration, planDay, mealTypes) {
   const dayNum = Number(planDay)
   const rows = ration.filter((r) => Number(r.day) === dayNum)
   const byType = {}
   for (const row of rows) {
-    const t = String(row.type || '').toLowerCase()
+    const t = normalizeMealType(row.type)
     if (!byType[t]) byType[t] = []
     const foods = Array.isArray(row.food) ? row.food : []
     byType[t].push(...foods)
   }
 
-  return MEAL_TYPES.map(({ key, label }) => {
+  return mealTypes.map(({ key, label }) => {
     const foods = byType[key] || []
     const meal = mergeFoodsForSlot(foods)
     const alternatives = (() => {
@@ -219,8 +239,8 @@ function NutritionPlan() {
   const [loadError, setLoadError] = useState(null)
   const [isLoading, setIsLoading] = useState(Boolean(scanId && token))
 
-  const [meals, setMeals] = useState([null, null, null])
-  const [alternativesBySlot, setAlternativesBySlot] = useState([[], [], []])
+  const [meals, setMeals] = useState([])
+  const [alternativesBySlot, setAlternativesBySlot] = useState([])
 
   const [activeSlot, setActiveSlot] = useState(null)
   const [openReplaceView, setOpenReplaceView] = useState(false)
@@ -271,12 +291,16 @@ function NutritionPlan() {
     () => planDayFromSelectedCalendarDate(selectedDate),
     [selectedDate],
   )
+  const visibleMealTypes = useMemo(
+    () => getVisibleMealTypesForDay(ration, planDay),
+    [ration, planDay],
+  )
 
   useEffect(() => {
-    const slots = buildSlotsForPlanDay(ration, planDay)
+    const slots = buildSlotsForPlanDay(ration, planDay, visibleMealTypes)
     setMeals(slots.map((s) => s.meal))
     setAlternativesBySlot(slots.map((s) => s.alternatives))
-  }, [ration, planDay])
+  }, [ration, planDay, visibleMealTypes])
 
   const handleReplaceMeal = useCallback((slotIndex, newMeal) => {
     setMeals((prev) => {
@@ -295,7 +319,7 @@ function NutritionPlan() {
   }
 
   const activeMeal = activeSlot != null ? meals[activeSlot] : null
-  const mealType = activeSlot != null ? MEAL_TYPES[activeSlot]?.label : null
+  const mealType = activeSlot != null ? visibleMealTypes[activeSlot]?.label : null
   const activeAlternatives = activeSlot != null ? alternativesBySlot[activeSlot] ?? [] : []
   const dayTotals = useMemo(() => {
     const totals = meals.reduce(
@@ -361,7 +385,7 @@ function NutritionPlan() {
         </p>
       )}
 
-      {!isLoading && !loadError && ration.length > 0 && MEAL_TYPES.map((slot, index) => {
+      {!isLoading && !loadError && ration.length > 0 && visibleMealTypes.map((slot, index) => {
         const m = meals[index]
         return (
           <MealCard
