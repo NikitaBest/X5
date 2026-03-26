@@ -39,6 +39,18 @@ function truncateText(text, maxLen) {
   return `${s.slice(0, maxLen).trim()}…`
 }
 
+function toNumber(value) {
+  const n = typeof value === 'number' ? value : Number.parseFloat(String(value ?? '').replace(',', '.'))
+  return Number.isFinite(n) ? n : 0
+}
+
+function kcalFromMeal(meal) {
+  if (!meal) return 0
+  const raw = String(meal.calories ?? '')
+  const match = raw.match(/[\d.]+/)
+  return match ? toNumber(match[0]) : 0
+}
+
 function gramsToMacros(product, grams) {
   const g = Number(grams) || 0
   const factor = g / 100
@@ -285,6 +297,27 @@ function NutritionPlan() {
   const activeMeal = activeSlot != null ? meals[activeSlot] : null
   const mealType = activeSlot != null ? MEAL_TYPES[activeSlot]?.label : null
   const activeAlternatives = activeSlot != null ? alternativesBySlot[activeSlot] ?? [] : []
+  const dayTotals = useMemo(() => {
+    const totals = meals.reduce(
+      (acc, meal) => {
+        if (!meal) return acc
+        acc.kcal += kcalFromMeal(meal)
+        acc.protein += toNumber(meal.protein)
+        acc.fat += toNumber(meal.fat)
+        acc.carbs += toNumber(meal.carbs)
+        return acc
+      },
+      { kcal: 0, protein: 0, fat: 0, carbs: 0 },
+    )
+    const macroSum = Math.max(0, totals.protein + totals.fat + totals.carbs)
+    return {
+      ...totals,
+      macroSum,
+      proteinShare: macroSum > 0 ? totals.protein / macroSum : 0,
+      fatShare: macroSum > 0 ? totals.fat / macroSum : 0,
+      carbsShare: macroSum > 0 ? totals.carbs / macroSum : 0,
+    }
+  }, [meals])
 
   if (!scanId) {
     return (
@@ -347,6 +380,46 @@ function NutritionPlan() {
           />
         )
       })}
+
+      {!isLoading && !loadError && ration.length > 0 ? (
+        <section className="nutrition-day-summary">
+          <h3 className="nutrition-day-summary-title">Итого за день</h3>
+          <div className="nutrition-day-summary-kcal">
+            <span className="nutrition-day-summary-kcal-value">{Math.round(dayTotals.kcal)}</span>
+            <span className="nutrition-day-summary-kcal-unit">ккал</span>
+          </div>
+
+          <div className="nutrition-day-summary-bar" aria-hidden="true">
+            <div
+              className="nutrition-day-summary-segment nutrition-day-summary-segment--protein"
+              style={{ flex: dayTotals.proteinShare || 0 }}
+            />
+            <div
+              className="nutrition-day-summary-segment nutrition-day-summary-segment--fat"
+              style={{ flex: dayTotals.fatShare || 0 }}
+            />
+            <div
+              className="nutrition-day-summary-segment nutrition-day-summary-segment--carbs"
+              style={{ flex: dayTotals.carbsShare || 0 }}
+            />
+          </div>
+
+          <div className="nutrition-day-summary-legend">
+            <div className="nutrition-day-summary-legend-item">
+              <span className="nutrition-day-summary-dot nutrition-day-summary-dot--protein" />
+              <span>Белки {Math.round(dayTotals.protein)}г</span>
+            </div>
+            <div className="nutrition-day-summary-legend-item">
+              <span className="nutrition-day-summary-dot nutrition-day-summary-dot--fat" />
+              <span>Жиры {Math.round(dayTotals.fat)}г</span>
+            </div>
+            <div className="nutrition-day-summary-legend-item">
+              <span className="nutrition-day-summary-dot nutrition-day-summary-dot--carbs" />
+              <span>Углев. {Math.round(dayTotals.carbs)}г</span>
+            </div>
+          </div>
+        </section>
+      ) : null}
 
       {!isLoading && !loadError && ration.length > 0 ? (
         <div className="nutrition-plan-footer">
