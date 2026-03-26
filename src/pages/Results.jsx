@@ -6,7 +6,6 @@ import ResultDetailSheet from '../components/ResultDetailSheet.jsx'
 import {
   getScanHistory,
   extractScanIdFromEnvelope,
-  getRationByScan,
   getRationGenerationStatus,
 } from '../api/client.js'
 import { useAuth } from '../contexts/AuthContext.jsx'
@@ -37,7 +36,6 @@ function parseWeekRationStatus(payload) {
   return Number.isFinite(n) ? n : null
 }
 
-/** Остановить опрос и разрешить переход: Completed или Failed (чтобы не блокировать UX). */
 function shouldStopRationStatusPolling(payload) {
   if (!payload || typeof payload !== 'object' || payload.isSuccess !== true) return false
   const n = parseWeekRationStatus(payload)
@@ -381,8 +379,13 @@ function Results() {
         const data = await getRationGenerationStatus(token, resolvedScanId)
         if (cancelled) return true
         if (shouldStopRationStatusPolling(data)) {
-          logRationTerminalStatus(data)
-          finish(true)
+          const status = parseWeekRationStatus(data)
+          if (status === WEEK_RATION_GEN_STATUS.Completed) {
+            finish(true)
+          } else {
+            logRationTerminalStatus(data)
+            finish(false)
+          }
           return true
         }
       } catch (error) {
@@ -390,20 +393,14 @@ function Results() {
       }
       if (cancelled) return true
       if (Date.now() - startedAt > RATION_STATUS_MAX_WAIT_MS) {
-        logger.warn('ration generation-status: timeout, разрешаем переход к рациону')
-        finish(true)
+        logger.warn('ration generation-status: timeout, рацион пока не готов')
+        finish(false)
         return true
       }
       return false
     }
 
     ;(async () => {
-      try {
-        await getRationByScan(token, resolvedScanId)
-      } catch (error) {
-        if (!cancelled) logger.warn('ration/scan kickoff failed', error)
-      }
-      if (cancelled) return
       const done = await poll()
       if (cancelled || done) return
       intervalId = window.setInterval(() => {
