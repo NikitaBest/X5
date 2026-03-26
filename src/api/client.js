@@ -26,6 +26,25 @@ export async function postAuthLogin(body = { id: null, utm: null }) {
 }
 
 /**
+ * GET /user/me — получить данные текущего пользователя (профиль, исключения и т.п.).
+ * @param {string|null} token
+ */
+export async function getUserMe(token) {
+  const url = `${BASE_URL.replace(/\/$/, '')}/user/me`
+  const res = await fetch(url, {
+    method: 'GET',
+    headers: {
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+  })
+  if (!res.ok) {
+    const errText = await res.text().catch(() => '')
+    throw new Error(`user/me failed: ${res.status} ${errText}`)
+  }
+  return res.json().catch(() => ({}))
+}
+
+/**
  * Достаёт JWT из ответа /auth/login (поле может называться token, accessToken, access_token).
  */
 export function getTokenFromLoginResponse(data) {

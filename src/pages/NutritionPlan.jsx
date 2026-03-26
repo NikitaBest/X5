@@ -94,26 +94,53 @@ function gramsToMacros(product, grams) {
 }
 
 function mapReplaceToAlternatives(food) {
-  const list = Array.isArray(food?.replace) ? food.replace : []
+  const list = Array.isArray(food?.replace)
+    ? food.replace
+    : Array.isArray(food?.replaces)
+      ? food.replaces
+      : []
+  const baseWeight = Number(food?.weigth ?? food?.weight ?? food?.product?.weightG ?? 0) || 0
+  const baseKcal = toNumber(food?.kcal ?? 0)
+  const baseProtein = toNumber(food?.proteins ?? food?.protein ?? 0)
+  const baseFat = toNumber(food?.fats ?? food?.fat ?? 0)
+  const baseCarbs = toNumber(food?.carbs ?? 0)
   return list.map((r) => {
-    const p = r.product
-    if (!p) return null
-    const w = Number(r.weigth ?? r.weight ?? p.weightG) || 100
-    const m = gramsToMacros(p, w)
+    const p = r?.product ?? null
+    const w = Number(r?.weigth ?? r?.weight ?? p?.weightG ?? 0) || (baseWeight || 100)
+    const ratio = baseWeight > 0 ? w / baseWeight : 1
+    const m = p
+      ? gramsToMacros(p, w)
+      : {
+          kcal: baseKcal * ratio,
+          protein: baseProtein * ratio,
+          fat: baseFat * ratio,
+          carbs: baseCarbs * ratio,
+        }
+    const reason = r?.reason ?? food?.reason ?? ''
+    const title = p?.title || (r?.productId ? `Вариант #${r.productId}` : '')
+    const imageUrl =
+      p && Array.isArray(p.images) && p.images[0]
+        ? proxiedProductImageUrl(p.images[0]) || null
+        : null
+    const composition = p?.mainIngrediants || p?.fullIngrediants || ''
     return {
-      id: r.id,
-      title: p.title || '',
-      shortTitle: truncateText(p.title, 72),
-      statusTag: food.reason ? truncateText(food.reason, 90) : '',
-      tags: [],
-      composition: p.mainIngrediants || p.fullIngrediants || '',
+      id: r?.id ?? r?.productId ?? '',
+      title,
+      shortTitle: truncateText(title, 72),
+      statusTag: reason ? truncateText(reason, 90) : '',
+      tags: reason
+        ? reason
+            .split(/[,;]/)
+            .map((s) => s.trim())
+            .filter(Boolean)
+            .slice(0, 3)
+        : [],
+      composition,
       calories: `${Math.round(m.kcal)} ккал`,
       protein: Math.round(m.protein * 10) / 10,
       fat: Math.round(m.fat * 10) / 10,
       carbs: Math.round(m.carbs * 10) / 10,
-      imageUrl: proxiedProductImageUrl(
-        Array.isArray(p.images) && p.images[0] ? p.images[0] : '',
-      ) || null,
+      imageUrl,
     }
   }).filter(Boolean)
 }
@@ -149,8 +176,9 @@ function foodItemToMealPartial(food) {
 function extractRationRows(data) {
   if (!data || typeof data !== 'object') return []
   const v = data.value != null && typeof data.value === 'object' ? data.value : data
-  if (!Array.isArray(v.ration)) return []
-  return v.ration
+  if (Array.isArray(v.ration)) return v.ration
+  if (Array.isArray(v.items)) return v.items
+  return []
 }
 
 function extractRationId(data) {
@@ -176,8 +204,13 @@ function buildEntriesForPlanDay(ration, planDay, mealTypes) {
   for (const row of rows) {
     const t = normalizeMealType(row.type)
     if (!byType[t]) byType[t] = []
-    const foods = Array.isArray(row.food) ? row.food : []
+    const foods = Array.isArray(row.food) ? row.food : [row]
     byType[t].push(...foods)
+  }
+
+  // Сортируем внутри приёма пищи по order (в новой схеме он есть у каждого элемента)
+  for (const key of Object.keys(byType)) {
+    byType[key].sort((a, b) => Number(a.order ?? 0) - Number(b.order ?? 0))
   }
 
   return mealTypes.flatMap(({ key, label }) => {

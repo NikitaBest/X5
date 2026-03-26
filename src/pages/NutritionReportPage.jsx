@@ -4,7 +4,7 @@ import Page from '../layout/Page.jsx'
 import Header from '../layout/Header.jsx'
 import NutritionReport from '../components/NutritionReport.jsx'
 import html2pdf from 'html2pdf.js'
-import { getRationById } from '../api/client.js'
+import { getRationById, getUserMe } from '../api/client.js'
 import { mapRationToNutritionReport } from '../utils/rationReportMapper.js'
 import { useAuth } from '../contexts/AuthContext.jsx'
 
@@ -25,10 +25,14 @@ function NutritionReportPage() {
     let cancelled = false
     setIsLoadingReport(true)
     setLoadError('')
-    getRationById(token, rationId)
-      .then((data) => {
+
+    const rationPromise = getRationById(token, rationId)
+    const mePromise = token ? getUserMe(token).catch(() => null) : Promise.resolve(null)
+
+    Promise.all([rationPromise, mePromise])
+      .then(([rationData, meData]) => {
         if (cancelled) return
-        setReport(mapRationToNutritionReport(data))
+        setReport(mapRationToNutritionReport(rationData, meData))
       })
       .catch(() => {
         if (cancelled) return

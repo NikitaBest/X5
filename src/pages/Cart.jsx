@@ -5,7 +5,7 @@ import html2pdf from 'html2pdf.js'
 import Page from '../layout/Page.jsx'
 import Header from '../layout/Header.jsx'
 import NutritionReport from '../components/NutritionReport.jsx'
-import { getRationById } from '../api/client.js'
+import { getRationById, getUserMe } from '../api/client.js'
 import { useAuth } from '../contexts/AuthContext.jsx'
 import { mapRationToNutritionReport } from '../utils/rationReportMapper.js'
 import './Cart.css'
@@ -35,10 +35,13 @@ function Cart() {
     if (!resolvedRationId) return
     let cancelled = false
     setIsLoadingReport(true)
-    getRationById(token, resolvedRationId)
-      .then((data) => {
+    const rationPromise = getRationById(token, resolvedRationId)
+    const mePromise = token ? getUserMe(token).catch(() => null) : Promise.resolve(null)
+
+    Promise.all([rationPromise, mePromise])
+      .then(([rationData, meData]) => {
         if (cancelled) return
-        setReport(mapRationToNutritionReport(data))
+        setReport(mapRationToNutritionReport(rationData, meData))
       })
       .catch(() => {
         if (cancelled) return
