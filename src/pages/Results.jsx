@@ -7,13 +7,13 @@ import {
   getScanHistory,
   extractScanIdFromEnvelope,
   getRationGenerationStatus,
+  postRationRegenerate,
 } from '../api/client.js'
 import { useAuth } from '../contexts/AuthContext.jsx'
 import logger from '../utils/logger.js'
 import './Results.css'
 
 const RATION_STATUS_POLL_MS = 2500
-const RATION_STATUS_MAX_WAIT_MS = 180000
 
 /**
  * WeekRationGenerationStatus (бэкенд):
@@ -50,6 +50,15 @@ function logRationTerminalStatus(payload) {
       statusMessage: payload?.value?.statusMessage,
     })
   }
+}
+
+function shouldAutoRegenerateRation(payload) {
+  const status = parseWeekRationStatus(payload)
+  const statusMessage = String(payload?.value?.statusMessage ?? '').trim().toLowerCase()
+  return (
+    status === WEEK_RATION_GEN_STATUS.Failed &&
+    statusMessage.includes('не удалось разобрать json ответа модели')
+  )
 }
 
 function clamp(value, min, max) {
@@ -348,6 +357,7 @@ function Results() {
     () => location.state?.scanId ?? extractScanIdFromEnvelope(backendScanResponse) ?? null,
     [location.state?.scanId, backendScanResponse],
   )
+  const allowAutoRegenerate = Boolean(location.state?.scanId)
 
   useEffect(() => {
     if (!resolvedScanId) {
@@ -363,7 +373,6 @@ function Results() {
 
     let cancelled = false
     let intervalId = null
-    const startedAt = Date.now()
 
     const finish = (allowNavigate) => {
       if (cancelled) return
@@ -382,21 +391,29 @@ function Results() {
           const status = parseWeekRationStatus(data)
           if (status === WEEK_RATION_GEN_STATUS.Completed) {
             finish(true)
+            return true
           } else {
+            if (allowAutoRegenerate && shouldAutoRegenerateRation(data)) {
+              try {
+                await postRationRegenerate(token, resolvedScanId)
+                logger.info('ration auto-regenerate triggered after JSON parse failure', {
+                  scanId: resolvedScanId,
+                  reason: 'status_4_json_parse_error',
+                })
+                return false
+              } catch (error) {
+                logger.warn('ration auto-regenerate failed', error)
+              }
+            }
             logRationTerminalStatus(data)
             finish(false)
+            return true
           }
-          return true
         }
       } catch (error) {
         if (!cancelled) logger.warn('ration generation-status poll failed', error)
       }
       if (cancelled) return true
-      if (Date.now() - startedAt > RATION_STATUS_MAX_WAIT_MS) {
-        logger.warn('ration generation-status: timeout, рацион пока не готов')
-        finish(false)
-        return true
-      }
       return false
     }
 
@@ -420,7 +437,7 @@ function Results() {
         intervalId = null
       }
     }
-  }, [token, resolvedScanId, backendScanResponse])
+  }, [token, resolvedScanId, backendScanResponse, allowAutoRegenerate])
 
   const backendValue = backendScanResponse?.value ?? null
   const backendTranscripts = Array.isArray(backendValue?.transcripts)
