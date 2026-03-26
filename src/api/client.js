@@ -240,6 +240,28 @@ export async function getRationByScan(token, scanId) {
 }
 
 /**
+ * POST /ration/scan/regenerate — запустить перегенерацию рациона по scanId.
+ * @param {string} token
+ * @param {string} scanId
+ */
+export async function postRationRegenerate(token, scanId) {
+  const url = `${BASE_URL.replace(/\/$/, '')}/ration/scan/regenerate`
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify({ scanId: String(scanId) }),
+  })
+  if (!res.ok) {
+    const errText = await res.text()
+    throw new Error(`ration/scan/regenerate failed: ${res.status} ${errText}`)
+  }
+  return res.json().catch(() => ({}))
+}
+
+/**
  * GET /ration/scan/{scanId}/generation-status — статус генерации рациона.
  * @param {string} token
  * @param {string} scanId

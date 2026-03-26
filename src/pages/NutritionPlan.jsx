@@ -5,7 +5,11 @@ import Header from '../layout/Header.jsx'
 import DayCalendar from '../components/DayCalendar.jsx'
 import MealCard from '../components/MealCard.jsx'
 import MealDetailSheet from '../components/MealDetailSheet.jsx'
-import { getRationByScan } from '../api/client.js'
+import {
+  getRationByScan,
+  getRationGenerationStatus,
+  postRationRegenerate,
+} from '../api/client.js'
 import { useAuth } from '../contexts/AuthContext.jsx'
 import logger from '../utils/logger.js'
 import { proxiedProductImageUrl } from '../utils/productImageProxy.js'
@@ -17,6 +21,15 @@ const BASE_MEAL_TYPES = [
   { key: 'snack', label: 'Перекус' },
   { key: 'dinner', label: 'Ужин' },
 ]
+const RATION_POLL_MS = 2500
+const RATION_POLL_TIMEOUT_MS = 180000
+const WEEK_RATION_STATUS = {
+  None: 0,
+  Pending: 1,
+  InProgress: 2,
+  Completed: 3,
+  Failed: 4,
+}
 
 function normalizeMealType(type) {
   const t = String(type || '').toLowerCase().trim()
@@ -25,6 +38,14 @@ function normalizeMealType(type) {
   if (t === 'dinner' || t === 'ужин') return 'dinner'
   if (t === 'snack' || t === 'перекус') return 'snack'
   return t
+}
+
+function parseRationStatus(payload) {
+  const v = payload?.value
+  if (!v || typeof v !== 'object') return null
+  const raw = v.status ?? v.weekRationGenerationStatus
+  const n = typeof raw === 'number' ? raw : Number.parseInt(String(raw), 10)
+  return Number.isFinite(n) ? n : null
 }
 
 function getWeekStartMonday(date) {
@@ -188,11 +209,26 @@ function NutritionPlan() {
   const [ration, setRation] = useState([])
   const [loadError, setLoadError] = useState(null)
   const [isLoading, setIsLoading] = useState(Boolean(scanId && token))
+  const [isRegenerating, setIsRegenerating] = useState(false)
 
   const [mealEntries, setMealEntries] = useState([])
 
   const [activeSlot, setActiveSlot] = useState(null)
   const [openReplaceView, setOpenReplaceView] = useState(false)
+
+  const loadRation = useCallback(async () => {
+    if (!scanId || !token) return false
+    const data = await getRationByScan(token, scanId)
+    if (data && typeof data === 'object' && data.isSuccess === false) {
+      throw new Error(data.error ? String(data.error) : 'Не удалось получить рацион.')
+    }
+    const rows = extractRationRows(data)
+    if (!rows.length) {
+      throw new Error('Рацион пока пуст. Попробуйте обновить позже.')
+    }
+    setRation(rows)
+    return true
+  }, [scanId, token])
 
   useEffect(() => {
     if (!scanId || !token) {
@@ -205,26 +241,14 @@ function NutritionPlan() {
     setIsLoading(true)
     setLoadError(null)
 
-    getRationByScan(token, scanId)
-      .then((data) => {
+    loadRation()
+      .then(() => {
         if (cancelled) return
-        if (data && typeof data === 'object' && data.isSuccess === false) {
-          setLoadError(data.error ? String(data.error) : 'Не удалось получить рацион.')
-          setRation([])
-          return
-        }
-        const rows = extractRationRows(data)
-        if (!rows.length) {
-          setLoadError('Рацион пока пуст. Попробуйте обновить позже.')
-          setRation([])
-          return
-        }
-        setRation(rows)
       })
       .catch((err) => {
         if (cancelled) return
         logger.warn('nutrition: getRationByScan failed', err)
-        setLoadError('Не удалось загрузить рацион. Попробуйте ещё раз.')
+        setLoadError(err?.message || 'Не удалось загрузить рацион. Попробуйте ещё раз.')
         setRation([])
       })
       .finally(() => {
@@ -234,7 +258,7 @@ function NutritionPlan() {
     return () => {
       cancelled = true
     }
-  }, [scanId, token])
+  }, [scanId, token, loadRation])
 
   const planDay = useMemo(
     () => planDayFromSelectedCalendarDate(selectedDate),
@@ -270,6 +294,47 @@ function NutritionPlan() {
     setActiveSlot(null)
     setOpenReplaceView(false)
   }
+
+  const handleRegenerateRation = useCallback(async () => {
+    if (!scanId || !token || isRegenerating) return
+    setLoadError(null)
+    setIsRegenerating(true)
+    setActiveSlot(null)
+    setOpenReplaceView(false)
+
+    try {
+      await postRationRegenerate(token, scanId)
+    } catch (err) {
+      logger.warn('nutrition: regenerate start failed', err)
+      setLoadError('Не удалось запустить перегенерацию. Попробуйте ещё раз.')
+      setIsRegenerating(false)
+      return
+    }
+
+    const startedAt = Date.now()
+    while (Date.now() - startedAt < RATION_POLL_TIMEOUT_MS) {
+      try {
+        const statusData = await getRationGenerationStatus(token, scanId)
+        const status = parseRationStatus(statusData)
+        if (status === WEEK_RATION_STATUS.Completed) {
+          await loadRation()
+          setIsRegenerating(false)
+          return
+        }
+        if (status === WEEK_RATION_STATUS.Failed) {
+          setLoadError('Не удалось перегенерировать рацион. Попробуйте позже.')
+          setIsRegenerating(false)
+          return
+        }
+      } catch (err) {
+        logger.warn('nutrition: regenerate status poll failed', err)
+      }
+      await new Promise((resolve) => window.setTimeout(resolve, RATION_POLL_MS))
+    }
+
+    setLoadError('Перегенерация заняла слишком много времени. Попробуйте позже.')
+    setIsRegenerating(false)
+  }, [scanId, token, isRegenerating, loadRation])
 
   const activeMeal = activeSlot != null ? mealEntries[activeSlot]?.meal : null
   const mealType = activeSlot != null ? mealEntries[activeSlot]?.label : null
@@ -329,17 +394,19 @@ function NutritionPlan() {
       <Header title="Ваш рацион" showBack />
       <DayCalendar selectedDate={selectedDate} onSelectDate={setSelectedDate} />
 
-      {isLoading && (
-        <p className="nutrition-plan-loading">Загружаем рацион…</p>
+      {(isLoading || isRegenerating) && (
+        <p className="nutrition-plan-loading">
+          {isRegenerating ? 'Обновляем рацион…' : 'Загружаем рацион…'}
+        </p>
       )}
 
-      {loadError && !isLoading && (
+      {loadError && !isLoading && !isRegenerating && (
         <p className="nutrition-plan-error" role="alert">
           {loadError}
         </p>
       )}
 
-      {!isLoading && !loadError && ration.length > 0 && mealEntries.map((entry, index) => {
+      {!isLoading && !isRegenerating && !loadError && ration.length > 0 && mealEntries.map((entry, index) => {
         const m = entry.meal
         return (
           <MealCard
@@ -359,7 +426,7 @@ function NutritionPlan() {
         )
       })}
 
-      {!isLoading && !loadError && ration.length > 0 ? (
+      {!isLoading && !isRegenerating && !loadError && ration.length > 0 ? (
         <section className="nutrition-day-summary">
           <h3 className="nutrition-day-summary-title">Итого за день</h3>
           <div className="nutrition-day-summary-kcal">
@@ -399,7 +466,14 @@ function NutritionPlan() {
         </section>
       ) : null}
 
-      {!isLoading && !loadError && ration.length > 0 ? (
+      {!isLoading && !isRegenerating && !loadError && ration.length > 0 ? (
+        <button type="button" className="nutrition-plan-reroll-btn" onClick={handleRegenerateRation}>
+          <img src="/restart.svg" alt="" aria-hidden="true" />
+          <span>Подобрать другой рацион</span>
+        </button>
+      ) : null}
+
+      {!isLoading && !isRegenerating && !loadError && ration.length > 0 ? (
         <div className="nutrition-plan-footer">
           <button type="button" className="nutrition-plan-cart-btn" onClick={() => navigate('/cart')}>
             Добавить в корзину

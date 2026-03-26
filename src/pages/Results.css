@@ -766,9 +766,37 @@
   background: #19b6d2;
 }
 
+.nutrition-plan-reroll-btn {
+  width: 100%;
+  margin-top: 16px;
+  min-height: 46px;
+  border-radius: 16px;
+  border: 1px solid #d8d8d8;
+  background: transparent;
+  color: #9fa1a3;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding: 0 12px;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.nutrition-plan-reroll-btn img {
+  width: 16px;
+  height: 16px;
+  opacity: 0.85;
+}
+
 /* Страница рациона — кнопка «Добавить в корзину» */
 .nutrition-plan-footer {
-  margin-top: 24px;
+  margin-top: 14px;
   padding: 0 0 24px;
 }
 
