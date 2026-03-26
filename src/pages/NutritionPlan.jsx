@@ -408,6 +408,9 @@ function NutritionPlan() {
   return (
     <Page className="results-page">
       <Header title="Ваш рацион" showBack />
+      <div className="nutrition-plan-intro">
+        <p className="nutrition-plan-intro-title">Рацион подобран на основе ваших показателей</p>
+      </div>
       <DayCalendar selectedDate={selectedDate} onSelectDate={setSelectedDate} />
 
       {(isLoading || isRegenerating) && (
@@ -492,6 +495,8 @@ function NutritionPlan() {
 
       {!isLoading && !isRegenerating && !loadError && ration.length > 0 ? (
         <div className="nutrition-plan-footer">
+          <div className="nutrition-plan-footer-divider" aria-hidden="true" />
+          <p className="nutrition-plan-footer-caption">Рацион на 7 дней</p>
           <button
             type="button"
             className="nutrition-plan-cart-btn"

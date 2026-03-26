@@ -53,6 +53,9 @@
 .day-calendar-date {
   margin-top: 8px;
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 400;
+  text-align: left;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #e1e3e6;
 }
 
