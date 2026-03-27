@@ -54,11 +54,7 @@ function logRationTerminalStatus(payload) {
 
 function shouldAutoRegenerateRation(payload) {
   const status = parseWeekRationStatus(payload)
-  const statusMessage = String(payload?.value?.statusMessage ?? '').trim().toLowerCase()
-  return (
-    status === WEEK_RATION_GEN_STATUS.Failed &&
-    statusMessage.includes('не удалось разобрать json ответа модели')
-  )
+  return status === WEEK_RATION_GEN_STATUS.Failed
 }
 
 function clamp(value, min, max) {
