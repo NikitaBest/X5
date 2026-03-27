@@ -60,6 +60,19 @@ const SMOKING_OPTIONS = [
   },
 ]
 
+function goalCodeToRu(goal) {
+  const key = String(goal ?? '').trim().toLowerCase()
+  if (!key) return ''
+  const map = {
+    sugar: 'Взять сахар под контроль',
+    lightness: 'Обрести лёгкость',
+    energy: 'Получить заряд бодрости',
+    immunity: 'Укрепить иммунитет',
+    shopping: 'Выгодно покупать полезное',
+  }
+  return map[key] || String(goal).trim()
+}
+
 function AlgorithmSettings() {
   const navigate = useNavigate()
   const { token } = useAuth()
@@ -159,7 +172,9 @@ function AlgorithmSettings() {
       weight: userDataToSave.weight ?? 0,
       gender: userDataToSave.gender === 'MALE' ? 0 : userDataToSave.gender === 'FEMALE' ? 1 : 0,
       smokeStatus: userDataToSave.smokingStatus === 'SMOKER' ? 1 : 0,
-      goals: Array.isArray(userData?.goals) ? userData.goals : [],
+      goals: Array.isArray(userData?.goals)
+        ? userData.goals.map(goalCodeToRu).filter(Boolean)
+        : [],
     }
 
     try {

@@ -1,4 +1,17 @@
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || ''
+const IN_FLIGHT_REQUESTS = new Map()
+
+function withInFlightDedupe(key, factory) {
+  const k = String(key)
+  if (IN_FLIGHT_REQUESTS.has(k)) return IN_FLIGHT_REQUESTS.get(k)
+  const p = Promise.resolve()
+    .then(factory)
+    .finally(() => {
+      IN_FLIGHT_REQUESTS.delete(k)
+    })
+  IN_FLIGHT_REQUESTS.set(k, p)
+  return p
+}
 
 /**
  * POST /auth/login — авторизация, возвращает JWT для дальнейшей работы с API.
@@ -7,22 +20,24 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL || ''
  */
 export async function postAuthLogin(body = { id: null, utm: null }) {
   const url = `${BASE_URL.replace(/\/$/, '')}/auth/login`
-  if (import.meta.env.DEV) {
-    console.log('[auth] POST', url, body)
-  }
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(body),
+  const reqBody = body ?? { id: null, utm: null }
+  return withInFlightDedupe(`POST:${url}:${JSON.stringify(reqBody)}`, async () => {
+    if (import.meta.env.DEV) {
+      console.log('[auth] POST', url, reqBody)
+    }
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(reqBody),
+    })
+    if (!res.ok) {
+      const errText = await res.text()
+      throw new Error(`auth/login failed: ${res.status} ${errText}`)
+    }
+    return res.json()
   })
-  if (!res.ok) {
-    const errText = await res.text()
-    throw new Error(`auth/login failed: ${res.status} ${errText}`)
-  }
-  const data = await res.json()
-  return data
 }
 
 /**
@@ -331,15 +346,41 @@ export async function getRationGenerationStatus(token, scanId) {
 export async function getRationById(token, rationId) {
   const id = encodeURIComponent(String(rationId))
   const url = `${BASE_URL.replace(/\/$/, '')}/ration/${id}`
-  const res = await fetch(url, {
-    method: 'GET',
-    headers: {
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    },
+  return withInFlightDedupe(`GET:${url}:auth:${token ? '1' : '0'}`, async () => {
+    const res = await fetch(url, {
+      method: 'GET',
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+    })
+    if (!res.ok) {
+      const errText = await res.text()
+      throw new Error(`ration/{id} failed: ${res.status} ${errText}`)
+    }
+    return res.json().catch(() => ({}))
   })
-  if (!res.ok) {
-    const errText = await res.text()
-    throw new Error(`ration/{id} failed: ${res.status} ${errText}`)
-  }
-  return res.json().catch(() => ({}))
+}
+
+/**
+ * GET /ration/{rationId}/owner — получить владельца рациона, профиль и исключения.
+ * Публичный метод, token необязателен.
+ * @param {string | null | undefined} token
+ * @param {string} rationId
+ */
+export async function getRationOwnerById(token, rationId) {
+  const id = encodeURIComponent(String(rationId))
+  const url = `${BASE_URL.replace(/\/$/, '')}/ration/${id}/owner`
+  return withInFlightDedupe(`GET:${url}:auth:${token ? '1' : '0'}`, async () => {
+    const res = await fetch(url, {
+      method: 'GET',
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+    })
+    if (!res.ok) {
+      const errText = await res.text()
+      throw new Error(`ration/{id}/owner failed: ${res.status} ${errText}`)
+    }
+    return res.json().catch(() => ({}))
+  })
 }
