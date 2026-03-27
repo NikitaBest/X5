@@ -60,6 +60,36 @@ export async function getUserMe(token) {
 }
 
 /**
+ * POST /app/stat-event — сохранить событие статистики.
+ * @param {string | null | undefined} token
+ * @param {{ type: string, data: string, durationSeconds: number }} body
+ */
+export async function postAppStatEvent(token, body) {
+  const url = `${BASE_URL.replace(/\/$/, '')}/app/stat-event`
+  const payload = {
+    type: String(body?.type ?? '').trim(),
+    data: String(body?.data ?? '').trim(),
+    durationSeconds: Number.isFinite(Number(body?.durationSeconds))
+      ? Math.max(0, Math.round(Number(body.durationSeconds)))
+      : 0,
+  }
+  if (!payload.type) return null
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify(payload),
+  })
+  if (!res.ok) {
+    const errText = await res.text().catch(() => '')
+    throw new Error(`app/stat-event failed: ${res.status} ${errText}`)
+  }
+  return res.json().catch(() => ({}))
+}
+
+/**
  * Достаёт JWT из ответа /auth/login (поле может называться token, accessToken, access_token).
  */
 export function getTokenFromLoginResponse(data) {
