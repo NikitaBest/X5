@@ -168,12 +168,20 @@ export function mapRationToNutritionReport(payload) {
   const avgFat = totalFat / daysCount
   const avgCarbs = totalCarbs / daysCount
 
-  // userMe (профиль/исключения) приходит отдельным запросом /user/me.
-  // В ответе часто используется обёртка { value: { profile, ... } } — это нужно учесть.
+  // ownerData (профиль/исключения) приходит из /ration/{rationId}/owner.
+  // Возможны формы:
+  // - { value: { user: { profile: ... }, excludeProducts: [...] } }
+  // - { value: { profile: ... , exclusions: [...] } }
   const userMe = arguments?.[1] ?? null
   const raw = userMe?.value && typeof userMe.value === 'object' ? userMe.value : userMe
 
-  const profile = raw?.profile && typeof raw.profile === 'object' ? raw.profile : null
+  const ownerUser = raw?.user && typeof raw.user === 'object' ? raw.user : null
+  const profile =
+    ownerUser?.profile && typeof ownerUser.profile === 'object'
+      ? ownerUser.profile
+      : raw?.profile && typeof raw.profile === 'object'
+        ? raw.profile
+        : null
 
   const goals =
     Array.isArray(profile?.goals) && profile.goals.length > 0
@@ -183,7 +191,7 @@ export function mapRationToNutritionReport(payload) {
   const normalizeExclusionValue = (item) => {
     if (item == null) return null
     if (typeof item === 'string') return item.trim()
-    const v = item?.productName ?? item?.name ?? item?.title ?? item?.label ?? item?.tag
+    const v = item?.excludeProduct ?? item?.productName ?? item?.name ?? item?.title ?? item?.label ?? item?.tag
     return v != null ? String(v).trim() : null
   }
 
@@ -229,6 +237,10 @@ export function mapRationToNutritionReport(payload) {
 
   const initials = (() => {
     const nameRaw =
+      ownerUser?.name ??
+      ownerUser?.fullName ??
+      ownerUser?.full_name ??
+      ownerUser?.displayName ??
       raw?.name ??
       raw?.fullName ??
       raw?.full_name ??
@@ -245,7 +257,14 @@ export function mapRationToNutritionReport(payload) {
     return `${a}${b}` || 'XP'
   })()
 
-  const displayName = raw?.name ?? raw?.fullName ?? raw?.full_name ?? 'Пользователь'
+  const displayName =
+    ownerUser?.name ??
+    ownerUser?.fullName ??
+    ownerUser?.full_name ??
+    raw?.name ??
+    raw?.fullName ??
+    raw?.full_name ??
+    'Пользователь'
 
   return {
     initials,
