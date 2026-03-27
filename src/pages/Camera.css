@@ -452,6 +452,29 @@
   text-align: center;
 }
 
+.camera-scan-hint {
+  position: absolute;
+  top: calc(50% + min(204px, 30vh));
+  left: 50%;
+  transform: translate(-50%, 82px);
+  z-index: 10;
+  margin: 0;
+  padding: 10px 14px;
+  background: rgba(60, 70, 80, 0.58);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  color: rgba(255, 255, 255, 0.95);
+  font-size: clamp(12px, 3.4vw, 14px);
+  font-weight: 400;
+  line-height: 1.35;
+  letter-spacing: 0.01em;
+  max-width: min(320px, 88vw);
+}
+
 .camera-instruction-percent {
   color: #07c3dc;
   font-size: clamp(18px, 4.5vw, 24px);

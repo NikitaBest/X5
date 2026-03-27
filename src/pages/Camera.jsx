@@ -366,6 +366,12 @@ const SDK_ALERTS = {
   },
 }
 
+const SCAN_PROGRESS_HINTS = [
+  'Не двигайте головой',
+  'Не разговаривайте',
+  'Не убирайте лицо из овальной рамки',
+]
+
 // Короткие сообщения для пользователя при предупреждениях SDK (показываем на экране)
 function getUserMessageForAlert(alertInfo) {
   if (!alertInfo || !alertInfo.solution) return null
@@ -463,6 +469,7 @@ function Camera() {
   const [hasMeasurementError, setHasMeasurementError] = useState(false) // Флаг ошибки измерения
   const [isProcessingFrames, setIsProcessingFrames] = useState(false) // Флаг обработки кадров SDK
   const [showCompletionSuccess, setShowCompletionSuccess] = useState(false) // Уведомление «Готово» перед переходом на результаты
+  const [scanHintIndex, setScanHintIndex] = useState(0)
   
   // scanIntervalRef удален - прогресс обновляется только в onVitalSign
   const isCreatingSessionRef = useRef(false) // Флаг для предотвращения множественного создания сессий
@@ -1670,6 +1677,18 @@ function Camera() {
     ovalColorClass === 'face-oval-success' &&
     instructionText === 'Отлично! Лицо обнаружено, начинаем измерение...' &&
     !showCompletionSuccess
+  const showScanProgressBlock = isMeasuring && isFaceValid && isProcessingFrames && !showCompletionSuccess
+
+  useEffect(() => {
+    if (!showScanProgressBlock) {
+      setScanHintIndex(0)
+      return undefined
+    }
+    const timer = window.setInterval(() => {
+      setScanHintIndex((prev) => (prev + 1) % SCAN_PROGRESS_HINTS.length)
+    }, 4200)
+    return () => window.clearInterval(timer)
+  }, [showScanProgressBlock])
   
   // Логируем только при изменении состояния овала или прогресс-бара
   const lastOvalStateRef = useRef({ color: null, progress: false })
@@ -1863,10 +1882,15 @@ function Camera() {
             </div>
             {/* При завершении показываем только уведомление «Готово» — без текста инструкции и процентов под ним */}
             {!showCompletionSuccess && (
-              isMeasuring && isFaceValid && isProcessingFrames ? (
-                <div className="camera-scan-percent" aria-live="polite">
-                  {Math.round(scanProgress)}%
-                </div>
+              showScanProgressBlock ? (
+                <>
+                  <div className="camera-scan-percent" aria-live="polite">
+                    {Math.round(scanProgress)}%
+                  </div>
+                  <div className="camera-scan-hint" aria-live="polite">
+                    {SCAN_PROGRESS_HINTS[scanHintIndex]}
+                  </div>
+                </>
               ) : (
                 <div className="camera-instruction-container">
                   <p className="camera-instruction-text">{instructionText}</p>
