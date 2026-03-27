@@ -624,6 +624,15 @@
   gap: 10px;
 }
 
+.results-ration-pending-hint {
+  margin: -8px 0 0;
+  font-size: 11px;
+  line-height: 1.35;
+  font-weight: 400;
+  text-align: center;
+  color: #8a8d94;
+}
+
 .results-button-spinner {
   width: 18px;
   height: 18px;

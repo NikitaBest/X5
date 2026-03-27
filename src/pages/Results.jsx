@@ -606,6 +606,9 @@ function Results() {
               'Подобрать рацион'
             )}
           </button>
+          {!rationNavigateEnabled ? (
+            <p className="results-ration-pending-hint">Ваш рацион будет готов примерно через 1 минуту</p>
+          ) : null}
           <button onClick={() => navigate('/camera')} className="results-button secondary">
             Измерить снова
           </button>
