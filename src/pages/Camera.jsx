@@ -1661,7 +1661,7 @@ function Camera() {
   
   const ovalColorClass = !isFaceDetected
     ? 'face-oval-warning' // Желтый - лицо не обнаружено в овале
-    : (sessionState === SessionState.MEASURING && isFaceValid) || isProcessingFrames
+    : showCompletionSuccess || (sessionState === SessionState.MEASURING && isFaceValid) || isProcessingFrames
       ? 'face-oval-success' // Зеленый - измерение запущено и лицо валидно / SDK обрабатывает данные
       : 'face-oval-default' // Серый - лицо в кадре, но либо измерение ещё не началось, либо лицо невалидно
   
@@ -1807,7 +1807,7 @@ function Camera() {
               ) : null}
               <svg 
                 ref={ovalRef}
-                className={`face-oval ${ovalColorClass}`}
+                className={`face-oval ${ovalColorClass}${showCompletionSuccess ? ' face-oval--fade-out' : ''}`}
                 width="298" 
                 height="409" 
                 viewBox="0 0 298 409" 
