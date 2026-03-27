@@ -9,6 +9,7 @@ import {
   getRationByScan,
   getRationGenerationStatus,
   postRationRegenerate,
+  postRationItemReplace,
 } from '../api/client.js'
 import { useAuth } from '../contexts/AuthContext.jsx'
 import logger from '../utils/logger.js'
@@ -124,6 +125,8 @@ function mapReplaceToAlternatives(food) {
     const composition = p?.mainIngrediants || p?.fullIngrediants || ''
     return {
       id: r?.id ?? r?.productId ?? '',
+      productId: Number(r?.productId ?? p?.id ?? 0) || null,
+      weigth: w,
       title,
       shortTitle: truncateText(title, 72),
       statusTag: reason ? truncateText(reason, 90) : '',
@@ -151,6 +154,8 @@ function foodItemToMealPartial(food) {
   const m = gramsToMacros(p, w)
   return {
     id: food.id,
+    productId: Number(food?.productId ?? p?.id ?? 0) || null,
+    weigth: w,
     title: p.title || '',
     shortTitle: truncateText(p.title, 72),
     statusTag: food.reason ? truncateText(food.reason, 90) : '',
@@ -323,21 +328,31 @@ function NutritionPlan() {
     setMealEntries(entries)
   }, [ration, planDay, visibleMealTypes])
 
-  const handleReplaceMeal = useCallback((entryIndex, newMeal) => {
-    setMealEntries((prev) => {
-      const next = [...prev]
-      const oldEntry = next[entryIndex]
-      if (!oldEntry) return prev
-      next[entryIndex] = {
-        ...oldEntry,
-        meal: {
-          ...newMeal,
-          id: newMeal.id ?? oldEntry.meal?.id,
-        },
-      }
-      return next
-    })
-  }, [])
+  const handleReplaceMeal = useCallback(async (entryIndex, newMeal) => {
+    const entry = mealEntries[entryIndex]
+    const currentMeal = entry?.meal
+    const rationItemId = currentMeal?.id
+    const nextProductId = Number(newMeal?.productId ?? 0)
+    const nextWeigth = Number(newMeal?.weigth ?? newMeal?.weight ?? currentMeal?.weigth ?? currentMeal?.weight ?? 0)
+
+    if (!rationItemId || !Number.isFinite(nextProductId) || nextProductId <= 0) {
+      setLoadError('Не удалось заменить блюдо. Попробуйте выбрать другой вариант.')
+      return
+    }
+
+    try {
+      setLoadError(null)
+      await postRationItemReplace(token, {
+        id: String(rationItemId),
+        productId: nextProductId,
+        weigth: Number.isFinite(nextWeigth) && nextWeigth > 0 ? nextWeigth : 100,
+      })
+      await loadRation()
+    } catch (err) {
+      logger.warn('nutrition: replace item failed', err)
+      setLoadError('Не удалось заменить блюдо. Попробуйте ещё раз.')
+    }
+  }, [mealEntries, token, loadRation])
 
   const handleCloseSheet = () => {
     setActiveSlot(null)

@@ -281,6 +281,28 @@ export async function postRationRegenerate(token, scanId) {
 }
 
 /**
+ * POST /ration/item/replace — заменить товар в позиции рациона.
+ * @param {string} token
+ * @param {{ id: string, productId: number, weigth: number }} body
+ */
+export async function postRationItemReplace(token, body) {
+  const url = `${BASE_URL.replace(/\/$/, '')}/ration/item/replace`
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify(body ?? {}),
+  })
+  if (!res.ok) {
+    const errText = await res.text()
+    throw new Error(`ration/item/replace failed: ${res.status} ${errText}`)
+  }
+  return res.json().catch(() => ({}))
+}
+
+/**
  * GET /ration/scan/{scanId}/generation-status — статус генерации рациона.
  * @param {string} token
  * @param {string} scanId
