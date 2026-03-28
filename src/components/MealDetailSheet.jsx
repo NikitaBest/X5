@@ -38,13 +38,13 @@ function MealDetailSheet({ open, onClose, meal, mealType, slotIndex, alternative
       if (e.key === 'Escape') {
         if (view === 'alternatives') {
           if (previewMeal) setPreviewMeal(null)
-          else setView('detail')
+          else handleBackFromAlternativesList()
         } else handleClose()
       }
     }
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [open, view, previewMeal])
+  }, [open, view, previewMeal, initialView])
 
   const handleClose = () => {
     setIsClosing(true)
@@ -56,11 +56,20 @@ function MealDetailSheet({ open, onClose, meal, mealType, slotIndex, alternative
     }, 280)
   }
 
+  /** С экрана списка замен: если шит открыли через «Заменить» — закрыть целиком; иначе вернуться к описанию текущего блюда. */
+  const handleBackFromAlternativesList = () => {
+    if (initialView === 'alternatives') {
+      handleClose()
+    } else {
+      setView('detail')
+    }
+  }
+
   const handleBackdropClick = (e) => {
     if (e.target === e.currentTarget) {
       if (view === 'alternatives') {
         if (previewMeal) setPreviewMeal(null)
-        else setView('detail')
+        else handleBackFromAlternativesList()
       } else handleClose()
     }
   }
@@ -76,7 +85,7 @@ function MealDetailSheet({ open, onClose, meal, mealType, slotIndex, alternative
     if (deltaY > 50) {
       if (view === 'alternatives') {
         if (previewMeal) setPreviewMeal(null)
-        else setView('detail')
+        else handleBackFromAlternativesList()
       } else handleClose()
     }
     startYRef.current = null
@@ -174,7 +183,7 @@ function MealDetailSheet({ open, onClose, meal, mealType, slotIndex, alternative
         ) : view === 'alternatives' ? (
           <>
             <div className="meal-sheet-alternatives-header">
-              <button type="button" className="meal-sheet-back-btn" onClick={() => setView('detail')} aria-label="Назад">
+              <button type="button" className="meal-sheet-back-btn" onClick={handleBackFromAlternativesList} aria-label="Назад">
                 <span className="meal-sheet-back-arrow" aria-hidden="true">←</span>
               </button>
               <h2 className="meal-sheet-alternatives-title">
