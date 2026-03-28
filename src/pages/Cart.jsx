@@ -110,6 +110,13 @@ function Cart() {
       })
   }
 
+  const handleCartBack = () => {
+    const st = location.state
+    const to =
+      typeof st?.returnTo === 'string' && st.returnTo.startsWith('/') ? st.returnTo : '/nutrition'
+    navigate(to, { replace: true })
+  }
+
   const handleCopyLink = async () => {
     const q = new URLSearchParams()
     q.set('public', '1')
@@ -141,7 +148,7 @@ function Cart() {
 
   return (
     <Page className="cart-page">
-      <Header title="Корзина" showBack />
+      <Header title="Корзина" showBack onBack={handleCartBack} />
 
       {toastMessage && typeof document !== 'undefined'
         ? createPortal(

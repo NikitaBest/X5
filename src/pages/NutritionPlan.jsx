@@ -290,6 +290,18 @@ function NutritionPlan() {
   const [activeSlot, setActiveSlot] = useState(null)
   const [openReplaceView, setOpenReplaceView] = useState(false)
 
+  const handleNutritionBack = useCallback(() => {
+    const st = location.state
+    const to =
+      typeof st?.returnTo === 'string' && st.returnTo.startsWith('/') ? st.returnTo : '/results'
+    const sid = (scanId && String(scanId).trim()) || readLastScanId()
+    if (sid) {
+      navigate(to, { replace: true, state: { scanId: String(sid).trim() } })
+    } else {
+      navigate(to, { replace: true })
+    }
+  }, [navigate, location.state, scanId])
+
   useEffect(() => {
     const sid = location.state?.scanId
     if (sid == null || !String(sid).trim()) return
@@ -524,7 +536,7 @@ function NutritionPlan() {
   if (!token) {
     return (
       <Page className="results-page">
-        <Header title="Ваш рацион" showBack />
+        <Header title="Ваш рацион" showBack onBack={handleNutritionBack} />
         <div className="nutrition-plan-empty">
           <p className="nutrition-plan-empty-text">Требуется авторизация для загрузки рациона.</p>
         </div>
@@ -541,12 +553,12 @@ function NutritionPlan() {
   ) {
     return (
       <Page className="results-page">
-        <Header title="Ваш рацион" showBack />
+        <Header title="Ваш рацион" showBack onBack={handleNutritionBack} />
         <div className="nutrition-plan-empty">
           <p className="nutrition-plan-empty-text">
             Чтобы увидеть персональный рацион, сначала пройдите сканирование и откройте эту страницу из блока результатов.
           </p>
-          <button type="button" className="results-button" onClick={() => navigate('/results')}>
+          <button type="button" className="results-button" onClick={() => navigate('/results', { replace: true })}>
             К результатам
           </button>
         </div>
@@ -556,7 +568,7 @@ function NutritionPlan() {
 
   return (
     <Page className="results-page">
-      <Header title="Ваш рацион" showBack />
+      <Header title="Ваш рацион" showBack onBack={handleNutritionBack} />
       <div className="nutrition-plan-intro">
         <p className="nutrition-plan-intro-title">Рацион подобран на основе ваших показателей</p>
       </div>
@@ -654,7 +666,13 @@ function NutritionPlan() {
           <button
             type="button"
             className="nutrition-plan-cart-btn"
-            onClick={() => navigate('/cart', { state: rationId ? { rationId } : {} })}
+            onClick={() =>
+              navigate('/cart', {
+                state: rationId
+                  ? { rationId, returnTo: '/nutrition' }
+                  : { returnTo: '/nutrition' },
+              })
+            }
           >
             Добавить в корзину
           </button>

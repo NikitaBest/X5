@@ -1,10 +1,10 @@
 import BackButton from '../ui/BackButton.jsx'
 import './Header.css'
 
-function Header({ title, showBack = true }) {
+function Header({ title, showBack = true, onBack }) {
   return (
     <header className="page-header">
-      {showBack && <BackButton />}
+      {showBack && <BackButton onClick={onBack} />}
       <h1 className="header-title">{title}</h1>
     </header>
   )

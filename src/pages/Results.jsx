@@ -758,7 +758,10 @@ function Results() {
             type="button"
             onClick={() =>
               navigate('/nutrition', {
-                state: resolvedScanId ? { scanId: resolvedScanId } : {},
+                state: {
+                  ...(resolvedScanId ? { scanId: resolvedScanId } : {}),
+                  returnTo: '/results',
+                },
               })
             }
             className={`results-button ${!rationNavigateEnabled ? 'results-button--ration-pending' : ''}`.trim()}
