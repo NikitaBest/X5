@@ -80,9 +80,16 @@ function getZoneColorByAngle(angle) {
   return stops[stops.length - 1].color
 }
 
+function toFiniteNumber(v) {
+  if (v == null || v === '') return null
+  if (typeof v === 'number' && Number.isFinite(v)) return v
+  const n = Number(v)
+  return Number.isFinite(n) ? n : null
+}
+
 function HeartRateGauge({ pulse, value, min = 40, max = 140 }) {
   const sourceValue = value ?? pulse
-  const numericValue = typeof sourceValue === 'number' ? sourceValue : null
+  const numericValue = toFiniteNumber(sourceValue)
   const targetAngle = getNeedleAngle(numericValue, min, max)
   const [angle, setAngle] = useState(-180)
   const zoneColor = getZoneColorByAngle(angle)

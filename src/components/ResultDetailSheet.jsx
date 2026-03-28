@@ -1,4 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
+import {
+  hasDisplayableScaleMetadata,
+  normalizeScaleSegmentItems,
+} from '../utils/resultMetricDisplay.js'
 import './ResultDetailSheet.css'
 
 function clamp(value, min, max) {
@@ -158,12 +162,8 @@ function ResultDetailSheet({
 
   if (!open) return null
 
-  const scaleItems = Array.isArray(scaleMetadata?.items)
-    ? [...scaleMetadata.items]
-        .filter((i) => i && Number.isFinite(Number(i.percentFrom)) && Number.isFinite(Number(i.percentTo)))
-        .sort((a, b) => Number(a.percentFrom) - Number(b.percentFrom))
-    : []
-  const hasDynamicScale = scaleItems.length > 0
+  const scaleItems = normalizeScaleSegmentItems(scaleMetadata)
+  const hasDynamicScale = hasDisplayableScaleMetadata(scaleMetadata)
   const markerPercent = getMarkerPercent(scaleMetadata, value)
 
   const sheetMarkup = (
@@ -229,35 +229,48 @@ function ResultDetailSheet({
             </div>
           </div>
 
-          <div className="result-sheet-scale-labels">
+          <div
+            className={
+              hasDynamicScale
+                ? 'result-sheet-scale-labels result-sheet-scale-labels--dynamic'
+                : 'result-sheet-scale-labels'
+            }
+          >
             {hasDynamicScale ? (
-              scaleItems.map((item, idx) => (
-                <span
-                  key={`label-${item.percentFrom}-${item.percentTo}-${idx}`}
-                  style={{
-                    left: `${clamp(Number(item.percentFrom), 0, 100)}%`,
-                    width: `${Math.max(
-                      0,
-                      clamp(Number(item.percentTo), 0, 100) - clamp(Number(item.percentFrom), 0, 100),
-                    )}%`,
-                  }}
-                >
-                  {getRangeLabel(item)}
-                </span>
-              ))
+              scaleItems.map((item, idx) => {
+                const w = Math.max(
+                  0,
+                  clamp(Number(item.percentTo), 0, 100) - clamp(Number(item.percentFrom), 0, 100),
+                )
+                return (
+                  <span
+                    key={`label-${item.percentFrom}-${item.percentTo}-${idx}`}
+                    className="result-sheet-scale-label-cell"
+                    style={{ flex: `0 0 ${w}%`, maxWidth: `${w}%` }}
+                  >
+                    {getRangeLabel(item)}
+                  </span>
+                )
+              })
             ) : (
               <>
-                <span>до 30</span>
-                <span>31–37</span>
-                <span>37+</span>
+                <span className="result-sheet-scale-label-cell result-sheet-scale-label-cell--third">
+                  до 30
+                </span>
+                <span className="result-sheet-scale-label-cell result-sheet-scale-label-cell--third">
+                  31–37
+                </span>
+                <span className="result-sheet-scale-label-cell result-sheet-scale-label-cell--third">
+                  37+
+                </span>
               </>
             )}
           </div>
         </div>
 
-        <div className="result-sheet-description">
-          {description || 'Тут позже появится текст с расшифровкой и рекомендациями по этому показателю.'}
-        </div>
+        {String(description ?? '').trim() ? (
+          <div className="result-sheet-description">{description}</div>
+        ) : null}
 
         <button
           type="button"

@@ -167,21 +167,28 @@
 }
 
 .result-sheet-scale-labels {
-  position: relative;
-  display: block;
+  display: flex;
+  width: 100%;
   margin-top: 4px;
-  /* абсолютные подписи не растягивают блок — резервируем строку и отступ до текста ниже */
   min-height: 1.35em;
   margin-bottom: 10px;
   font-size: clamp(9px, 2.5vw, 10px);
   color: #666666;
+  box-sizing: border-box;
 }
 
-.result-sheet-scale-labels > span {
+.result-sheet-scale-label-cell {
   text-align: center;
   white-space: nowrap;
-  position: absolute;
-  top: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 0 2px;
+}
+
+.result-sheet-scale-label-cell--third {
+  flex: 1 1 33.333%;
 }
 
 .result-sheet-description {

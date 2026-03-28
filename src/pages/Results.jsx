@@ -10,6 +10,10 @@ import {
   postRationRegenerate,
 } from '../api/client.js'
 import { extractLastScanResponse, hasTranscriptsInResponse } from '../utils/scanHistory.js'
+import {
+  hasDisplayableScaleMetadata,
+  isRawSdkMetricKey,
+} from '../utils/resultMetricDisplay.js'
 import { writeLastScanId } from '../utils/lastScanId.js'
 import { useAuth } from '../contexts/AuthContext.jsx'
 import logger from '../utils/logger.js'
@@ -124,6 +128,35 @@ function normalizeTranscript(t) {
     confidenceLevel: t.confidenceLevel ?? null,
     scaleMetadata: t.scaleMetadata ?? null,
   }
+}
+
+/**
+ * Одна логика для обоих сценариев: после скана (state) и при открытии /results (история).
+ * В обоих случаях данные приходят в backendScanResponse → normalizeTranscript → этот фильтр.
+ */
+function isTranscriptVisibleInUi(t) {
+  if (!t?.key) return false
+  const color = String(t.color ?? '').trim().toLowerCase()
+  const hasTraffic = color === 'green' || color === 'yellow' || color === 'red'
+  const comment = String(t.comment ?? '').trim()
+  const desc = String(t.description ?? '').trim()
+  const hasUserText = Boolean(comment || desc)
+  const usableScale = hasDisplayableScaleMetadata(t.scaleMetadata)
+  const conf = Number(t.confidenceLevel)
+  const hasConfidence = Number.isFinite(conf) && conf > 0
+
+  if (isRawSdkMetricKey(t.key)) {
+    if (hasUserText && hasTraffic) return true
+    if (usableScale && hasTraffic) return true
+    if (hasUserText && usableScale) return true
+    return false
+  }
+
+  if (hasTraffic) return true
+  if (hasUserText) return true
+  if (usableScale) return true
+  if (hasConfidence) return true
+  return false
 }
 
 function getCardsFromBackend(transcripts = []) {
@@ -436,14 +469,16 @@ function Results() {
 
   const backendValue = backendScanResponse?.value ?? null
   const backendTranscripts = Array.isArray(backendValue?.transcripts)
-    ? backendValue.transcripts.map(normalizeTranscript).filter(Boolean)
+    ? backendValue.transcripts.map(normalizeTranscript).filter(Boolean).filter(isTranscriptVisibleInUi)
     : []
 
-  // Показываем все показатели с key; тема карточки для пустого color — нейтральная (getCardThemeByColor)
+  // Показываем показатели с key после фильтра «пустых» сырых метрик
   const cards = getCardsFromBackend(backendTranscripts.filter((t) => t?.key))
   const visibleCards = showAllMetricsCards ? cards : cards.slice(0, 4)
-  const hasAnyResults = cards.length > 0
-  const healthScore = backendValue?.healthScore != null ? Number(backendValue.healthScore) : null
+  const rawHealthScore = backendValue?.healthScore
+  const healthScore =
+    rawHealthScore != null && Number.isFinite(Number(rawHealthScore)) ? Number(rawHealthScore) : null
+  const hasAnyResults = cards.length > 0 || healthScore != null
   const healthScoreColor = getGaugeColorByScore(healthScore)
   const healthBadgeText = getHealthBadgeText(healthScore)
 

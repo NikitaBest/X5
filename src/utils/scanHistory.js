@@ -102,20 +102,93 @@ function collectArrays(inner, data) {
   return out
 }
 
-function buildScanEnvelope(transcripts, healthScore, ...sources) {
-  const merged = Object.assign({}, ...sources.filter(Boolean))
-  return {
-    value: {
-      ...merged,
-      transcripts,
-      healthScore:
-        healthScore ??
-        merged.healthScore ??
-        merged.overallScore ??
-        merged.score ??
-        merged.health_score,
-    },
+function coerceFiniteNumber(x) {
+  if (x == null || x === '') return null
+  const n = Number(x)
+  return Number.isFinite(n) ? n : null
+}
+
+/** Явные поля общего индекса 0–100 (как на экране результатов). */
+const HEALTH_SCORE_PRIMARY_KEYS = [
+  'healthScore',
+  'HealthScore',
+  'overallScore',
+  'OverallScore',
+  'health_score',
+  'rppgScore',
+  'RppgScore',
+]
+
+/**
+ * Сомнительные имена: на корне ответа `score` часто не про здоровье (статус, страница и т.д.).
+ * Берём только после поиска во вложениях и только по PRIMARY.
+ */
+const HEALTH_SCORE_FALLBACK_KEYS = ['totalScore', 'score']
+
+function pickFromKeyList(target, keys) {
+  if (target == null || typeof target !== 'object') return null
+  for (const k of keys) {
+    const n = coerceFiniteNumber(target[k])
+    if (n != null) return n
   }
+  return null
+}
+
+/**
+ * Узлы, где обычно лежит scan + healthScore (в т.ч. value.scan).
+ */
+function collectNestedHealthNodes(root) {
+  if (root == null || typeof root !== 'object') return []
+  const nodes = []
+  const topKeys = ['value', 'scan', 'scanResult', 'rppgResult', 'payload', 'data']
+  for (const k of topKeys) {
+    const v = root[k]
+    if (v == null || typeof v !== 'object' || Array.isArray(v)) continue
+    nodes.push(v)
+    for (const k2 of ['scan', 'scanResult', 'rppgResult', 'data', 'value']) {
+      const inner = v[k2]
+      if (inner != null && typeof inner === 'object' && !Array.isArray(inner)) nodes.push(inner)
+    }
+  }
+  return nodes
+}
+
+/**
+ * Ищет числовой общий балл для шкалы 0–100. Сначала вложения (реальный скан), потом корень;
+ * не используем wellnessScore (другая шкала, напр. «баллы»).
+ */
+function pickHealthScoreFromObject(obj) {
+  if (obj == null || typeof obj !== 'object') return null
+
+  const nestedNodes = collectNestedHealthNodes(obj)
+  for (const node of nestedNodes) {
+    const n = pickFromKeyList(node, HEALTH_SCORE_PRIMARY_KEYS)
+    if (n != null) return n
+  }
+  const topPrimary = pickFromKeyList(obj, HEALTH_SCORE_PRIMARY_KEYS)
+  if (topPrimary != null) return topPrimary
+
+  for (const node of nestedNodes) {
+    const n = pickFromKeyList(node, HEALTH_SCORE_FALLBACK_KEYS)
+    if (n != null) return n
+  }
+  return pickFromKeyList(obj, HEALTH_SCORE_FALLBACK_KEYS)
+}
+
+function buildScanEnvelope(transcripts, healthScoreHint, ...sources) {
+  const merged = Object.assign({}, ...sources.filter(Boolean))
+  const fromHint = coerceFiniteNumber(healthScoreHint)
+  const fromTree = pickHealthScoreFromObject(merged)
+  const healthScore = fromHint ?? fromTree ?? null
+
+  const value = { ...merged, transcripts }
+  if (healthScore != null) {
+    value.healthScore = healthScore
+  } else {
+    delete value.healthScore
+  }
+
+  return { value }
 }
 
 /**
@@ -130,11 +203,7 @@ export function extractLastScanResponse(data) {
   if (inner) {
     const tr = pickTranscriptsFromNode(inner)
     if (tr) {
-      return buildScanEnvelope(
-        tr,
-        inner.healthScore ?? inner.overallScore ?? inner.score ?? inner.health_score,
-        inner,
-      )
+      return buildScanEnvelope(tr, null, inner, data)
     }
   }
 
@@ -155,15 +224,7 @@ export function extractLastScanResponse(data) {
         if (typeof node !== 'object') continue
         const tr = pickTranscriptsFromNode(node)
         if (tr && tr.length > 0) {
-          return buildScanEnvelope(
-            tr,
-            node.healthScore ??
-              first.healthScore ??
-              first.value?.healthScore ??
-              inner?.healthScore,
-            node,
-            first,
-          )
+          return buildScanEnvelope(tr, null, node, first, first.value, inner, data)
         }
       }
     }
@@ -171,7 +232,7 @@ export function extractLastScanResponse(data) {
 
   const deep = deepFindTranscriptArray(data)
   if (deep && deep.length > 0) {
-    return buildScanEnvelope(deep, null, unwrapPayload(data) || {})
+    return buildScanEnvelope(deep, null, unwrapPayload(data) || {}, data)
   }
 
   return null
