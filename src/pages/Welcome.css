@@ -48,14 +48,50 @@
   gap: 10px;
 }
 
+/* Не выбрано: текст и иконки #9E9D9D; выбрано — #5DAF2E.
+   Одинаковый квадрат для всех целей; крупные SVG (800×800) ужимаем маской до визуала как у молнии. */
+.welcome-goals .radio-card:not(.radio-card-selected) .radio-card-label {
+  color: #9e9d9d;
+}
+
 .welcome-goals .radio-card-icon {
-  width: 44px;
-  height: 44px;
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  color: #9e9d9d;
+}
+
+.welcome-goals .radio-card-selected .radio-card-icon {
+  color: #5daf2e;
+}
+
+.welcome-goals .radio-card-icon .welcome-goal-icon-mask {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background-color: currentcolor;
+  -webkit-mask-image: var(--goal-icon-src);
+  mask-image: var(--goal-icon-src);
+  -webkit-mask-size: contain;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+}
+
+.welcome-goals .radio-card-icon .welcome-goal-icon-mask--dense {
+  -webkit-mask-size: 82%;
+  mask-size: 82%;
 }
 
 .welcome-goals .radio-card-indicator {
   width: 18px;
   height: 18px;
+}
+
+.welcome-goals .radio-card:not(.radio-card-selected) .radio-card-indicator-empty {
+  border-color: #9e9d9d;
 }
 
 .welcome-footer {
