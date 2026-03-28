@@ -13,8 +13,8 @@ const QUESTIONS = [
   },
   {
     id: 'q2',
-    title: 'Как часто вы бы пользовались таким сервисом?',
-    options: ['Каждый день', 'Несколько раз в неделю', 'Раз в неделю', 'Реже'],
+    title: 'Порекомендовали бы вы наш сервис?',
+    options: ['Да', 'Нет'],
   },
   {
     id: 'q3',
@@ -23,8 +23,8 @@ const QUESTIONS = [
   },
   {
     id: 'q4',
-    title: 'Как часто вы бы пользовались таким сервисом?',
-    options: ['Часто', 'Иногда', 'Редко', 'Никогда'],
+    title: 'Насколько рекомендации соответствовали вашим ожиданиям?',
+    options: ['Полностью', 'В основном', 'Частично', 'Не соответствовали'],
   },
 ]
 
@@ -109,7 +109,7 @@ function Survey() {
             <div className="survey-comment-icon" aria-hidden="true">
               <span />
             </div>
-            <div className="survey-card-title">Есть пожелания?</div>
+            <div className="survey-card-title">Предложите, что нам улучшить в сервисе</div>
             <div className="survey-optional">необязательно</div>
           </div>
 
