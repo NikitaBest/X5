@@ -8,6 +8,7 @@ import NutritionReport from '../components/NutritionReport.jsx'
 import { getRationById, getRationOwnerById } from '../api/client.js'
 import { useAuth } from '../contexts/AuthContext.jsx'
 import { mapRationToNutritionReport } from '../utils/rationReportMapper.js'
+import { readLastRationIdFromStorage } from '../utils/lastRationIdStorage.js'
 import './Cart.css'
 
 function Cart() {
@@ -24,11 +25,7 @@ function Cart() {
   const rationId = location.state?.rationId ?? null
   const resolvedRationId = useMemo(() => {
     if (rationId) return rationId
-    try {
-      return window.localStorage.getItem('lastRationId')
-    } catch {
-      return null
-    }
+    return readLastRationIdFromStorage()
   }, [rationId])
 
   useEffect(() => {

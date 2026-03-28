@@ -15,6 +15,7 @@ import {
   isRawSdkMetricKey,
 } from '../utils/resultMetricDisplay.js'
 import { writeLastScanId } from '../utils/lastScanId.js'
+import { readCachedScanEnvelope, writeCachedScanEnvelope } from '../utils/scanResultCache.js'
 import { useAuth } from '../contexts/AuthContext.jsx'
 import logger from '../utils/logger.js'
 import './Results.css'
@@ -313,19 +314,19 @@ function Results() {
   const navigate = useNavigate()
   const { token } = useAuth()
 
-  const initialBackend = location.state?.backendScanResponse ?? null
-  const needsFetchFromHistory = Boolean(token && !hasTranscriptsInResponse(initialBackend))
-
   const latestHistoryFetchGenRef = useRef(0)
 
   const [showAllMetricsCards, setShowAllMetricsCards] = useState(false)
   const [activeDetail, setActiveDetail] = useState(null)
-  const [isLoadingLatestScan, setIsLoadingLatestScan] = useState(needsFetchFromHistory)
-  const [backendScanResponse, setBackendScanResponse] = useState(initialBackend)
-  const [isRationReady, setIsRationReady] = useState(
-    () =>
-      !(location.state?.scanId ?? extractScanIdFromEnvelope(location.state?.backendScanResponse ?? null)),
+  const [backendScanResponse, setBackendScanResponse] = useState(
+    () => location.state?.backendScanResponse ?? readCachedScanEnvelope() ?? null,
   )
+  const [isRationReady, setIsRationReady] = useState(() => {
+    const hydrated =
+      location.state?.backendScanResponse ?? readCachedScanEnvelope() ?? null
+    const sid = location.state?.scanId ?? extractScanIdFromEnvelope(hydrated)
+    return !sid
+  })
 
   const truncateText = (text, maxLen = 90) => {
     const s = String(text ?? '').trim()
@@ -338,25 +339,23 @@ function Results() {
     const raw = location.state?.backendScanResponse
     if (raw != null && typeof raw === 'object') {
       setBackendScanResponse(raw)
-      setIsLoadingLatestScan(!hasTranscriptsInResponse(raw))
     }
   }, [location.state?.backendScanResponse])
 
-  // GET /scan/get: без didTryLoadLatestScan — иначе после cleanup (Strict Mode / смена deps)
-  // «отменённый» запрос не сбрасывает loading, а повторный эффект уже не стартует.
   useEffect(() => {
-    if (!token) {
-      setIsLoadingLatestScan(false)
-      return undefined
-    }
-
     if (hasTranscriptsInResponse(backendScanResponse)) {
-      setIsLoadingLatestScan(false)
-      return undefined
+      writeCachedScanEnvelope(backendScanResponse)
     }
+  }, [backendScanResponse])
+
+  // Тихое обновление с сервера: без отдельного экрана «Загружаем…» (после перезапуска приложения
+  // данные поднимаются из localStorage, затем подменяются актуальным /scan/get).
+  useEffect(() => {
+    if (!token) return undefined
+
+    if (hasTranscriptsInResponse(backendScanResponse)) return undefined
 
     const gen = ++latestHistoryFetchGenRef.current
-    setIsLoadingLatestScan(true)
 
     getScanHistory(token, { pageNumber: 1, pageSize: 10 })
       .then((data) => {
@@ -367,9 +366,6 @@ function Results() {
       .catch((error) => {
         if (gen !== latestHistoryFetchGenRef.current) return
         logger.warn('Failed to fetch latest scan via /scan/get', error)
-      })
-      .finally(() => {
-        if (gen === latestHistoryFetchGenRef.current) setIsLoadingLatestScan(false)
       })
 
     return () => {
@@ -494,18 +490,13 @@ function Results() {
 
   const rationNavigateEnabled = !resolvedScanId || isRationReady
 
-  const loadingBody = Boolean(token && !hasAnyResults && isLoadingLatestScan)
-  const emptyAfterFetch = Boolean(token && !hasAnyResults && !isLoadingLatestScan)
-
   const headerHint = !token
     ? 'Войдите в приложение, чтобы увидеть результаты сканирования.'
-    : loadingBody
-      ? 'Загружаем ваш последний результат…'
-      : emptyAfterFetch
-        ? 'Пока нет данных для отображения. Вы можете пройти измерение заново.'
-        : priorityCard && priorityCommentText
-          ? `${priorityCard.title}: ${priorityCommentText}`
-          : 'Все показатели в пределах нормы. Продолжайте в том же духе.'
+    : !hasAnyResults
+      ? 'Пока нет данных для отображения. Вы можете пройти измерение заново.'
+      : priorityCard && priorityCommentText
+        ? `${priorityCard.title}: ${priorityCommentText}`
+        : 'Все показатели в пределах нормы. Продолжайте в том же духе.'
 
   if (hasAnyResults) {
     logger.info('Results page displayed', {
@@ -522,13 +513,6 @@ function Results() {
           <div className="results-subtitle">rPPG-сканирование и анализ показателей по шкалам</div>
           <div className="results-first-red-hint">{headerHint}</div>
         </div>
-
-        {loadingBody ? (
-          <div className="nutrition-plan-loading results-body-loading" aria-busy="true">
-            <span className="nutrition-plan-loading-spinner" aria-hidden="true" />
-            Загрузка…
-          </div>
-        ) : null}
 
         {hasAnyResults ? (
           <>

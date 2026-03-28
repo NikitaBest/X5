@@ -1,8 +1,8 @@
 import { createContext, useContext, useState, useCallback } from 'react'
 import { postAuthLogin, getTokenFromLoginResponse } from '../api/client.js'
+import { AUTH_USER_ID_STORAGE_KEY } from '../utils/storageUserScope.js'
 
 const TOKEN_STORAGE_KEY = 'x5_auth_token'
-const USER_ID_STORAGE_KEY = 'x5_user_id'
 
 const AuthContext = createContext(null)
 
@@ -17,7 +17,7 @@ export function AuthProvider({ children }) {
 
   const [userId, setUserIdState] = useState(() => {
     try {
-      return localStorage.getItem(USER_ID_STORAGE_KEY)
+      return localStorage.getItem(AUTH_USER_ID_STORAGE_KEY)
     } catch {
       return null
     }
@@ -34,8 +34,8 @@ export function AuthProvider({ children }) {
   const setUserId = useCallback((value) => {
     setUserIdState(value)
     try {
-      if (value) localStorage.setItem(USER_ID_STORAGE_KEY, value)
-      else localStorage.removeItem(USER_ID_STORAGE_KEY)
+      if (value) localStorage.setItem(AUTH_USER_ID_STORAGE_KEY, value)
+      else localStorage.removeItem(AUTH_USER_ID_STORAGE_KEY)
     } catch {}
   }, [])
 

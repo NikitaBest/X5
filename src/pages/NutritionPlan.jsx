@@ -16,6 +16,8 @@ import {
 } from '../api/client.js'
 import { extractLastScanResponse } from '../utils/scanHistory.js'
 import { readLastScanId, writeLastScanId } from '../utils/lastScanId.js'
+import { readCachedRationDisplay, writeCachedRationDisplay } from '../utils/rationDisplayCache.js'
+import { readLastRationIdFromStorage, writeLastRationIdToStorage } from '../utils/lastRationIdStorage.js'
 import { useAuth } from '../contexts/AuthContext.jsx'
 import logger from '../utils/logger.js'
 import { proxiedProductImageUrl } from '../utils/productImageProxy.js'
@@ -206,12 +208,7 @@ function extractRationId(data) {
 }
 
 function readStoredRationId() {
-  try {
-    const s = window.localStorage.getItem('lastRationId')
-    return s != null && String(s).trim() ? String(s).trim() : null
-  } catch {
-    return null
-  }
+  return readLastRationIdFromStorage()
 }
 
 function getVisibleMealTypesForDay(ration, planDay) {
@@ -280,10 +277,12 @@ function NutritionPlan() {
   const planStartDate = useMemo(() => getPlanStartDateTomorrow(new Date()), [])
   const [selectedDate, setSelectedDate] = useState(planStartDate)
 
-  const [ration, setRation] = useState([])
-  const [rationId, setRationId] = useState(null)
+  const [ration, setRation] = useState(() => readCachedRationDisplay()?.rows ?? [])
+  const [rationId, setRationId] = useState(() => readCachedRationDisplay()?.rationId ?? null)
   const [loadError, setLoadError] = useState(null)
-  const [isLoading, setIsLoading] = useState(Boolean(initialScanId && token))
+  const [rationFetchPending, setRationFetchPending] = useState(
+    () => Boolean(token && initialScanId && !(readCachedRationDisplay()?.rows?.length)),
+  )
   const [isRegenerating, setIsRegenerating] = useState(false)
 
   const [mealEntries, setMealEntries] = useState([])
@@ -344,13 +343,10 @@ function NutritionPlan() {
       const nextRationId = extractRationId(data)
       setRationId(nextRationId)
       if (nextRationId) {
-        try {
-          window.localStorage.setItem('lastRationId', nextRationId)
-        } catch {
-          // ignore
-        }
+        writeLastRationIdToStorage(nextRationId)
       }
       setRation(rows)
+      writeCachedRationDisplay(rows, nextRationId)
       return true
     }
 
@@ -382,12 +378,13 @@ function NutritionPlan() {
 
   useLayoutEffect(() => {
     if (!token || !scanResolved) {
-      if (!token) setIsLoading(false)
+      if (!token) setRationFetchPending(false)
       return undefined
     }
 
     let cancelled = false
-    setIsLoading(true)
+    const hadCachedAtStart = ration.length > 0
+    setRationFetchPending(true)
     setLoadError(null)
 
     loadRation()
@@ -398,11 +395,13 @@ function NutritionPlan() {
         if (cancelled) return
         logger.warn('nutrition: load ration failed', err)
         setLoadError(err?.message || 'Не удалось загрузить рацион. Попробуйте ещё раз.')
-        setRation([])
-        setRationId(null)
+        if (!hadCachedAtStart) {
+          setRation([])
+          setRationId(null)
+        }
       })
       .finally(() => {
-        if (!cancelled) setIsLoading(false)
+        if (!cancelled) setRationFetchPending(false)
       })
 
     return () => {
@@ -533,19 +532,13 @@ function NutritionPlan() {
     )
   }
 
-  if (!scanResolved) {
-    return (
-      <Page className="results-page">
-        <Header title="Ваш рацион" showBack />
-        <div className="nutrition-plan-loading" style={{ marginTop: '24px' }}>
-          <span className="nutrition-plan-loading-spinner" aria-hidden="true" />
-          Загружаем рацион…
-        </div>
-      </Page>
-    )
-  }
-
-  if (scanResolved && !isLoading && !isRegenerating && ration.length === 0 && !loadError) {
+  if (
+    scanResolved &&
+    !rationFetchPending &&
+    !isRegenerating &&
+    ration.length === 0 &&
+    !loadError
+  ) {
     return (
       <Page className="results-page">
         <Header title="Ваш рацион" showBack />
@@ -574,20 +567,20 @@ function NutritionPlan() {
         belowDateText="Рацион на неделю вперёд — начинаем со следующего дня."
       />
 
-      {(isLoading || isRegenerating) && (
+      {isRegenerating ? (
         <div className="nutrition-plan-loading">
           <span className="nutrition-plan-loading-spinner" aria-hidden="true" />
-          {isRegenerating ? 'Обновляем рацион…' : 'Загружаем рацион…'}
+          Обновляем рацион…
         </div>
-      )}
+      ) : null}
 
-      {loadError && !isLoading && !isRegenerating && (
+      {loadError && !rationFetchPending && !isRegenerating && (
         <p className="nutrition-plan-error" role="alert">
           {loadError}
         </p>
       )}
 
-      {!isLoading && !isRegenerating && !loadError && ration.length > 0 && mealEntries.map((entry, index) => {
+      {!isRegenerating && !loadError && ration.length > 0 && mealEntries.map((entry, index) => {
         const m = entry.meal
         return (
           <MealCard
@@ -607,7 +600,7 @@ function NutritionPlan() {
         )
       })}
 
-      {!isLoading && !isRegenerating && !loadError && ration.length > 0 ? (
+      {!isRegenerating && !loadError && ration.length > 0 ? (
         <section className="nutrition-day-summary">
           <h3 className="nutrition-day-summary-title">Итого за день</h3>
           <div className="nutrition-day-summary-kcal">
@@ -647,14 +640,14 @@ function NutritionPlan() {
         </section>
       ) : null}
 
-      {!isLoading && !isRegenerating && !loadError && ration.length > 0 && scanId ? (
+      {!isRegenerating && !loadError && ration.length > 0 && scanId ? (
         <button type="button" className="nutrition-plan-reroll-btn" onClick={handleRegenerateRation}>
           <img src="/restart.svg" alt="" aria-hidden="true" />
           <span>Подобрать другой рацион</span>
         </button>
       ) : null}
 
-      {!isLoading && !isRegenerating && !loadError && ration.length > 0 ? (
+      {!isRegenerating && !loadError && ration.length > 0 ? (
         <div className="nutrition-plan-footer">
           <div className="nutrition-plan-footer-divider" aria-hidden="true" />
           <p className="nutrition-plan-footer-caption">Рацион на 7 дней</p>

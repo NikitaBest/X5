@@ -13,6 +13,8 @@ import { postScanSaveRppg, extractScanIdFromEnvelope } from '../api/client.js'
 import { SDK_CONFIG } from '../config/sdkConfig.js'
 import logger from '../utils/logger.js'
 import { writeLastScanId } from '../utils/lastScanId.js'
+import { hasTranscriptsInResponse } from '../utils/scanHistory.js'
+import { writeCachedScanEnvelope } from '../utils/scanResultCache.js'
 import Page from '../layout/Page.jsx'
 import Modal from '../ui/Modal.jsx'
 import LoadingScreen from '../components/LoadingScreen.jsx'
@@ -724,6 +726,9 @@ function Camera() {
 
       const scanId = extractScanIdFromEnvelope(backendScanResponse)
       if (scanId) writeLastScanId(scanId)
+      if (hasTranscriptsInResponse(backendScanResponse)) {
+        writeCachedScanEnvelope(backendScanResponse)
+      }
 
       navigate('/results', {
         state: {

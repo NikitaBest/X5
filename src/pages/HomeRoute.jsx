@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext.jsx'
 import { getScanHistory, extractScanIdFromEnvelope } from '../api/client.js'
 import { extractLastScanResponse, hasTranscriptsInResponse } from '../utils/scanHistory.js'
 import { writeLastScanId } from '../utils/lastScanId.js'
+import { writeCachedScanEnvelope } from '../utils/scanResultCache.js'
 import Page from '../layout/Page.jsx'
 import Welcome from './Welcome.jsx'
 import './Results.css'
@@ -33,6 +34,7 @@ function HomeRoute() {
         if (last && hasTranscriptsInResponse(last)) {
           const scanId = extractScanIdFromEnvelope(last)
           if (scanId) writeLastScanId(scanId)
+          writeCachedScanEnvelope(last)
           navigate('/results', {
             replace: true,
             state: {
