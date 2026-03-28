@@ -26,7 +26,7 @@ function HomeRoute() {
     let cancelled = false
     setShowWelcome(false)
 
-    getScanHistory(token, { pageNumber: 1, pageSize: 1 })
+    getScanHistory(token, { pageNumber: 1, pageSize: 10 })
       .then((data) => {
         if (cancelled) return
         const last = extractLastScanResponse(data)

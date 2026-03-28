@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import Page from '../layout/Page.jsx'
 import Header from '../layout/Header.jsx'
@@ -7,6 +7,7 @@ import MealCard from '../components/MealCard.jsx'
 import MealDetailSheet from '../components/MealDetailSheet.jsx'
 import {
   getRationByScan,
+  getRationById,
   getRationGenerationStatus,
   postRationRegenerate,
   postRationItemReplace,
@@ -204,6 +205,15 @@ function extractRationId(data) {
   return id != null && String(id).trim() ? String(id).trim() : null
 }
 
+function readStoredRationId() {
+  try {
+    const s = window.localStorage.getItem('lastRationId')
+    return s != null && String(s).trim() ? String(s).trim() : null
+  } catch {
+    return null
+  }
+}
+
 function getVisibleMealTypesForDay(ration, planDay) {
   const dayNum = Number(planDay)
   const present = new Set(
@@ -301,7 +311,7 @@ function NutritionPlan() {
     }
     let cancelled = false
     setScanResolved(false)
-    getScanHistory(token, { pageNumber: 1, pageSize: 1 })
+    getScanHistory(token, { pageNumber: 1, pageSize: 10 })
       .then((data) => {
         if (cancelled) return
         const last = extractLastScanResponse(data)
@@ -324,32 +334,55 @@ function NutritionPlan() {
   }, [token, scanId])
 
   const loadRation = useCallback(async () => {
-    if (!scanId || !token) return false
-    const data = await getRationByScan(token, scanId)
-    if (data && typeof data === 'object' && data.isSuccess === false) {
-      throw new Error(data.error ? String(data.error) : 'Не удалось получить рацион.')
+    if (!token) return false
+
+    const applyPayload = (data) => {
+      if (!data || typeof data !== 'object') return false
+      if (data.isSuccess === false) return false
+      const rows = extractRationRows(data)
+      if (!rows.length) return false
+      const nextRationId = extractRationId(data)
+      setRationId(nextRationId)
+      if (nextRationId) {
+        try {
+          window.localStorage.setItem('lastRationId', nextRationId)
+        } catch {
+          // ignore
+        }
+      }
+      setRation(rows)
+      return true
     }
-    const rows = extractRationRows(data)
-    if (!rows.length) {
-      throw new Error('Рацион пока пуст. Попробуйте обновить позже.')
-    }
-    const nextRationId = extractRationId(data)
-    setRationId(nextRationId)
-    if (nextRationId) {
+
+    if (scanId) {
       try {
-        window.localStorage.setItem('lastRationId', nextRationId)
-      } catch {
-        // ignore
+        const data = await getRationByScan(token, scanId)
+        if (applyPayload(data)) return true
+      } catch (err) {
+        logger.warn('nutrition: getRationByScan failed', err)
       }
     }
-    setRation(rows)
-    return true
+
+    const storedRationId = readStoredRationId()
+    if (storedRationId) {
+      try {
+        const data = await getRationById(token, storedRationId)
+        if (applyPayload(data)) return true
+      } catch (err) {
+        logger.warn('nutrition: getRationById failed', err)
+      }
+    }
+
+    throw new Error(
+      scanId || storedRationId
+        ? 'Не удалось загрузить рацион. Попробуйте ещё раз.'
+        : 'Рацион пока пуст. Попробуйте обновить позже.',
+    )
   }, [scanId, token])
 
-  useEffect(() => {
-    if (!scanId || !token) {
-      setIsLoading(false)
-      setRation([])
+  useLayoutEffect(() => {
+    if (!token || !scanResolved) {
+      if (!token) setIsLoading(false)
       return undefined
     }
 
@@ -363,9 +396,10 @@ function NutritionPlan() {
       })
       .catch((err) => {
         if (cancelled) return
-        logger.warn('nutrition: getRationByScan failed', err)
+        logger.warn('nutrition: load ration failed', err)
         setLoadError(err?.message || 'Не удалось загрузить рацион. Попробуйте ещё раз.')
         setRation([])
+        setRationId(null)
       })
       .finally(() => {
         if (!cancelled) setIsLoading(false)
@@ -374,7 +408,7 @@ function NutritionPlan() {
     return () => {
       cancelled = true
     }
-  }, [scanId, token, loadRation])
+  }, [token, scanResolved, scanId, loadRation])
 
   const planDay = useMemo(
     () => planDayFromSelectedCalendarDate(selectedDate),
@@ -511,7 +545,7 @@ function NutritionPlan() {
     )
   }
 
-  if (!scanId) {
+  if (scanResolved && !isLoading && !isRegenerating && ration.length === 0 && !loadError) {
     return (
       <Page className="results-page">
         <Header title="Ваш рацион" showBack />
@@ -613,7 +647,7 @@ function NutritionPlan() {
         </section>
       ) : null}
 
-      {!isLoading && !isRegenerating && !loadError && ration.length > 0 ? (
+      {!isLoading && !isRegenerating && !loadError && ration.length > 0 && scanId ? (
         <button type="button" className="nutrition-plan-reroll-btn" onClick={handleRegenerateRation}>
           <img src="/restart.svg" alt="" aria-hidden="true" />
           <span>Подобрать другой рацион</span>

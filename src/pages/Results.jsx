@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import Page from '../layout/Page.jsx'
 import HeartRateGauge from '../components/HeartRateGauge.jsx'
@@ -109,15 +109,18 @@ function getHealthBadgeText(score) {
 }
 
 function normalizeTranscript(t) {
-  if (!t || !t.key) return null
+  if (!t || typeof t !== 'object') return null
+  const key = t.key ?? t.Key ?? t.metricKey ?? t.id
+  if (key == null || String(key).trim() === '') return null
+  const keyStr = String(key).trim()
   return {
-    key: t.key,
-    name: t.name || t.key,
-    value: t.value,
-    unit: t.unit || '',
-    color: t.color || '',
-    description: t.descriptionUser || '',
-    comment: t.commentUser || '',
+    key: keyStr,
+    name: t.name || t.Name || keyStr,
+    value: t.value ?? t.Value,
+    unit: t.unit || t.Unit || '',
+    color: t.color || t.Color || '',
+    description: t.descriptionUser || t.description || '',
+    comment: t.commentUser || t.comment || '',
     confidenceLevel: t.confidenceLevel ?? null,
     scaleMetadata: t.scaleMetadata ?? null,
   }
@@ -273,14 +276,19 @@ function getSpecialIconType(card) {
 }
 
 function Results() {
-  const [showAllMetricsCards, setShowAllMetricsCards] = useState(false)
-  const [activeDetail, setActiveDetail] = useState(null)
-  const [isLoadingLatestScan, setIsLoadingLatestScan] = useState(false)
-  const [didTryLoadLatestScan, setDidTryLoadLatestScan] = useState(false)
   const location = useLocation()
   const navigate = useNavigate()
   const { token } = useAuth()
-  const [backendScanResponse, setBackendScanResponse] = useState(() => location.state?.backendScanResponse ?? null)
+
+  const initialBackend = location.state?.backendScanResponse ?? null
+  const needsFetchFromHistory = Boolean(token && !hasTranscriptsInResponse(initialBackend))
+
+  const latestHistoryFetchGenRef = useRef(0)
+
+  const [showAllMetricsCards, setShowAllMetricsCards] = useState(false)
+  const [activeDetail, setActiveDetail] = useState(null)
+  const [isLoadingLatestScan, setIsLoadingLatestScan] = useState(needsFetchFromHistory)
+  const [backendScanResponse, setBackendScanResponse] = useState(initialBackend)
   const [isRationReady, setIsRationReady] = useState(
     () =>
       !(location.state?.scanId ?? extractScanIdFromEnvelope(location.state?.backendScanResponse ?? null)),
@@ -294,39 +302,47 @@ function Results() {
   }
 
   useEffect(() => {
-    if (location.state?.backendScanResponse) {
-      setBackendScanResponse(location.state.backendScanResponse)
-      setDidTryLoadLatestScan(false)
+    const raw = location.state?.backendScanResponse
+    if (raw != null && typeof raw === 'object') {
+      setBackendScanResponse(raw)
+      setIsLoadingLatestScan(!hasTranscriptsInResponse(raw))
     }
-  }, [location.state])
+  }, [location.state?.backendScanResponse])
 
+  // GET /scan/get: без didTryLoadLatestScan — иначе после cleanup (Strict Mode / смена deps)
+  // «отменённый» запрос не сбрасывает loading, а повторный эффект уже не стартует.
   useEffect(() => {
-    if (hasTranscriptsInResponse(backendScanResponse)) return
-    if (didTryLoadLatestScan) return
-    if (!token) return
+    if (!token) {
+      setIsLoadingLatestScan(false)
+      return undefined
+    }
 
-    let cancelled = false
-    setDidTryLoadLatestScan(true)
+    if (hasTranscriptsInResponse(backendScanResponse)) {
+      setIsLoadingLatestScan(false)
+      return undefined
+    }
+
+    const gen = ++latestHistoryFetchGenRef.current
     setIsLoadingLatestScan(true)
 
-    getScanHistory(token, { pageNumber: 1, pageSize: 1 })
+    getScanHistory(token, { pageNumber: 1, pageSize: 10 })
       .then((data) => {
-        if (cancelled) return
+        if (gen !== latestHistoryFetchGenRef.current) return
         const lastScan = extractLastScanResponse(data)
         if (lastScan) setBackendScanResponse(lastScan)
       })
       .catch((error) => {
-        if (cancelled) return
+        if (gen !== latestHistoryFetchGenRef.current) return
         logger.warn('Failed to fetch latest scan via /scan/get', error)
       })
       .finally(() => {
-        if (!cancelled) setIsLoadingLatestScan(false)
+        if (gen === latestHistoryFetchGenRef.current) setIsLoadingLatestScan(false)
       })
 
     return () => {
-      cancelled = true
+      latestHistoryFetchGenRef.current += 1
     }
-  }, [backendScanResponse, didTryLoadLatestScan, token])
+  }, [backendScanResponse, token])
 
   const resolvedScanId = useMemo(
     () => location.state?.scanId ?? extractScanIdFromEnvelope(backendScanResponse) ?? null,
@@ -443,30 +459,25 @@ function Results() {
 
   const rationNavigateEnabled = !resolvedScanId || isRationReady
 
-  if (!hasAnyResults) {
-    logger.warn('Results page accessed without backend results')
-    return (
-      <Page>
-        <div className="results-page">
-          <div className="results-error">
-            <h2>{isLoadingLatestScan ? 'Загружаем последний скан...' : 'Результаты ещё не готовы'}</h2>
-            <p>
-              {isLoadingLatestScan
-                ? 'Проверяем ваш последний результат на сервере.'
-                : 'Подождите обработку на сервере и попробуйте открыть результаты снова.'}
-            </p>
-            <button onClick={() => navigate('/camera')} className="results-button">
-              Вернуться к измерению
-            </button>
-          </div>
-        </div>
-      </Page>
-    )
+  const loadingBody = Boolean(token && !hasAnyResults && isLoadingLatestScan)
+  const emptyAfterFetch = Boolean(token && !hasAnyResults && !isLoadingLatestScan)
+
+  const headerHint = !token
+    ? 'Войдите в приложение, чтобы увидеть результаты сканирования.'
+    : loadingBody
+      ? 'Загружаем ваш последний результат…'
+      : emptyAfterFetch
+        ? 'Пока нет данных для отображения. Вы можете пройти измерение заново.'
+        : priorityCard && priorityCommentText
+          ? `${priorityCard.title}: ${priorityCommentText}`
+          : 'Все показатели в пределах нормы. Продолжайте в том же духе.'
+
+  if (hasAnyResults) {
+    logger.info('Results page displayed', {
+      hasBackendTranscripts: backendTranscripts.length > 0,
+      totalCards: cards.length,
+    })
   }
-  logger.info('Results page displayed', {
-    hasBackendTranscripts: backendTranscripts.length > 0,
-    totalCards: cards.length,
-  })
 
   return (
     <Page>
@@ -474,14 +485,17 @@ function Results() {
         <div className="results-header">
           <h1 className="results-title">Результаты</h1>
           <div className="results-subtitle">rPPG-сканирование и анализ показателей по шкалам</div>
-          <div className="results-first-red-hint">
-            {priorityCard && priorityCommentText
-              ? `${priorityCard.title}: ${priorityCommentText}`
-              : 'Все показатели в пределах нормы. Продолжайте в том же духе.'}
-          </div>
+          <div className="results-first-red-hint">{headerHint}</div>
         </div>
 
-        {hasAnyResults && (
+        {loadingBody ? (
+          <div className="nutrition-plan-loading results-body-loading" aria-busy="true">
+            <span className="nutrition-plan-loading-spinner" aria-hidden="true" />
+            Загрузка…
+          </div>
+        ) : null}
+
+        {hasAnyResults ? (
           <>
             <div className="results-gauge-wrapper">
               <HeartRateGauge value={healthScore} min={0} max={100} />
@@ -490,13 +504,7 @@ function Results() {
               {healthBadgeText}
             </div>
           </>
-        )}
-
-        {!hasAnyResults && (
-          <div style={{ padding: '2rem', textAlign: 'center', color: 'red' }}>
-            ⚠️ ВНИМАНИЕ: Данные есть, но не извлекаются. Проверьте консоль для отладки.
-          </div>
-        )}
+        ) : null}
 
         <div className="results-grid">
           {visibleCards.map((card) => {
@@ -576,7 +584,7 @@ function Results() {
               })
             }
             className={`results-button ${!rationNavigateEnabled ? 'results-button--ration-pending' : ''}`.trim()}
-            disabled={!rationNavigateEnabled}
+            disabled={!token || !hasAnyResults || !rationNavigateEnabled}
           >
             {!rationNavigateEnabled ? (
               <span className="results-button-ration-pending-inner">
