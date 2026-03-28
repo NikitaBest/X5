@@ -625,12 +625,12 @@
 }
 
 .results-ration-pending-hint {
-  margin: -8px 0 0;
-  font-size: 11px;
-  line-height: 1.35;
-  font-weight: 400;
+  margin: -6px 0 0;
+  font-size: 13px;
+  line-height: 1.4;
+  font-weight: 600;
   text-align: center;
-  color: #8a8d94;
+  color: #5daf2e;
 }
 
 .results-button-spinner {
