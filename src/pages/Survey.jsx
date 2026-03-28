@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import Page from '../layout/Page.jsx'
 import Header from '../layout/Header.jsx'
@@ -27,10 +28,14 @@ const QUESTIONS = [
   },
 ]
 
+/** После тоста (как на корзине) — чуть дольше из‑за длинного текста. */
+const THANKS_NAVIGATE_MS = 3000
+
 function Survey() {
   const navigate = useNavigate()
   const [answers, setAnswers] = useState({})
   const [comment, setComment] = useState('')
+  const [showThanks, setShowThanks] = useState(false)
 
   const isComplete = useMemo(() => QUESTIONS.every((q) => Boolean(answers[q.id])), [answers])
 
@@ -39,10 +44,18 @@ function Survey() {
   }
 
   const handleSubmit = () => {
-    // Пока бекенда нет — просто закрываем экран.
-    // Позже тут будет отправка на API.
-    navigate('/results')
+    if (!isComplete || showThanks) return
+    // Позже: отправка ответов на бекенд, затем то же уведомление и переход.
+    setShowThanks(true)
   }
+
+  useEffect(() => {
+    if (!showThanks) return undefined
+    const id = window.setTimeout(() => {
+      navigate('/results')
+    }, THANKS_NAVIGATE_MS)
+    return () => window.clearTimeout(id)
+  }, [showThanks, navigate])
 
   return (
     <Page className="survey-page">
@@ -114,10 +127,31 @@ function Survey() {
       </div>
 
       <div className="survey-footer">
-        <button type="button" className="survey-submit" onClick={handleSubmit} disabled={!isComplete}>
+        <button
+          type="button"
+          className="survey-submit"
+          onClick={handleSubmit}
+          disabled={!isComplete || showThanks}
+        >
           Отправить
         </button>
       </div>
+
+      {showThanks && typeof document !== 'undefined'
+        ? createPortal(
+            <div className="survey-thanks-overlay" role="status" aria-live="polite">
+              <div className="survey-thanks-card">
+                <p className="survey-thanks-card-text">
+                  Спасибо, что воспользовались сервисом подбора рациона питания с ИИ
+                </p>
+                <span className="survey-thanks-card-emoji" aria-hidden="true">
+                  😊
+                </span>
+              </div>
+            </div>,
+            document.body,
+          )
+        : null}
     </Page>
   )
 }
