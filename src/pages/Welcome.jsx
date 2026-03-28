@@ -9,6 +9,10 @@ import ProgressBar from '../ui/ProgressBar.jsx'
 import RadioCard from '../ui/RadioCard.jsx'
 import './Welcome.css'
 
+/** Политика и пользовательское соглашение (один документ в Google Docs). */
+const LEGAL_DOC_URL =
+  'https://docs.google.com/document/d/1iJgnFwAsyt5_L9DBP7nYL-k2KC04djH2ICgR4xXRXeY/edit?tab=t.0'
+
 function welcomeGoalIcon(src) {
   const dense = src !== '/lightning-01.svg'
   return (
@@ -126,8 +130,25 @@ function Welcome() {
           />
           <span className="welcome-consent-text">
             Я соглашаюсь с{' '}
-            <span className="welcome-consent-link">Политикой конфиденциальности</span> и{' '}
-            <span className="welcome-consent-link">Условиями использования</span>
+            <a
+              className="welcome-consent-link"
+              href={LEGAL_DOC_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+            >
+              Политикой конфиденциальности
+            </a>{' '}
+            и{' '}
+            <a
+              className="welcome-consent-link"
+              href={LEGAL_DOC_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+            >
+              Условиями использования
+            </a>
           </span>
         </label>
 

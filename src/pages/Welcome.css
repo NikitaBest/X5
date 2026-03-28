@@ -131,6 +131,8 @@
 
 .welcome-consent-link {
   color: #0783DC;
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 
 .welcome-success-message {
