@@ -1,6 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext.jsx'
+import { useUserData } from '../contexts/UserDataContext.jsx'
+import { canAccessHealthScreens } from '../utils/userProfileGate.js'
 import { getScanHistory, extractScanIdFromEnvelope } from '../api/client.js'
 import { extractLastScanResponse, hasTranscriptsInResponse } from '../utils/scanHistory.js'
 import { writeLastScanId } from '../utils/lastScanId.js'
@@ -14,13 +16,23 @@ import './Results.css'
  * Если пользователь уже авторизован и на сервере есть последний скан с результатами — сразу на результаты.
  */
 function HomeRoute() {
-  const { token } = useAuth()
+  const { token, initialAuthFinished, hasServerProfileBasics } = useAuth()
+  const { userData } = useUserData()
   const navigate = useNavigate()
   const [showWelcome, setShowWelcome] = useState(() => !token)
+
+  const allowResultsShortcut = useMemo(
+    () => canAccessHealthScreens(hasServerProfileBasics, userData),
+    [hasServerProfileBasics, userData],
+  )
 
   useEffect(() => {
     if (!token) {
       setShowWelcome(true)
+      return undefined
+    }
+
+    if (!initialAuthFinished) {
       return undefined
     }
 
@@ -31,7 +43,7 @@ function HomeRoute() {
       .then((data) => {
         if (cancelled) return
         const last = extractLastScanResponse(data)
-        if (last && hasTranscriptsInResponse(last)) {
+        if (last && hasTranscriptsInResponse(last) && allowResultsShortcut) {
           const scanId = extractScanIdFromEnvelope(last)
           if (scanId) writeLastScanId(scanId)
           writeCachedScanEnvelope(last)
@@ -53,7 +65,7 @@ function HomeRoute() {
     return () => {
       cancelled = true
     }
-  }, [token, navigate])
+  }, [token, initialAuthFinished, navigate, allowResultsShortcut])
 
   if (!showWelcome) {
     return (

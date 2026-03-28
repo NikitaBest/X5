@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef } from 'react'
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
-import { AuthProvider, useAuth } from './contexts/AuthContext.jsx'
+import { useState, useEffect, useLayoutEffect, useRef } from 'react'
+import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom'
+import { AuthProvider, useAuth, AUTH_TOKEN_STORAGE_KEY } from './contexts/AuthContext.jsx'
 import { UserDataProvider, useUserData } from './contexts/UserDataContext.jsx'
 import { postAppStatEvent } from './api/client.js'
 import MobileAppShell from './layout/MobileAppShell.jsx'
@@ -17,6 +17,7 @@ import NutritionPlan from './pages/NutritionPlan.jsx'
 import NutritionReportPage from './pages/NutritionReportPage.jsx'
 import Cart from './pages/Cart.jsx'
 import Survey from './pages/Survey.jsx'
+import { canAccessHealthScreens, profileResponseHasBasics } from './utils/userProfileGate.js'
 import './App.css'
 
 function App() {
@@ -31,6 +32,8 @@ function App() {
       <UserDataProvider>
         <AuthInit />
         <BrowserRouter>
+        <PersistedTokenDeepLinkGuard />
+        <HealthScreensOnboardingGuard />
         <StatEventTracker />
         <Routes>
           <Route element={<MobileAppShell />}>
@@ -55,8 +58,58 @@ function App() {
   )
 }
 
+const PATHS_NEED_PERSISTED_TOKEN = ['/results', '/nutrition', '/cart', '/nutrition-report']
+
+/**
+ * Если в localStorage нет сохранённого JWT, не остаёмся на «глубоких» URL после обновления
+ * (пользователь очистил Application → ожидает вход с корня, а не экран результатов).
+ * Авторизация всё равно выполнится на /, но без «призрачного» /results до редиректа HomeRoute.
+ */
+function PersistedTokenDeepLinkGuard() {
+  const location = useLocation()
+  const navigate = useNavigate()
+
+  useLayoutEffect(() => {
+    const path = location.pathname
+    const needsToken = PATHS_NEED_PERSISTED_TOKEN.some((p) => path === p || path.startsWith(`${p}/`))
+    if (!needsToken) return
+    try {
+      const t = localStorage.getItem(AUTH_TOKEN_STORAGE_KEY)
+      if (t != null && String(t).trim()) return
+    } catch {
+      // treat as no token
+    }
+    navigate('/', { replace: true })
+  }, [location.pathname, location.key, navigate])
+
+  return null
+}
+
+/**
+ * Пустой профиль с бэка и нет локального онбординга (Welcome) — не держим на результатах/рационе/корзине.
+ */
+function HealthScreensOnboardingGuard() {
+  const location = useLocation()
+  const navigate = useNavigate()
+  const { token, hasServerProfileBasics, initialAuthFinished } = useAuth()
+  const { userData } = useUserData()
+
+  const allowed = canAccessHealthScreens(hasServerProfileBasics, userData)
+
+  useLayoutEffect(() => {
+    if (!initialAuthFinished || !token) return
+    const path = location.pathname
+    const gated = PATHS_NEED_PERSISTED_TOKEN.some((p) => path === p || path.startsWith(`${p}/`))
+    if (!gated) return
+    if (allowed) return
+    navigate('/', { replace: true })
+  }, [initialAuthFinished, token, allowed, location.pathname, location.key, navigate])
+
+  return null
+}
+
 function AuthInit() {
-  const { token, userId, login } = useAuth()
+  const { token, userId, login, setHasServerProfileBasics, setInitialAuthFinished } = useAuth()
   const { updateUserData } = useUserData()
   const loginSentRef = useRef(false)
   useEffect(() => {
@@ -70,6 +123,7 @@ function AuthInit() {
     }
     login({ id: userId ?? null, utm: null })
       .then((data) => {
+        setHasServerProfileBasics(profileResponseHasBasics(data?.user?.profile))
         const profile = data?.user?.profile
         if (profile) {
           const mapped = {
@@ -89,7 +143,10 @@ function AuthInit() {
         loginSentRef.current = false
         console.warn('Auth login failed', err)
       })
-  }, [token, userId, login, updateUserData])
+      .finally(() => {
+        setInitialAuthFinished(true)
+      })
+  }, [token, userId, login, updateUserData, setHasServerProfileBasics, setInitialAuthFinished])
   return null
 }
 

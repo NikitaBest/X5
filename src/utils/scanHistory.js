@@ -1,3 +1,5 @@
+import { getScanHistory } from '../api/client.js'
+
 function unwrapPayload(payload) {
   if (payload == null || typeof payload !== 'object') return null
   // Не отбрасываем ответ при isSuccess: false — данные скана часто всё равно в value
@@ -192,6 +194,26 @@ function buildScanEnvelope(transcripts, healthScoreHint, ...sources) {
 }
 
 /**
+ * Общий балл 0–100 для шкалы (ответ save-rppg или сырой конверт из истории).
+ * Те же эвристики, что при сборке конверта из GET, плюс прямые поля в value.
+ */
+export function extractHealthScoreForGauge(envelope) {
+  if (envelope == null || typeof envelope !== 'object') return null
+  const v = envelope.value != null && typeof envelope.value === 'object' ? envelope.value : envelope
+  const direct = coerceFiniteNumber(
+    v.healthScore ??
+      v.HealthScore ??
+      v.overallScore ??
+      v.OverallScore ??
+      v.health_score ??
+      v.rppgScore ??
+      v.RppgScore,
+  )
+  if (direct != null) return direct
+  return pickHealthScoreFromObject(envelope)
+}
+
+/**
  * Достаёт последний скан из ответа GET /scan/get (разные формы value / списков).
  * @param {unknown} data
  * @returns {object|null} Объект вида { value: { transcripts, healthScore?, ... } }
@@ -203,7 +225,9 @@ export function extractLastScanResponse(data) {
   if (inner) {
     const tr = pickTranscriptsFromNode(inner)
     if (tr) {
-      return buildScanEnvelope(tr, null, inner, data)
+      const hsHint =
+        extractHealthScoreForGauge(inner) ?? extractHealthScoreForGauge(data)
+      return buildScanEnvelope(tr, hsHint, inner, data)
     }
   }
 
@@ -224,7 +248,11 @@ export function extractLastScanResponse(data) {
         if (typeof node !== 'object') continue
         const tr = pickTranscriptsFromNode(node)
         if (tr && tr.length > 0) {
-          return buildScanEnvelope(tr, null, node, first, first.value, inner, data)
+          const hsHint =
+            extractHealthScoreForGauge(first) ??
+            extractHealthScoreForGauge(inner) ??
+            extractHealthScoreForGauge(data)
+          return buildScanEnvelope(tr, hsHint, node, first, first.value, inner, data)
         }
       }
     }
@@ -232,8 +260,38 @@ export function extractLastScanResponse(data) {
 
   const deep = deepFindTranscriptArray(data)
   if (deep && deep.length > 0) {
-    return buildScanEnvelope(deep, null, unwrapPayload(data) || {}, data)
+    const unwrapped = unwrapPayload(data) || {}
+    const hsHint = extractHealthScoreForGauge(data) ?? extractHealthScoreForGauge(unwrapped)
+    return buildScanEnvelope(deep, hsHint, unwrapped, data)
   }
 
+  return null
+}
+
+/**
+ * После POST /scan/save-rppg: несколько раз запрашивает GET /scan/get, пока extractLastScanResponse
+ * не вернёт конверт с transcripts (как в scan/get.md: value.data[0] + healthScore).
+ * @param {string} token
+ * @param {{ maxAttempts?: number, delayMs?: number, pageSize?: number }} [options]
+ * @returns {Promise<object|null>} { value: { transcripts, healthScore?, ... } } или null
+ */
+export async function fetchNormalizedLatestScan(token, options = {}) {
+  const { maxAttempts = 12, delayMs = 400, pageSize = 10 } = options
+  if (!token) return null
+
+  for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+    try {
+      const data = await getScanHistory(token, { pageNumber: 1, pageSize })
+      const envelope = extractLastScanResponse(data)
+      if (envelope && hasTranscriptsInResponse(envelope)) {
+        return envelope
+      }
+    } catch {
+      /* повтор */
+    }
+    if (attempt < maxAttempts - 1) {
+      await new Promise((r) => setTimeout(r, delayMs))
+    }
+  }
   return null
 }

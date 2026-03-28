@@ -9,7 +9,11 @@ import {
   getRationGenerationStatus,
   postRationRegenerate,
 } from '../api/client.js'
-import { extractLastScanResponse, hasTranscriptsInResponse } from '../utils/scanHistory.js'
+import {
+  extractLastScanResponse,
+  extractHealthScoreForGauge,
+  hasTranscriptsInResponse,
+} from '../utils/scanHistory.js'
 import {
   hasDisplayableScaleMetadata,
   isRawSdkMetricKey,
@@ -19,6 +23,56 @@ import { readCachedScanEnvelope, writeCachedScanEnvelope } from '../utils/scanRe
 import { useAuth } from '../contexts/AuthContext.jsx'
 import logger from '../utils/logger.js'
 import './Results.css'
+
+/**
+ * Подмешивание healthScore при повторном GET для того же scanId (если в ответе балл пропал).
+ */
+function applyTrustedHealthScoreFromSave(envelope, trusted) {
+  if (!envelope || typeof envelope !== 'object' || !trusted) return envelope
+  const id = extractScanIdFromEnvelope(envelope)
+  if (!id || id !== trusted.scanId) return envelope
+  const hs = trusted.healthScore
+  if (hs == null || !Number.isFinite(Number(hs))) return envelope
+  const prevValue = envelope.value != null && typeof envelope.value === 'object' ? envelope.value : {}
+  return {
+    ...envelope,
+    value: {
+      ...prevValue,
+      healthScore: Number(hs),
+    },
+  }
+}
+
+/**
+ * GET /scan/get после сборки конверта иногда не содержит healthScore, хотя кеш/state уже показали верный балл.
+ * При том же scanId не затираем число — иначе после F5 мигание: шкала верная → стрелка влево и бейдж «Ваши показатели».
+ */
+function mergeHealthScoreIfSameScan(prevEnvelope, nextEnvelope) {
+  if (!nextEnvelope || typeof nextEnvelope !== 'object') return nextEnvelope
+
+  const nextHs = extractHealthScoreForGauge(nextEnvelope)
+  if (nextHs != null && Number.isFinite(Number(nextHs))) return nextEnvelope
+
+  if (!prevEnvelope || typeof prevEnvelope !== 'object') return nextEnvelope
+
+  const prevId = extractScanIdFromEnvelope(prevEnvelope)
+  const nextId = extractScanIdFromEnvelope(nextEnvelope)
+  const a = prevId != null ? String(prevId).trim() : ''
+  const b = nextId != null ? String(nextId).trim() : ''
+  if (!a || !b || a !== b) return nextEnvelope
+
+  const prevHs = extractHealthScoreForGauge(prevEnvelope)
+  if (prevHs == null || !Number.isFinite(Number(prevHs))) return nextEnvelope
+
+  const nextValue = nextEnvelope.value != null && typeof nextEnvelope.value === 'object' ? nextEnvelope.value : {}
+  return {
+    ...nextEnvelope,
+    value: {
+      ...nextValue,
+      healthScore: Number(prevHs),
+    },
+  }
+}
 
 const RATION_STATUS_POLL_MS = 2500
 
@@ -113,6 +167,51 @@ function getHealthBadgeText(score) {
   return 'Требует особого внимания'
 }
 
+function finiteHealthScore(...candidates) {
+  for (const x of candidates) {
+    if (x == null || x === '') continue
+    const n = Number(x)
+    if (Number.isFinite(n)) return n
+  }
+  return null
+}
+
+/**
+ * GET /scan/get (scan/get.md): transcripts и healthScore часто на value.data[0].
+ * После extractLastScanResponse transcripts поднимаются в value, а healthScore может остаться только на data[0] —
+ * тогда ранний return v терял балл и шкала уходила в «Ваши показатели».
+ */
+function pickDisplayScanValueFromEnvelope(envelope) {
+  if (envelope == null || typeof envelope !== 'object') return null
+  const v = envelope.value != null && typeof envelope.value === 'object' ? envelope.value : null
+  if (!v) return null
+
+  const row = Array.isArray(v.data) && v.data.length > 0 && typeof v.data[0] === 'object' ? v.data[0] : null
+  const scoreOnValue = finiteHealthScore(v.healthScore, v.HealthScore)
+  const scoreOnRow = row ? finiteHealthScore(row.healthScore, row.HealthScore) : null
+
+  const topT = v.transcripts
+  if (Array.isArray(topT) && topT.length > 0) {
+    const score = scoreOnValue ?? scoreOnRow
+    if (score != null && scoreOnValue == null) {
+      return { ...v, healthScore: score }
+    }
+    return v
+  }
+
+  if (!row) return v
+  const rowT = row.transcripts
+  if (!Array.isArray(rowT) || rowT.length === 0) return v
+
+  const score = scoreOnValue ?? scoreOnRow
+  return {
+    ...v,
+    ...row,
+    transcripts: rowT,
+    ...(score != null ? { healthScore: score } : {}),
+  }
+}
+
 function normalizeTranscript(t) {
   if (!t || typeof t !== 'object') return null
   const key = t.key ?? t.Key ?? t.metricKey ?? t.id
@@ -188,7 +287,7 @@ function getCardThemeByColor(color) {
       statusColor: '#4C9A24',
     }
   }
-  if (key === 'yellow') {
+  if (key === 'yellow' || key === 'orange') {
     return {
       cardBg: 'rgba(254, 192, 20, 0.12)',
       cardBorder: 'rgba(246, 175, 0, 0.55)',
@@ -221,9 +320,31 @@ function getCardThemeByColor(color) {
 function getStatusByColor(color) {
   const key = String(color || '').toLowerCase()
   if (key === 'green') return 'В норме'
-  if (key === 'yellow') return 'Выше нормы'
+  if (key === 'yellow' || key === 'orange') return 'Выше нормы'
   if (key === 'red') return 'Требует внимания'
   return ''
+}
+
+/** Для подсказки под заголовком: красный важнее жёлтого независимо от порядка карточек. */
+function transcriptSeverityRank(color) {
+  const k = String(color ?? '').toLowerCase()
+  if (k === 'red') return 3
+  if (k === 'yellow' || k === 'orange') return 2
+  return 0
+}
+
+function pickPriorityHintCard(cards) {
+  if (!Array.isArray(cards) || cards.length === 0) return null
+  let picked = null
+  let best = 0
+  for (const c of cards) {
+    const r = transcriptSeverityRank(c?.color)
+    if (r > best) {
+      best = r
+      picked = c
+    }
+  }
+  return best >= 2 ? picked : null
 }
 
 function getSpecialIconType(card) {
@@ -315,6 +436,8 @@ function Results() {
   const { token } = useAuth()
 
   const latestHistoryFetchGenRef = useRef(0)
+  /** { scanId, healthScore } из state при входе на результаты — подмешиваем, если повторный GET обрезал балл */
+  const trustedHealthFromSaveRef = useRef(null)
 
   const [showAllMetricsCards, setShowAllMetricsCards] = useState(false)
   const [activeDetail, setActiveDetail] = useState(null)
@@ -343,17 +466,35 @@ function Results() {
   }, [location.state?.backendScanResponse])
 
   useEffect(() => {
+    const st = location.state
+    const raw = st?.backendScanResponse
+    const sid = st?.scanId ?? extractScanIdFromEnvelope(raw ?? null)
+    if (raw && hasTranscriptsInResponse(raw) && sid) {
+      const hs = extractHealthScoreForGauge(raw)
+      if (hs != null && Number.isFinite(Number(hs))) {
+        trustedHealthFromSaveRef.current = {
+          scanId: String(sid).trim(),
+          healthScore: Number(hs),
+        }
+        return
+      }
+    }
+    if (!st?.backendScanResponse && !st?.scanId) {
+      trustedHealthFromSaveRef.current = null
+    }
+  }, [location.state])
+
+  useEffect(() => {
     if (hasTranscriptsInResponse(backendScanResponse)) {
       writeCachedScanEnvelope(backendScanResponse)
     }
   }, [backendScanResponse])
 
-  // Тихое обновление с сервера: без отдельного экрана «Загружаем…» (после перезапуска приложения
-  // данные поднимаются из localStorage, затем подменяются актуальным /scan/get).
+  // Всегда запрашиваем GET /scan/get при заходе на экран (и после обновления вкладки):
+  // иначе при наличии кеша в localStorage запрос не уходил, в Network пусто, UI мог быть неактуален.
+  // Кеш/state даёт быстрый первый кадр; ответ сервера подменяет состояние, если скан найден.
   useEffect(() => {
     if (!token) return undefined
-
-    if (hasTranscriptsInResponse(backendScanResponse)) return undefined
 
     const gen = ++latestHistoryFetchGenRef.current
 
@@ -361,7 +502,15 @@ function Results() {
       .then((data) => {
         if (gen !== latestHistoryFetchGenRef.current) return
         const lastScan = extractLastScanResponse(data)
-        if (lastScan) setBackendScanResponse(lastScan)
+        if (lastScan) {
+          setBackendScanResponse((prev) => {
+            const merged = applyTrustedHealthScoreFromSave(
+              lastScan,
+              trustedHealthFromSaveRef.current,
+            )
+            return mergeHealthScoreIfSameScan(prev, merged)
+          })
+        }
       })
       .catch((error) => {
         if (gen !== latestHistoryFetchGenRef.current) return
@@ -371,7 +520,7 @@ function Results() {
     return () => {
       latestHistoryFetchGenRef.current += 1
     }
-  }, [backendScanResponse, token])
+  }, [token, location.key])
 
   const resolvedScanId = useMemo(
     () => location.state?.scanId ?? extractScanIdFromEnvelope(backendScanResponse) ?? null,
@@ -463,7 +612,10 @@ function Results() {
     }
   }, [token, resolvedScanId, backendScanResponse, allowAutoRegenerate])
 
-  const backendValue = backendScanResponse?.value ?? null
+  const backendValue = useMemo(
+    () => pickDisplayScanValueFromEnvelope(backendScanResponse),
+    [backendScanResponse],
+  )
   const backendTranscripts = Array.isArray(backendValue?.transcripts)
     ? backendValue.transcripts.map(normalizeTranscript).filter(Boolean).filter(isTranscriptVisibleInUi)
     : []
@@ -471,22 +623,27 @@ function Results() {
   // Показываем показатели с key после фильтра «пустых» сырых метрик
   const cards = getCardsFromBackend(backendTranscripts.filter((t) => t?.key))
   const visibleCards = showAllMetricsCards ? cards : cards.slice(0, 4)
-  const rawHealthScore = backendValue?.healthScore
-  const healthScore =
-    rawHealthScore != null && Number.isFinite(Number(rawHealthScore)) ? Number(rawHealthScore) : null
+  const healthScore = useMemo(() => {
+    const raw = backendValue?.healthScore
+    if (raw != null && Number.isFinite(Number(raw))) return Number(raw)
+    const extracted = extractHealthScoreForGauge(backendScanResponse)
+    return extracted != null && Number.isFinite(Number(extracted)) ? Number(extracted) : null
+  }, [backendScanResponse, backendValue?.healthScore])
+
   const hasAnyResults = cards.length > 0 || healthScore != null
   const healthScoreColor = getGaugeColorByScore(healthScore)
   const healthBadgeText = getHealthBadgeText(healthScore)
 
-  const firstRedCard = cards.find((c) => String(c?.color ?? '').toLowerCase() === 'red') ?? null
-  const firstYellowCard = cards.find((c) => String(c?.color ?? '').toLowerCase() === 'yellow') ?? null
+  // Подсказка: самая «тяжёлая» по цвету карточка; текст — комментарий или тот же бейдж, что на карточке.
+  const priorityCard = pickPriorityHintCard(cards)
+  const priorityHintBody =
+    priorityCard &&
+    (String(priorityCard.statusText ?? '').trim() || getStatusByColor(priorityCard.color))
 
-  // Приоритет текста под заголовком:
-  // 1) первый красный, 2) первый жёлтый, 3) статичный "всё хорошо".
-  const priorityCard = firstRedCard ?? firstYellowCard ?? null
-  const priorityCommentText = priorityCard
-    ? truncateText(priorityCard?.statusText || '')
-    : 'Все показатели в пределах нормы. Продолжайте в том же духе.'
+  const priorityHintStyle =
+    priorityCard && transcriptSeverityRank(priorityCard.color) >= 2
+      ? { color: getCardThemeByColor(priorityCard.color).statusColor }
+      : undefined
 
   const rationNavigateEnabled = !resolvedScanId || isRationReady
 
@@ -494,8 +651,8 @@ function Results() {
     ? 'Войдите в приложение, чтобы увидеть результаты сканирования.'
     : !hasAnyResults
       ? 'Пока нет данных для отображения. Вы можете пройти измерение заново.'
-      : priorityCard && priorityCommentText
-        ? `${priorityCard.title}: ${priorityCommentText}`
+      : priorityCard && priorityHintBody
+        ? `${priorityCard.title}: ${truncateText(priorityHintBody)}`
         : 'Все показатели в пределах нормы. Продолжайте в том же духе.'
 
   if (hasAnyResults) {
@@ -511,7 +668,9 @@ function Results() {
         <div className="results-header">
           <h1 className="results-title">Результаты</h1>
           <div className="results-subtitle">rPPG-сканирование и анализ показателей по шкалам</div>
-          <div className="results-first-red-hint">{headerHint}</div>
+          <div className="results-first-red-hint" style={priorityHintStyle}>
+            {headerHint}
+          </div>
         </div>
 
         {hasAnyResults ? (

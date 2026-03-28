@@ -10,10 +10,10 @@ import healthMonitorManager, {
 import { useUserData } from '../contexts/UserDataContext.jsx'
 import { useAuth } from '../contexts/AuthContext.jsx'
 import { postScanSaveRppg, extractScanIdFromEnvelope } from '../api/client.js'
+import { hasTranscriptsInResponse, fetchNormalizedLatestScan } from '../utils/scanHistory.js'
 import { SDK_CONFIG } from '../config/sdkConfig.js'
 import logger from '../utils/logger.js'
 import { writeLastScanId } from '../utils/lastScanId.js'
-import { hasTranscriptsInResponse } from '../utils/scanHistory.js'
 import { writeCachedScanEnvelope } from '../utils/scanResultCache.js'
 import Page from '../layout/Page.jsx'
 import Modal from '../ui/Modal.jsx'
@@ -710,21 +710,33 @@ function Camera() {
       saveScanPromiseRef.current = null
     }
     
-    // Переход на страницу результатов через 1 секунду (пользователь видит уведомление «Готово»)
+    // Переход на страницу результатов через 1 с: UI только из GET /scan/get (как scan/get.md), POST лишь сохраняет скан.
     setTimeout(async () => {
       let backendScanResponse = null
+      let scanId = null
+
       try {
-        if (saveScanPromiseRef.current) {
-          backendScanResponse = await Promise.race([
-            saveScanPromiseRef.current,
-            new Promise((resolve) => setTimeout(() => resolve(null), 4000)),
-          ])
+        const saveResult = saveScanPromiseRef.current
+          ? await Promise.race([
+              saveScanPromiseRef.current,
+              new Promise((resolve) => setTimeout(() => resolve(null), 15000)),
+            ])
+          : null
+
+        if (saveResult) {
+          backendScanResponse = await fetchNormalizedLatestScan(token, {
+            maxAttempts: 12,
+            delayMs: 400,
+            pageSize: 10,
+          })
+          scanId =
+            extractScanIdFromEnvelope(backendScanResponse) ??
+            extractScanIdFromEnvelope(saveResult)
         }
       } catch {
         backendScanResponse = null
       }
 
-      const scanId = extractScanIdFromEnvelope(backendScanResponse)
       if (scanId) writeLastScanId(scanId)
       if (hasTranscriptsInResponse(backendScanResponse)) {
         writeCachedScanEnvelope(backendScanResponse)

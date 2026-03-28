@@ -1,15 +1,15 @@
-import { createContext, useContext, useState, useCallback } from 'react'
+import { createContext, useContext, useState, useCallback, useEffect } from 'react'
 import { postAuthLogin, getTokenFromLoginResponse } from '../api/client.js'
 import { AUTH_USER_ID_STORAGE_KEY } from '../utils/storageUserScope.js'
 
-const TOKEN_STORAGE_KEY = 'x5_auth_token'
+export const AUTH_TOKEN_STORAGE_KEY = 'x5_auth_token'
 
 const AuthContext = createContext(null)
 
 export function AuthProvider({ children }) {
   const [token, setTokenState] = useState(() => {
     try {
-      return localStorage.getItem(TOKEN_STORAGE_KEY)
+      return localStorage.getItem(AUTH_TOKEN_STORAGE_KEY)
     } catch {
       return null
     }
@@ -23,11 +23,21 @@ export function AuthProvider({ children }) {
     }
   })
 
+  /** Есть ли с /auth/login хотя бы одно поле профиля (не «пустой» пользователь с точки зрения бэка). */
+  const [hasServerProfileBasics, setHasServerProfileBasics] = useState(false)
+
+  /** Первый вызов login() в приложении завершён — можно опираться на hasServerProfileBasics и не гонять с главной зря. */
+  const [initialAuthFinished, setInitialAuthFinished] = useState(false)
+
+  useEffect(() => {
+    if (!token) setHasServerProfileBasics(false)
+  }, [token])
+
   const setToken = useCallback((value) => {
     setTokenState(value)
     try {
-      if (value) localStorage.setItem(TOKEN_STORAGE_KEY, value)
-      else localStorage.removeItem(TOKEN_STORAGE_KEY)
+      if (value) localStorage.setItem(AUTH_TOKEN_STORAGE_KEY, value)
+      else localStorage.removeItem(AUTH_TOKEN_STORAGE_KEY)
     } catch {}
   }, [])
 
@@ -55,7 +65,19 @@ export function AuthProvider({ children }) {
   )
 
   return (
-    <AuthContext.Provider value={{ token, userId, setToken, setUserId, login }}>
+    <AuthContext.Provider
+      value={{
+        token,
+        userId,
+        setToken,
+        setUserId,
+        login,
+        hasServerProfileBasics,
+        setHasServerProfileBasics,
+        initialAuthFinished,
+        setInitialAuthFinished,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   )

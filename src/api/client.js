@@ -257,26 +257,40 @@ export async function getScanHistory(token, params = {}) {
 }
 
 /**
- * Достаёт идентификатор скана из ответа save-rppg / scan/get (разные формы value).
+ * Достаёт идентификатор скана из ответа save-rppg, сырого GET /scan/get (value.data[0]) или нормализованного конверта.
  * @param {unknown} envelope
  * @returns {string|null}
  */
 export function extractScanIdFromEnvelope(envelope) {
   if (envelope == null || typeof envelope !== 'object') return null
+
+  const tryBlock = (block) => {
+    if (block == null || typeof block !== 'object') return null
+    const scan = block.scan != null && typeof block.scan === 'object' ? block.scan : null
+    const candidates = [
+      scan?.id,
+      scan?.scanId,
+      scan?.scanID,
+      block.scanId,
+      block.scanID,
+      block.scan_id,
+      block.id,
+    ]
+    for (const c of candidates) {
+      if (c != null && String(c).trim() !== '') return String(c).trim()
+    }
+    return null
+  }
+
   const v = envelope.value != null && typeof envelope.value === 'object' ? envelope.value : envelope
-  const scan = v.scan != null && typeof v.scan === 'object' ? v.scan : null
-  const candidates = [
-    scan?.id,
-    scan?.scanId,
-    scan?.scanID,
-    v.scanId,
-    v.scanID,
-    v.scan_id,
-    v.id,
-    envelope.scanId,
-    envelope.id,
-  ]
-  for (const c of candidates) {
+  const fromFlat = tryBlock(v)
+  if (fromFlat) return fromFlat
+
+  const firstRow = Array.isArray(v.data) && v.data.length > 0 && typeof v.data[0] === 'object' ? v.data[0] : null
+  const fromList = tryBlock(firstRow)
+  if (fromList) return fromList
+
+  for (const c of [envelope.scanId, envelope.id]) {
     if (c != null && String(c).trim() !== '') return String(c).trim()
   }
   return null
