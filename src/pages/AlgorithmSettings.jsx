@@ -64,11 +64,11 @@ function goalCodeToRu(goal) {
   const key = String(goal ?? '').trim().toLowerCase()
   if (!key) return ''
   const map = {
-    sugar: 'Взять сахар под контроль',
-    lightness: 'Обрести лёгкость',
+    sugar: 'Взять вес под контроль',
+    lightness: 'Дополнительные витамины',
     energy: 'Получить заряд бодрости',
     immunity: 'Укрепить иммунитет',
-    shopping: 'Выгодно покупать полезное',
+    shopping: 'Быстрое восстановление',
   }
   return map[key] || String(goal).trim()
 }

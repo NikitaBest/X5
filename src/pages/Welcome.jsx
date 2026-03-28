@@ -11,7 +11,7 @@ import './Welcome.css'
 const GOAL_OPTIONS = [
   {
     value: 'sugar',
-    label: 'Взять сахар под контроль',
+    label: 'Взять вес под контроль',
     icon: (
       <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M0 4C0 1.79086 1.79086 0 4 0H44C46.2091 0 48 1.79086 48 4V44C48 46.2091 46.2091 48 44 48H4C1.79086 48 0 46.2091 0 44V4Z" fill="var(--radio-icon-bg, #F5F5F5)"/>
@@ -21,7 +21,7 @@ const GOAL_OPTIONS = [
   },
   {
     value: 'lightness',
-    label: 'Обрести лёгкость',
+    label: 'Дополнительные витамины',
     icon: (
       <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M0 4C0 1.79086 1.79086 0 4 0H44C46.2091 0 48 1.79086 48 4V44C48 46.2091 46.2091 48 44 48H4C1.79086 48 0 46.2091 0 44V4Z" fill="var(--radio-icon-bg, #F5F5F5)"/>
@@ -54,7 +54,7 @@ const GOAL_OPTIONS = [
   },
   {
     value: 'shopping',
-    label: 'Выгодно покупать полезное',
+    label: 'Быстрое восстановление',
     icon: (
       <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M0 4C0 1.79086 1.79086 0 4 0H44C46.2091 0 48 1.79086 48 4V44C48 46.2091 46.2091 48 44 48H4C1.79086 48 0 46.2091 0 44V4Z" fill="var(--radio-icon-bg, #F5F5F5)"/>
