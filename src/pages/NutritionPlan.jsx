@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import Page from '../layout/Page.jsx'
 import Header from '../layout/Header.jsx'
@@ -18,6 +18,10 @@ import { extractLastScanResponse } from '../utils/scanHistory.js'
 import { readLastScanId, writeLastScanId } from '../utils/lastScanId.js'
 import { readCachedRationDisplay, writeCachedRationDisplay } from '../utils/rationDisplayCache.js'
 import { readLastRationIdFromStorage, writeLastRationIdToStorage } from '../utils/lastRationIdStorage.js'
+import {
+  setRationRegenPollPending,
+  takeRationRegenPollPendingForScan,
+} from '../utils/rationRegenPollStorage.js'
 import { useAuth } from '../contexts/AuthContext.jsx'
 import logger from '../utils/logger.js'
 import { proxiedProductImageUrl } from '../utils/productImageProxy.js'
@@ -284,6 +288,7 @@ function NutritionPlan() {
     () => Boolean(token && initialScanId && !(readCachedRationDisplay()?.rows?.length)),
   )
   const [isRegenerating, setIsRegenerating] = useState(false)
+  const allergiesRegenPollSessionRef = useRef(0)
 
   const [mealEntries, setMealEntries] = useState([])
 
@@ -301,6 +306,25 @@ function NutritionPlan() {
       navigate(to, { replace: true })
     }
   }, [navigate, location.state, scanId])
+
+  const allergiesHeaderSlot = token ? (
+    <button
+      type="button"
+      className="header-allergies-btn"
+      aria-label="Аллергии и исключения"
+      onClick={() => {
+        const sid = (scanId && String(scanId).trim()) || readLastScanId()
+        navigate('/allergies', {
+          state: {
+            returnTo: '/nutrition',
+            ...(sid ? { scanId: String(sid).trim() } : {}),
+          },
+        })
+      }}
+    >
+      <img src="/allerg.svg" alt="" width={28} height={28} />
+    </button>
+  ) : null
 
   useEffect(() => {
     const sid = location.state?.scanId
@@ -387,6 +411,9 @@ function NutritionPlan() {
         : 'Рацион пока пуст. Попробуйте обновить позже.',
     )
   }, [scanId, token])
+
+  const loadRationRef = useRef(loadRation)
+  loadRationRef.current = loadRation
 
   useLayoutEffect(() => {
     if (!token || !scanResolved) {
@@ -507,6 +534,83 @@ function NutritionPlan() {
     setIsRegenerating(false)
   }, [scanId, token, isRegenerating, loadRation])
 
+  /**
+   * После аллергий: опрос статуса как у «Подобрать другой рацион».
+   * Старт по sessionStorage и/или pendingRationRegeneration в location.state — чтобы не терять
+   * опрос при повторном монтировании (Strict Mode) после take() из storage.
+   * Не зависим от loadRation. sessionRef не даёт старому finally сбросить isRegenerating, если уже идёт новая сессия.
+   */
+  useLayoutEffect(() => {
+    if (!token || !scanId) return undefined
+    const claimedStorage = takeRationRegenPollPendingForScan(scanId)
+    const pendingFromNav = location.state?.pendingRationRegeneration === true
+    if (!claimedStorage && !pendingFromNav) return undefined
+
+    const session = ++allergiesRegenPollSessionRef.current
+    const preserveReturnTo =
+      typeof location.state?.returnTo === 'string' && location.state.returnTo.startsWith('/')
+        ? location.state.returnTo
+        : undefined
+    const clearPendingRationRegenNav = () => {
+      navigate(location.pathname, {
+        replace: true,
+        state: {
+          scanId: String(scanId),
+          ...(preserveReturnTo ? { returnTo: preserveReturnTo } : {}),
+        },
+      })
+    }
+
+    let cancelled = false
+    setIsRegenerating(true)
+    setLoadError(null)
+    setActiveSlot(null)
+    setOpenReplaceView(false)
+
+    ;(async () => {
+      let terminal = false
+      try {
+        const startedAt = Date.now()
+        while (Date.now() - startedAt < RATION_POLL_TIMEOUT_MS) {
+          if (cancelled) return
+          try {
+            const statusData = await getRationGenerationStatus(token, scanId)
+            const status = parseRationStatus(statusData)
+            if (status === WEEK_RATION_STATUS.Completed) {
+              await loadRationRef.current()
+              terminal = true
+              clearPendingRationRegenNav()
+              return
+            }
+            if (status === WEEK_RATION_STATUS.Failed) {
+              setLoadError('Не удалось перегенерировать рацион. Попробуйте позже.')
+              terminal = true
+              clearPendingRationRegenNav()
+              return
+            }
+          } catch (err) {
+            logger.warn('nutrition: regenerate status poll failed (from allergies)', err)
+          }
+          await new Promise((resolve) => setTimeout(resolve, RATION_POLL_MS))
+        }
+        setLoadError('Перегенерация заняла слишком много времени. Попробуйте позже.')
+        terminal = true
+        clearPendingRationRegenNav()
+      } finally {
+        if (!terminal && cancelled) {
+          setRationRegenPollPending(scanId)
+        }
+        if (allergiesRegenPollSessionRef.current === session) {
+          setIsRegenerating(false)
+        }
+      }
+    })()
+
+    return () => {
+      cancelled = true
+    }
+  }, [token, scanId, location.state?.pendingRationRegeneration, navigate, location.pathname])
+
   const activeMeal = activeSlot != null ? mealEntries[activeSlot]?.meal : null
   const mealType = activeSlot != null ? mealEntries[activeSlot]?.label : null
   const activeAlternatives = activeSlot != null ? mealEntries[activeSlot]?.alternatives ?? [] : []
@@ -536,7 +640,7 @@ function NutritionPlan() {
   if (!token) {
     return (
       <Page className="results-page">
-        <Header title="Ваш рацион" showBack onBack={handleNutritionBack} />
+        <Header title="Ваш рацион" showBack onBack={handleNutritionBack} endSlot={allergiesHeaderSlot} />
         <div className="nutrition-plan-empty">
           <p className="nutrition-plan-empty-text">Требуется авторизация для загрузки рациона.</p>
         </div>
@@ -553,7 +657,7 @@ function NutritionPlan() {
   ) {
     return (
       <Page className="results-page">
-        <Header title="Ваш рацион" showBack onBack={handleNutritionBack} />
+        <Header title="Ваш рацион" showBack onBack={handleNutritionBack} endSlot={allergiesHeaderSlot} />
         <div className="nutrition-plan-empty">
           <p className="nutrition-plan-empty-text">
             Чтобы увидеть персональный рацион, сначала пройдите сканирование и откройте эту страницу из блока результатов.
@@ -568,7 +672,7 @@ function NutritionPlan() {
 
   return (
     <Page className="results-page">
-      <Header title="Ваш рацион" showBack onBack={handleNutritionBack} />
+      <Header title="Ваш рацион" showBack onBack={handleNutritionBack} endSlot={allergiesHeaderSlot} />
       <div className="nutrition-plan-intro">
         <p className="nutrition-plan-intro-title">Рацион подобран на основе ваших показателей</p>
       </div>

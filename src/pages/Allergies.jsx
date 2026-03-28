@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import Page from '../layout/Page.jsx'
 import Header from '../layout/Header.jsx'
 import ProgressBar from '../ui/ProgressBar.jsx'
@@ -7,7 +7,10 @@ import {
   getExcludeProducts,
   getExcludeProductsForUser,
   postExcludeProducts,
+  postRationRegenerate,
 } from '../api/client.js'
+import { readLastScanId } from '../utils/lastScanId.js'
+import { setRationRegenPollPending } from '../utils/rationRegenPollStorage.js'
 import { useAuth } from '../contexts/AuthContext.jsx'
 import './Allergies.css'
 
@@ -52,7 +55,17 @@ function normalizeExcludeValue(item) {
 
 function Allergies() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { token } = useAuth()
+  const returnTarget =
+    typeof location.state?.returnTo === 'string' && location.state.returnTo.startsWith('/')
+      ? location.state.returnTo
+      : null
+  const rationScanId = useMemo(() => {
+    const s = location.state?.scanId
+    if (s != null && String(s).trim()) return String(s).trim()
+    return readLastScanId()
+  }, [location.state?.scanId])
   const [activeTab, setActiveTab] = useState('Все')
   const [query, setQuery] = useState('')
   const [selectedTags, setSelectedTags] = useState(new Set())
@@ -181,7 +194,29 @@ function Allergies() {
         .filter(Boolean)
 
       await postExcludeProducts(token, payload)
-      navigate('/preparation')
+
+      if (returnTarget) {
+        if (rationScanId) {
+          try {
+            await postRationRegenerate(token, rationScanId)
+            setRationRegenPollPending(rationScanId)
+          } catch {
+            setSaveError(
+              'Исключения сохранены. Не удалось запустить перегенерацию — на странице рациона нажмите «Подобрать другой рацион».',
+            )
+            setIsSaving(false)
+            return
+          }
+        }
+        navigate(returnTarget, {
+          replace: true,
+          state: rationScanId
+            ? { scanId: rationScanId, pendingRationRegeneration: true }
+            : undefined,
+        })
+      } else {
+        navigate('/preparation')
+      }
     } catch (e) {
       setSaveError('Не удалось сохранить исключения. Попробуйте ещё раз.')
     } finally {
@@ -189,10 +224,14 @@ function Allergies() {
     }
   }
 
+  const handleAllergiesBack = returnTarget
+    ? () => navigate(returnTarget, { replace: true })
+    : undefined
+
   return (
     <Page className="allergies-page">
-      <Header title="Исключения" showBack />
-      <ProgressBar currentStep={3} totalSteps={3} />
+      <Header title="Исключения" showBack onBack={handleAllergiesBack} />
+      {returnTarget ? null : <ProgressBar currentStep={3} totalSteps={3} />}
 
       <div className="allergies-content">
         <div className="allergies-title-block">
@@ -305,10 +344,14 @@ function Allergies() {
           disabled={isSaving}
         >
           {isSaving
-            ? 'Сохраняем...'
-            : selectedTags.size > 0
-              ? 'Продолжить'
-              : 'Продолжить без исключений'}
+            ? returnTarget
+              ? 'Сохраняем и подбираем рацион…'
+              : 'Сохраняем...'
+            : returnTarget
+              ? 'Сохранить и подобрать другой рацион'
+              : selectedTags.size > 0
+                ? 'Продолжить'
+                : 'Продолжить без исключений'}
         </button>
       </div>
     </Page>
