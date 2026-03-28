@@ -9,14 +9,13 @@ import ProgressBar from '../ui/ProgressBar.jsx'
 import RadioCard from '../ui/RadioCard.jsx'
 import './Welcome.css'
 
-/**
- * Политика конфиденциальности — публичная страница.
- * Исходный файл политики (Google Docs): https://docs.google.com/document/d/1Dx1AcpzYtKy6C_4c71GFcotvPRPe5owI/edit
- */
-const PRIVACY_POLICY_URL = 'https://scan.mobilemed.ai/privacypolicy'
+/** Политика конфиденциальности (Google Docs). */
+const PRIVACY_POLICY_URL =
+  'https://docs.google.com/document/d/195F-F1FnvYhJrSAv6yNNh8ZR10khf6tpu-MWxeL9st0/edit?tab=t.0'
 
-/** Условия использования / оферта — страница на scan.mobilemed.ai (содержимое соответствует документу оферты). */
-const TERMS_OF_USE_URL = 'https://scan.mobilemed.ai/oferta'
+/** Правила использования (Google Docs). */
+const USAGE_RULES_URL =
+  'https://docs.google.com/document/d/1TOT0pCYPori4p4MS2s5xxgu9e_DGkbw612-G5HDkIjM/edit?tab=t.0'
 
 function welcomeGoalIcon(src) {
   const dense = src !== '/lightning-01.svg'
@@ -147,12 +146,12 @@ function Welcome() {
             и{' '}
             <a
               className="welcome-consent-link"
-              href={TERMS_OF_USE_URL}
+              href={USAGE_RULES_URL}
               target="_blank"
               rel="noopener noreferrer"
               onClick={(e) => e.stopPropagation()}
             >
-              Условиями использования
+              Правилами использования
             </a>
           </span>
         </label>
