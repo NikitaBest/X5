@@ -5,6 +5,7 @@ import { UserDataProvider, useUserData } from './contexts/UserDataContext.jsx'
 import { postAppStatEvent } from './api/client.js'
 import MobileAppShell from './layout/MobileAppShell.jsx'
 import LoadingScreen from './components/LoadingScreen.jsx'
+import HomeRoute from './pages/HomeRoute.jsx'
 import Welcome from './pages/Welcome.jsx'
 import PrioritySelection from './pages/PrioritySelection.jsx'
 import AlgorithmSettings from './pages/AlgorithmSettings.jsx'
@@ -33,7 +34,8 @@ function App() {
         <StatEventTracker />
         <Routes>
           <Route element={<MobileAppShell />}>
-            <Route path="/" element={<Welcome />} />
+            <Route path="/" element={<HomeRoute />} />
+            <Route path="/welcome" element={<Welcome />} />
             <Route path="/recent-activity" element={<Navigate to="/algorithm-settings" replace />} />
             <Route path="/priority" element={<PrioritySelection />} />
             <Route path="/algorithm-settings" element={<AlgorithmSettings />} />

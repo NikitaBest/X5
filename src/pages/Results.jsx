@@ -9,6 +9,7 @@ import {
   getRationGenerationStatus,
   postRationRegenerate,
 } from '../api/client.js'
+import { extractLastScanResponse, hasTranscriptsInResponse } from '../utils/scanHistory.js'
 import { useAuth } from '../contexts/AuthContext.jsx'
 import logger from '../utils/logger.js'
 import './Results.css'
@@ -267,29 +268,6 @@ function getSpecialIconType(card) {
     return 'cardio'
   }
 
-  return null
-}
-
-function hasTranscriptsInResponse(response) {
-  return Array.isArray(response?.value?.transcripts) && response.value.transcripts.length > 0
-}
-
-function extractLastScanResponse(data) {
-  if (hasTranscriptsInResponse(data)) return data
-
-  const list = Array.isArray(data?.value?.data)
-    ? data.value.data
-    : Array.isArray(data?.value?.items)
-      ? data.value.items
-      : Array.isArray(data?.data)
-        ? data.data
-        : []
-
-  const first = list[0]
-  if (hasTranscriptsInResponse(first)) return first
-  if (Array.isArray(first?.transcripts) && first.transcripts.length > 0) {
-    return { value: first }
-  }
   return null
 }
 
@@ -612,7 +590,7 @@ function Results() {
           <button onClick={() => navigate('/camera')} className="results-button secondary">
             Измерить снова
           </button>
-          <button onClick={() => navigate('/')} className="results-button secondary">
+          <button type="button" onClick={() => navigate('/welcome')} className="results-button secondary">
             На главную
           </button>
         </div>
