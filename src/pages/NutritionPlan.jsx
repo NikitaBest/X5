@@ -70,6 +70,13 @@ function truncateText(text, maxLen) {
   return `${s.slice(0, maxLen).trim()}…`
 }
 
+function titleWithGrams(baseTitle, grams) {
+  const t = String(baseTitle ?? '').trim()
+  const g = Math.round(Number(grams) || 0)
+  if (!g) return t
+  return t ? `${t} · ${g} г` : `${g} г`
+}
+
 function toNumber(value) {
   const n = typeof value === 'number' ? value : Number.parseFloat(String(value ?? '').replace(',', '.'))
   return Number.isFinite(n) ? n : 0
@@ -117,7 +124,8 @@ function mapReplaceToAlternatives(food) {
           carbs: baseCarbs * ratio,
         }
     const reason = r?.reason ?? food?.reason ?? ''
-    const title = p?.title || (r?.productId ? `Вариант #${r.productId}` : '')
+    const titleBase = p?.title || (r?.productId ? `Вариант #${r.productId}` : '')
+    const title = titleWithGrams(titleBase, w)
     const imageUrl =
       p && Array.isArray(p.images) && p.images[0]
         ? proxiedProductImageUrl(p.images[0]) || null
@@ -152,12 +160,13 @@ function foodItemToMealPartial(food) {
   if (!p) return null
   const w = Number(food.weigth ?? food.weight ?? p.weightG) || 100
   const m = gramsToMacros(p, w)
+  const title = titleWithGrams(p.title || '', w)
   return {
     id: food.id,
     productId: Number(food?.productId ?? p?.id ?? 0) || null,
     weigth: w,
-    title: p.title || '',
-    shortTitle: truncateText(p.title, 72),
+    title,
+    shortTitle: truncateText(title, 72),
     statusTag: food.reason ? truncateText(food.reason, 90) : '',
     tags: food.reason
       ? food.reason
