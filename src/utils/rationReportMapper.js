@@ -3,10 +3,24 @@ function toNum(value) {
   return Number.isFinite(n) ? n : 0
 }
 
+/** Как на странице рациона: вес позиции для отображения и пересчёта КБЖУ. */
+function mealGramsForFood(food) {
+  const p = food?.product
+  const n = toNum(food?.weigth ?? food?.weight ?? p?.weightG ?? 0)
+  return n > 0 ? n : 100
+}
+
+function titleWithGrams(baseTitle, grams) {
+  const t = String(baseTitle ?? '').trim()
+  const g = Math.round(Number(grams) || 0)
+  if (!g) return t
+  return t ? `${t} · ${g} г` : `${g} г`
+}
+
 function macrosForFood(food) {
   const p = food?.product
   if (!p) return { kcal: 0, protein: 0, fat: 0, carbs: 0 }
-  const grams = toNum(food?.weigth ?? food?.weight ?? p?.weightG ?? 0)
+  const grams = mealGramsForFood(food)
   const factor = grams / 100
   return {
     kcal: toNum(p.kcalPer100G) * factor,
@@ -123,10 +137,12 @@ export function mapRationToNutritionReport(payload) {
       bucket.macros.proteinGrams += m.protein
       bucket.macros.fatGrams += m.fat
       bucket.macros.carbsGrams += m.carbs
+      const p = food?.product
+      const baseTitle = p?.title || 'Продукт'
       bucket.meals.push({
         key: String(food?.id ?? `${day}-${row?.type ?? 'meal'}`),
         slot: mealType,
-        text: food?.product?.title || 'Продукт',
+        text: titleWithGrams(baseTitle, mealGramsForFood(food)),
         kcal: Math.round(m.kcal),
         order: Number(food?.order ?? row?.order ?? 0),
       })
