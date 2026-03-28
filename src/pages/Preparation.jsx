@@ -54,7 +54,7 @@ function Preparation() {
             <div className="requirement-content">
               <h3 className="requirement-title">Хорошее освещение</h3>
               <p className="requirement-description">
-                Встаньте лицом к источнику света. Избегайте теней на лице.
+              Убедитесь, что лицо хорошо освещено. Избегайте попадание теней на лицо.
               </p>
             </div>
           </div>
@@ -64,9 +64,9 @@ function Preparation() {
               <img src="/material-symbols_medical-information-outline (1).svg" alt="Телефон на уровне глаз" />
             </div>
             <div className="requirement-content">
-              <h3 className="requirement-title">Телефон на уровне глаз</h3>
+              <h3 className="requirement-title">Не двигайтесь</h3>
               <p className="requirement-description">
-                Зафиксируйте устройство на расстоянии 30–40 см от лица.
+              Сядьте, держите устройство на расстоянии 20-30см, не говорите во время сканирования.
               </p>
             </div>
           </div>
@@ -76,9 +76,9 @@ function Preparation() {
               <img src="/material-symbols_medical-information-outline (2).svg" alt="Не двигайтесь" />
             </div>
             <div className="requirement-content">
-              <h3 className="requirement-title">Не двигайтесь</h3>
+              <h3 className="requirement-title">Доступность</h3>
               <p className="requirement-description">
-                Расслабьте лицо, не говорите и не двигайтесь во время измерения.
+              Снимите очки и головной убор - они мешают сканированию.
               </p>
             </div>
           </div>
@@ -88,9 +88,9 @@ function Preparation() {
               <img src="/material-symbols_medical-information-outline (3).svg" alt="Без кофе и сигарет" />
             </div>
             <div className="requirement-content">
-              <h3 className="requirement-title">Без кофе и сигарет</h3>
+              <h3 className="requirement-title">Спокойствие</h3>
               <p className="requirement-description">
-                Воздержитесь минимум 20 минут до сканирования.
+              Не занимайтесь активностью перед сканированием, не курите.
               </p>
             </div>
           </div>
