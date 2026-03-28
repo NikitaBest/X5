@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext.jsx'
 import { getScanHistory, extractScanIdFromEnvelope } from '../api/client.js'
 import { extractLastScanResponse, hasTranscriptsInResponse } from '../utils/scanHistory.js'
+import { writeLastScanId } from '../utils/lastScanId.js'
 import Page from '../layout/Page.jsx'
 import Welcome from './Welcome.jsx'
 import './Results.css'
@@ -31,6 +32,7 @@ function HomeRoute() {
         const last = extractLastScanResponse(data)
         if (last && hasTranscriptsInResponse(last)) {
           const scanId = extractScanIdFromEnvelope(last)
+          if (scanId) writeLastScanId(scanId)
           navigate('/results', {
             replace: true,
             state: {

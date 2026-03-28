@@ -10,7 +10,11 @@ import {
   getRationGenerationStatus,
   postRationRegenerate,
   postRationItemReplace,
+  getScanHistory,
+  extractScanIdFromEnvelope,
 } from '../api/client.js'
+import { extractLastScanResponse } from '../utils/scanHistory.js'
+import { readLastScanId, writeLastScanId } from '../utils/lastScanId.js'
 import { useAuth } from '../contexts/AuthContext.jsx'
 import logger from '../utils/logger.js'
 import { proxiedProductImageUrl } from '../utils/productImageProxy.js'
@@ -249,7 +253,14 @@ function NutritionPlan() {
   const navigate = useNavigate()
   const location = useLocation()
   const { token } = useAuth()
-  const scanId = location.state?.scanId ?? null
+  const scanFromNav = location.state?.scanId
+  const initialScanId =
+    scanFromNav != null && String(scanFromNav).trim()
+      ? String(scanFromNav).trim()
+      : readLastScanId()
+
+  const [scanId, setScanId] = useState(initialScanId)
+  const [scanResolved, setScanResolved] = useState(() => Boolean(!token || initialScanId))
 
   const today = useMemo(() => {
     const d = new Date()
@@ -262,13 +273,55 @@ function NutritionPlan() {
   const [ration, setRation] = useState([])
   const [rationId, setRationId] = useState(null)
   const [loadError, setLoadError] = useState(null)
-  const [isLoading, setIsLoading] = useState(Boolean(scanId && token))
+  const [isLoading, setIsLoading] = useState(Boolean(initialScanId && token))
   const [isRegenerating, setIsRegenerating] = useState(false)
 
   const [mealEntries, setMealEntries] = useState([])
 
   const [activeSlot, setActiveSlot] = useState(null)
   const [openReplaceView, setOpenReplaceView] = useState(false)
+
+  useEffect(() => {
+    const sid = location.state?.scanId
+    if (sid == null || !String(sid).trim()) return
+    const s = String(sid).trim()
+    setScanId(s)
+    writeLastScanId(s)
+    setScanResolved(true)
+  }, [location.state?.scanId])
+
+  useEffect(() => {
+    if (!token) {
+      setScanResolved(true)
+      return undefined
+    }
+    if (scanId) {
+      setScanResolved(true)
+      return undefined
+    }
+    let cancelled = false
+    setScanResolved(false)
+    getScanHistory(token, { pageNumber: 1, pageSize: 1 })
+      .then((data) => {
+        if (cancelled) return
+        const last = extractLastScanResponse(data)
+        let id = extractScanIdFromEnvelope(last)
+        if (!id) id = extractScanIdFromEnvelope(data)
+        if (id) {
+          setScanId(id)
+          writeLastScanId(id)
+        }
+      })
+      .catch((err) => {
+        if (!cancelled) logger.warn('nutrition: resolve scanId from history failed', err)
+      })
+      .finally(() => {
+        if (!cancelled) setScanResolved(true)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [token, scanId])
 
   const loadRation = useCallback(async () => {
     if (!scanId || !token) return false
@@ -435,6 +488,29 @@ function NutritionPlan() {
     }
   }, [mealEntries])
 
+  if (!token) {
+    return (
+      <Page className="results-page">
+        <Header title="Ваш рацион" showBack />
+        <div className="nutrition-plan-empty">
+          <p className="nutrition-plan-empty-text">Требуется авторизация для загрузки рациона.</p>
+        </div>
+      </Page>
+    )
+  }
+
+  if (!scanResolved) {
+    return (
+      <Page className="results-page">
+        <Header title="Ваш рацион" showBack />
+        <div className="nutrition-plan-loading" style={{ marginTop: '24px' }}>
+          <span className="nutrition-plan-loading-spinner" aria-hidden="true" />
+          Загружаем рацион…
+        </div>
+      </Page>
+    )
+  }
+
   if (!scanId) {
     return (
       <Page className="results-page">
@@ -446,17 +522,6 @@ function NutritionPlan() {
           <button type="button" className="results-button" onClick={() => navigate('/results')}>
             К результатам
           </button>
-        </div>
-      </Page>
-    )
-  }
-
-  if (!token) {
-    return (
-      <Page className="results-page">
-        <Header title="Ваш рацион" showBack />
-        <div className="nutrition-plan-empty">
-          <p className="nutrition-plan-empty-text">Требуется авторизация для загрузки рациона.</p>
         </div>
       </Page>
     )

@@ -10,6 +10,7 @@ import {
   postRationRegenerate,
 } from '../api/client.js'
 import { extractLastScanResponse, hasTranscriptsInResponse } from '../utils/scanHistory.js'
+import { writeLastScanId } from '../utils/lastScanId.js'
 import { useAuth } from '../contexts/AuthContext.jsx'
 import logger from '../utils/logger.js'
 import './Results.css'
@@ -334,6 +335,10 @@ function Results() {
   const allowAutoRegenerate = Boolean(location.state?.scanId)
 
   useEffect(() => {
+    if (resolvedScanId) writeLastScanId(resolvedScanId)
+  }, [resolvedScanId])
+
+  useEffect(() => {
     if (!resolvedScanId) {
       setIsRationReady(true)
       return
@@ -418,10 +423,8 @@ function Results() {
     ? backendValue.transcripts.map(normalizeTranscript).filter(Boolean)
     : []
 
-  // Если у показателя нет цвета (color === '' / null), значит он невалиден для отображения на UI
-  const validBackendTranscripts = backendTranscripts.filter((t) => Boolean(t?.color))
-
-  const cards = getCardsFromBackend(validBackendTranscripts)
+  // Показываем все показатели с key; тема карточки для пустого color — нейтральная (getCardThemeByColor)
+  const cards = getCardsFromBackend(backendTranscripts.filter((t) => t?.key))
   const visibleCards = showAllMetricsCards ? cards : cards.slice(0, 4)
   const hasAnyResults = cards.length > 0
   const healthScore = backendValue?.healthScore != null ? Number(backendValue.healthScore) : null
