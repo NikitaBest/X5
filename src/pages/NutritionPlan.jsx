@@ -674,7 +674,7 @@ function NutritionPlan() {
     <Page className="results-page">
       <Header title="Ваш рацион" showBack onBack={handleNutritionBack} endSlot={allergiesHeaderSlot} />
       <div className="nutrition-plan-intro">
-        <p className="nutrition-plan-intro-title">Рацион подобран на основе ваших показателей</p>
+        <p className="nutrition-plan-intro-title">Рацион подобран на основе ваших показателей, целей и данных профиля</p>
       </div>
       <DayCalendar
         startDate={planStartDate}
