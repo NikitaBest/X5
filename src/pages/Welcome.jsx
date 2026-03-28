@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom'
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useUserData } from '../contexts/UserDataContext.jsx'
+import { normalizeGoalsToCodes } from '../utils/goals.js'
 import PrimaryButton from '../components/PrimaryButton.jsx'
 import Page from '../layout/Page.jsx'
 import Header from '../layout/Header.jsx'
@@ -49,11 +50,20 @@ const GOAL_OPTIONS = [
 
 function Welcome() {
   const navigate = useNavigate()
-  const { updateUserData } = useUserData()
-  const [selectedGoals, setSelectedGoals] = useState([])
+  const { userData, updateUserData } = useUserData()
+  const [selectedGoals, setSelectedGoals] = useState(() => normalizeGoalsToCodes(userData?.goals))
   const [acceptTerms, setAcceptTerms] = useState(false)
+  const userEditedGoalsRef = useRef(false)
+
+  useEffect(() => {
+    if (userEditedGoalsRef.current) return
+    const fromContext = normalizeGoalsToCodes(userData?.goals)
+    if (fromContext.length === 0) return
+    setSelectedGoals((prev) => (prev.length === 0 ? fromContext : prev))
+  }, [userData?.goals])
 
   const handleGoalToggle = (value) => {
+    userEditedGoalsRef.current = true
     setSelectedGoals((prev) => {
       // если цель уже выбрана — снимаем выбор
       if (prev.includes(value)) {

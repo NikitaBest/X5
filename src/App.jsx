@@ -76,7 +76,9 @@ function AuthInit() {
             height: profile.height ?? null,
             weight: profile.weight ?? null,
             smokingStatus: profile.smokeStatus === 1 ? 'SMOKER' : profile.smokeStatus === 0 ? 'NON_SMOKER' : null,
-            goals: Array.isArray(profile.goals) ? profile.goals : [],
+          }
+          if (Array.isArray(profile.goals) && profile.goals.length > 0) {
+            mapped.goals = profile.goals
           }
           updateUserData(mapped)
         }
