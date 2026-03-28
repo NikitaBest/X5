@@ -105,9 +105,9 @@ function Welcome() {
       <ProgressBar currentStep={1} totalSteps={3} />
       
       <div className="welcome-content">
-        <h1 className="welcome-heading">Что сейчас важнее?</h1>
+        <h1 className="welcome-heading">Что для Вас сейчас важнее?</h1>
         <p className="welcome-subtitle">
-          Выберите 1-2 цели и мы подберём питание
+        Выберите одну или две цели и мы подберем рацион питания
         </p>
 
         <div className="welcome-goals">
