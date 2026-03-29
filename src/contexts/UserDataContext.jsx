@@ -4,6 +4,24 @@ import { normalizeGoalsToCodes } from '../utils/goals.js'
 const UserDataContext = createContext(null)
 
 const GOALS_STORAGE_KEY = 'x5_user_goals'
+const CONFIRMED_POLICY_KEY = 'x5_confirmed_policy_documents'
+
+function readConfirmedPolicyDocuments() {
+  try {
+    return localStorage.getItem(CONFIRMED_POLICY_KEY) === '1'
+  } catch {
+    return false
+  }
+}
+
+function writeConfirmedPolicyDocuments(value) {
+  try {
+    if (value) localStorage.setItem(CONFIRMED_POLICY_KEY, '1')
+    else localStorage.removeItem(CONFIRMED_POLICY_KEY)
+  } catch {
+    // ignore
+  }
+}
 
 function readStoredGoals() {
   try {
@@ -36,6 +54,7 @@ export function UserDataProvider({ children }) {
     birthDate: null,
     goals: readStoredGoals(),
     recentActivity: null,
+    confirmedPolicyAndDocuments: readConfirmedPolicyDocuments(),
   }))
 
   const updateUserData = useCallback((data) => {
@@ -45,6 +64,10 @@ export function UserDataProvider({ children }) {
         next.goals = normalizeGoalsToCodes(data.goals)
         writeStoredGoals(next.goals)
       }
+      if (Object.prototype.hasOwnProperty.call(data, 'confirmedPolicyAndDocuments')) {
+        next.confirmedPolicyAndDocuments = Boolean(data.confirmedPolicyAndDocuments)
+        writeConfirmedPolicyDocuments(next.confirmedPolicyAndDocuments)
+      }
       return next
     })
   }, [])
@@ -52,6 +75,7 @@ export function UserDataProvider({ children }) {
   const clearUserData = useCallback(() => {
     try {
       window.localStorage.removeItem(GOALS_STORAGE_KEY)
+      window.localStorage.removeItem(CONFIRMED_POLICY_KEY)
     } catch {
       // ignore
     }
@@ -64,6 +88,7 @@ export function UserDataProvider({ children }) {
       birthDate: null,
       goals: [],
       recentActivity: null,
+      confirmedPolicyAndDocuments: false,
     })
   }, [])
 

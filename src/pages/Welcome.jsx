@@ -90,8 +90,11 @@ function Welcome() {
   }
 
   const handleNext = () => {
-    // сохраняем выбранные цели в контекст пользователя
-    updateUserData({ goals: selectedGoals })
+    if (!acceptTerms) return
+    updateUserData({
+      goals: selectedGoals,
+      confirmedPolicyAndDocuments: true,
+    })
     navigate('/algorithm-settings')
   }
 

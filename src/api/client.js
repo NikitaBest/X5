@@ -99,7 +99,7 @@ export function getTokenFromLoginResponse(data) {
 /**
  * PUT /user/update — обновление профиля пользователя.
  * @param {string} token - JWT из auth/login
- * @param {{ age: number, height: number, weight: number, gender: number, smokeStatus: number, goals: string[] }} body
+ * @param {{ age: number, height: number, weight: number, gender: number, smokeStatus: number, goals: string[], confirmedPolicyAndDocuments?: boolean }} body
  */
 export async function putUserUpdate(token, body) {
   const url = `${BASE_URL.replace(/\/$/, '')}/user/update`

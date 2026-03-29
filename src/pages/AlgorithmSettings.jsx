@@ -175,6 +175,7 @@ function AlgorithmSettings() {
       goals: Array.isArray(userData?.goals)
         ? userData.goals.map(goalCodeToRu).filter(Boolean)
         : [],
+      confirmedPolicyAndDocuments: Boolean(userData?.confirmedPolicyAndDocuments),
     }
 
     try {
