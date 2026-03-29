@@ -120,6 +120,33 @@ export async function putUserUpdate(token, body) {
 }
 
 /**
+ * POST /user/feedback — сохранить JSON-фидбек текущего пользователя.
+ * Тело: { feedback: Record<string, unknown> }
+ * @param {string | null | undefined} token
+ * @param {Record<string, unknown>} feedback — полезная нагрузка внутри поля feedback
+ */
+export async function postUserFeedback(token, feedback) {
+  const url = `${BASE_URL.replace(/\/$/, '')}/user/feedback`
+  const payload = {
+    feedback:
+      feedback && typeof feedback === 'object' && !Array.isArray(feedback) ? feedback : {},
+  }
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify(payload),
+  })
+  if (!res.ok) {
+    const errText = await res.text().catch(() => '')
+    throw new Error(`user/feedback failed: ${res.status} ${errText}`)
+  }
+  return res.json().catch(() => ({}))
+}
+
+/**
  * GET /exclude-products/get — список продуктов-исключений.
  * @param {string} token - JWT из auth/login
  * @param {{ search?: string, pageNumber?: number, pageSize?: number }} params

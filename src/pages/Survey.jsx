@@ -3,6 +3,9 @@ import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import Page from '../layout/Page.jsx'
 import Header from '../layout/Header.jsx'
+import { postUserFeedback } from '../api/client.js'
+import { useAuth } from '../contexts/AuthContext.jsx'
+import logger from '../utils/logger.js'
 import './Survey.css'
 
 const QUESTIONS = [
@@ -33,9 +36,11 @@ const THANKS_NAVIGATE_MS = 3000
 
 function Survey() {
   const navigate = useNavigate()
+  const { token } = useAuth()
   const [answers, setAnswers] = useState({})
   const [comment, setComment] = useState('')
   const [showThanks, setShowThanks] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const isComplete = useMemo(() => QUESTIONS.every((q) => Boolean(answers[q.id])), [answers])
 
@@ -43,9 +48,27 @@ function Survey() {
     setAnswers((prev) => ({ ...prev, [qid]: option }))
   }
 
-  const handleSubmit = () => {
-    if (!isComplete || showThanks) return
-    // Позже: отправка ответов на бекенд, затем то же уведомление и переход.
+  const handleSubmit = async () => {
+    if (!isComplete || showThanks || isSubmitting) return
+    const trimmedComment = comment.trim()
+    const feedback = {
+      source: 'survey',
+      submittedAt: new Date().toISOString(),
+      answers: QUESTIONS.map((q) => ({
+        id: q.id,
+        question: q.title,
+        answer: answers[q.id],
+      })),
+      ...(trimmedComment ? { comment: trimmedComment } : {}),
+    }
+    setIsSubmitting(true)
+    try {
+      await postUserFeedback(token, feedback)
+    } catch (err) {
+      logger.warn('survey: user/feedback failed', err)
+    } finally {
+      setIsSubmitting(false)
+    }
     setShowThanks(true)
   }
 
@@ -131,7 +154,7 @@ function Survey() {
           type="button"
           className="survey-submit"
           onClick={handleSubmit}
-          disabled={!isComplete || showThanks}
+          disabled={!isComplete || showThanks || isSubmitting}
         >
           Отправить
         </button>
