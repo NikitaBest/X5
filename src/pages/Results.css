@@ -855,6 +855,15 @@
   opacity: 0.85;
 }
 
+.nutrition-plan-reroll-hint {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.35;
+  font-weight: 400;
+  text-align: center;
+  color: #5daf2e;
+}
+
 /* Страница рациона — кнопка «Добавить в корзину» */
 .nutrition-plan-footer {
   margin-top: 14px;

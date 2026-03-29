@@ -684,10 +684,13 @@ function NutritionPlan() {
       />
 
       {isRegenerating ? (
-        <div className="nutrition-plan-loading">
-          <span className="nutrition-plan-loading-spinner" aria-hidden="true" />
-          Обновляем рацион…
-        </div>
+        <>
+          <div className="nutrition-plan-loading">
+            <span className="nutrition-plan-loading-spinner" aria-hidden="true" />
+            Обновляем рацион…
+          </div>
+          <p className="nutrition-plan-reroll-hint">Ваш рацион будет готов примерно через 1 минуту</p>
+        </>
       ) : null}
 
       {loadError && !rationFetchPending && !isRegenerating && (
@@ -757,10 +760,13 @@ function NutritionPlan() {
       ) : null}
 
       {!isRegenerating && !loadError && ration.length > 0 && scanId ? (
-        <button type="button" className="nutrition-plan-reroll-btn" onClick={handleRegenerateRation}>
-          <img src="/restart.svg" alt="" aria-hidden="true" />
-          <span>Подобрать другой рацион</span>
-        </button>
+        <>
+          <button type="button" className="nutrition-plan-reroll-btn" onClick={handleRegenerateRation}>
+            <img src="/restart.svg" alt="" aria-hidden="true" />
+            <span>Подобрать другой рацион</span>
+          </button>
+          <p className="nutrition-plan-reroll-hint">Ваш рацион будет готов примерно через 1 минуту</p>
+        </>
       ) : null}
 
       {!isRegenerating && !loadError && ration.length > 0 ? (
