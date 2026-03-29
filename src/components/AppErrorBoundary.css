@@ -1,0 +1,36 @@
+.app-error-boundary {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  padding: 24px 20px;
+  box-sizing: border-box;
+  background: #f7f7f8;
+}
+
+.app-error-boundary-text {
+  margin: 0;
+  max-width: 320px;
+  font-size: 15px;
+  line-height: 1.45;
+  color: #333333;
+  text-align: center;
+}
+
+.app-error-boundary-btn {
+  border: none;
+  border-radius: 12px;
+  padding: 14px 24px;
+  font-size: 15px;
+  font-weight: 600;
+  background: #5daf2e;
+  color: #ffffff;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.app-error-boundary-btn:active {
+  opacity: 0.92;
+}

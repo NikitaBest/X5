@@ -90,6 +90,40 @@ export async function postAppStatEvent(token, body) {
 }
 
 /**
+ * POST /app/save-log — сохранение лога фронтенда (LogSource на бэке: frontend).
+ * Публичный метод; при валидном Bearer в запись добавляется UserId.
+ * Поле log — именно JSON-объект в теле запроса, не строка.
+ * @param {string | null | undefined} token
+ * @param {{ logType: string, log?: Record<string, unknown>, logMessage?: string }} body
+ */
+export async function postAppSaveLog(token, body) {
+  const url = `${BASE_URL.replace(/\/$/, '')}/app/save-log`
+  const rawLog = body?.log
+  const logObject =
+    rawLog != null && typeof rawLog === 'object' && !Array.isArray(rawLog)
+      ? rawLog
+      : {}
+  const payload = {
+    logType: String(body?.logType ?? '').trim(),
+    log: logObject,
+    logMessage: String(body?.logMessage ?? '').trim(),
+  }
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify(payload),
+  })
+  if (!res.ok) {
+    const errText = await res.text().catch(() => '')
+    throw new Error(`app/save-log failed: ${res.status} ${errText}`)
+  }
+  return res.json().catch(() => ({}))
+}
+
+/**
  * Достаёт JWT из ответа /auth/login (поле может называться token, accessToken, access_token).
  */
 export function getTokenFromLoginResponse(data) {

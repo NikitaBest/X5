@@ -48,6 +48,14 @@
   overflow: hidden;
 }
 
+.meal-card-thumb {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: inherit;
+}
+
 .meal-card-image--photo {
   padding: 0;
 }

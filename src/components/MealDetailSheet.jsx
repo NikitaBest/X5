@@ -1,5 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
+import logger from '../utils/logger.js'
 import './MealDetailSheet.css'
+
+function logMealSheetImageFailure(scope, imageUrl) {
+  const u = String(imageUrl ?? '').trim()
+  if (!u || u.includes('meal-placeholder')) return
+  logger.warn('meal_sheet_image_load_failed', { scope, imageUrl: u.slice(0, 500) })
+}
 
 function MealDetailSheet({ open, onClose, meal, mealType, slotIndex, alternatives = [], onReplaceMeal, initialView = 'detail' }) {
   const sheetRef = useRef(null)
@@ -147,6 +154,7 @@ function MealDetailSheet({ open, onClose, meal, mealType, slotIndex, alternative
                   alt=""
                   onError={(e) => {
                     e.currentTarget.onerror = null
+                    logMealSheetImageFailure('sheet_preview', previewMeal?.imageUrl)
                     e.currentTarget.src = fallbackImage
                   }}
                 />
@@ -260,6 +268,7 @@ function MealDetailSheet({ open, onClose, meal, mealType, slotIndex, alternative
                   alt=""
                   onError={(e) => {
                     e.currentTarget.onerror = null
+                    logMealSheetImageFailure('sheet_detail', meal?.imageUrl)
                     e.currentTarget.src = fallbackImage
                   }}
                 />

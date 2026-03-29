@@ -1,13 +1,19 @@
 /**
  * Система логирования для отладки на продакшене
- * 
+ *
+ * warn / error дополнительно отправляются на бэкенд POST /app/save-log (если не отключено).
+ *
  * Использование:
  * import logger from './utils/logger'
- * 
+ *
  * logger.info('SDK initialized', { licenseKey: '...' })
  * logger.error('SDK Error', errorData)
  * logger.sdk('onVitalSign', { pulseRate: 72 })
  */
+
+import { postAppSaveLog } from '../api/client.js'
+
+const AUTH_TOKEN_STORAGE_KEY = 'x5_auth_token'
 
 const LOG_LEVELS = {
   DEBUG: 0,
@@ -43,6 +49,81 @@ const getLogLevel = () => {
 
 const currentLogLevel = getLogLevel()
 const enableSDKLogs = import.meta.env.VITE_ENABLE_SDK_LOGS !== 'false'
+
+/** Отключить удалённые логи: VITE_REMOTE_LOG=false */
+const remoteLogEnabled = import.meta.env.VITE_REMOTE_LOG !== 'false'
+
+const remoteLogTimes = []
+const REMOTE_LOG_MAX_PER_MINUTE = 30
+
+function getStoredAuthToken() {
+  try {
+    const t = localStorage.getItem(AUTH_TOKEN_STORAGE_KEY)
+    return t != null && String(t).trim() ? String(t).trim() : null
+  } catch {
+    return null
+  }
+}
+
+function sanitizeForJson(value, depth = 0) {
+  if (depth > 4) return '[MaxDepth]'
+  if (value == null) return value
+  if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') return value
+  if (value instanceof Error) {
+    return {
+      name: value.name,
+      message: String(value.message ?? '').slice(0, 2000),
+      stack: String(value.stack ?? '').slice(0, 4000),
+    }
+  }
+  if (Array.isArray(value)) {
+    return value.slice(0, 50).map((x) => sanitizeForJson(x, depth + 1))
+  }
+  if (typeof value === 'object') {
+    const out = {}
+    const keys = Object.keys(value).slice(0, 40)
+    for (const k of keys) {
+      try {
+        out[k] = sanitizeForJson(value[k], depth + 1)
+      } catch {
+        out[k] = '[Error]'
+      }
+    }
+    return out
+  }
+  return String(value).slice(0, 500)
+}
+
+function remoteLogRateOk() {
+  const now = Date.now()
+  while (remoteLogTimes.length > 0 && remoteLogTimes[0] < now - 60000) {
+    remoteLogTimes.shift()
+  }
+  if (remoteLogTimes.length >= REMOTE_LOG_MAX_PER_MINUTE) return false
+  remoteLogTimes.push(now)
+  return true
+}
+
+/**
+ * POST /app/save-log — не блокирует UI, ошибки сети глушим.
+ */
+function queueRemoteLog(logType, message, detail) {
+  if (!remoteLogEnabled || typeof window === 'undefined') return
+  if (!remoteLogRateOk()) return
+
+  const log = {
+    level: logType,
+    path: window.location?.pathname || '',
+    time: new Date().toISOString(),
+    detail: detail != null ? sanitizeForJson(detail) : null,
+  }
+
+  postAppSaveLog(getStoredAuthToken(), {
+    logType,
+    log,
+    logMessage: String(message ?? '').trim().slice(0, 2000) || logType,
+  }).catch(() => {})
+}
 
 // Форматирование времени
 const getTimestamp = () => {
@@ -97,6 +178,7 @@ const logger = {
         console.warn(formatted)
       }
     }
+    queueRemoteLog('frontend_warn', message, data)
   },
 
   /**
@@ -111,6 +193,7 @@ const logger = {
         console.error(formatted)
       }
     }
+    queueRemoteLog('frontend_error', message, error ?? null)
   },
 
   /**

@@ -1,19 +1,33 @@
+import { useCallback, useEffect, useState } from 'react'
+import logger from '../utils/logger.js'
 import './MealCard.css'
 
+const PLACEHOLDER_SRC = '/meal-placeholder.svg'
+
 function MealCard({ mealType, time, title, description, tag, imageUrl, onClick, onReplaceClick }) {
-  const imageStyle = imageUrl
-    ? {
-        backgroundImage: `url("${imageUrl}"), url("/meal-placeholder.svg")`,
-        backgroundSize: 'cover, 36px 36px',
-        backgroundPosition: 'center, center',
-        backgroundRepeat: 'no-repeat, no-repeat',
-      }
-    : {
-        backgroundImage: 'url("/meal-placeholder.svg")',
-        backgroundSize: '36px 36px',
-        backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat',
-      }
+  const [imageBroken, setImageBroken] = useState(false)
+
+  useEffect(() => {
+    setImageBroken(false)
+  }, [imageUrl])
+
+  const handleImageError = useCallback(
+    (e) => {
+      const el = e?.currentTarget
+      const failedSrc = el?.src || ''
+      if (failedSrc.includes('meal-placeholder')) return
+      if (!imageUrl || imageBroken) return
+      logger.warn('meal_card_image_load_failed', {
+        imageUrl: String(imageUrl).slice(0, 500),
+        title: typeof title === 'string' ? title.slice(0, 120) : '',
+      })
+      setImageBroken(true)
+    },
+    [imageUrl, imageBroken, title],
+  )
+
+  const showRemote = Boolean(imageUrl) && !imageBroken
+  const imgSrc = showRemote ? imageUrl : PLACEHOLDER_SRC
 
   return (
     <section className="meal-section">
@@ -23,11 +37,16 @@ function MealCard({ mealType, time, title, description, tag, imageUrl, onClick, 
       </header>
 
       <div className={`meal-card${onClick ? ' meal-card--clickable' : ''}`} role={onClick ? 'button' : undefined} tabIndex={onClick ? 0 : undefined} onClick={onClick} onKeyDown={onClick ? (e) => { if (e.key === 'Enter' || e.key === ' ') e.preventDefault(); if (e.key === 'Enter') onClick(); } : undefined}>
-        <div
-          className={`meal-card-image${imageUrl ? ' meal-card-image--photo' : ''}`}
-          aria-hidden="true"
-          style={imageStyle}
-        />
+        <div className={`meal-card-image${showRemote ? ' meal-card-image--photo' : ''}`} aria-hidden="true">
+          <img
+            className="meal-card-thumb"
+            src={imgSrc}
+            alt=""
+            loading="lazy"
+            decoding="async"
+            onError={handleImageError}
+          />
+        </div>
         <div className="meal-card-content">
           <div className="meal-card-text">
             <div className="meal-card-title">{title}</div>
