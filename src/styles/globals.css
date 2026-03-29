@@ -89,10 +89,13 @@ button:focus-visible {
 
 .app-content {
   flex: 1;
+  min-height: 0;
   display: flex;
   justify-content: flex-start;
   align-items: stretch;
   padding: var(--page-padding-y) var(--page-padding-x);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .page {

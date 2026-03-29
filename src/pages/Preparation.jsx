@@ -73,12 +73,15 @@ function Preparation() {
 
           <div className="requirement-item">
             <div className="requirement-icon">
-              <img src="/material-symbols_medical-information-outline (2).svg" alt="Не двигайтесь" />
+              <img src="/material-symbols_medical-information-outline (2).svg" alt="Доступность" />
             </div>
             <div className="requirement-content">
               <h3 className="requirement-title">Доступность</h3>
               <p className="requirement-description">
-              Снимите очки и головной убор - они мешают сканированию.
+                Снимите очки и головной убор — они мешают сканированию.
+              </p>
+              <p className="requirement-description requirement-description--extra">
+                Не проводите сканирование с зарядкой батареи менее 20%.
               </p>
             </div>
           </div>
