@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback } from 'react'
+import { useEffect, useRef, useState, useCallback, useId } from 'react'
 import { useNavigate } from 'react-router-dom'
 import healthMonitorManager, {
   SessionState,
@@ -422,8 +422,9 @@ function getFriendlyCameraError(rawError) {
 
   if (lower.includes('cross-origin') || lower.includes('coop') || lower.includes('coep')) {
     return {
-      title: 'Ошибка конфигурации приложения',
-      description: 'Камера временно недоступна из-за настроек безопасности. Попробуйте позже.',
+      title: 'Сканирование временно недоступно',
+      description:
+        'Модуль измерения сейчас не запускается по техническим причинам. Откройте экран позже.',
     }
   }
 
@@ -453,6 +454,7 @@ function Camera() {
   const { token } = useAuth()
   const videoRef = useRef(null)
   const ovalRef = useRef(null)
+  const ovalSvgMaskUid = useId().replace(/:/g, '')
   const sessionRef = useRef(null)
   const cameraIdRef = useRef(null)
   
@@ -1761,6 +1763,12 @@ function Camera() {
   const progressFraction = Math.max(0, Math.min(1, scanProgress / 100))
   const progressOffset = circumference - circumference * progressFraction
 
+  const outerOvalMaskId = `cam-outer-oval-${ovalSvgMaskUid}`
+  const progressMaskId = `cam-progress-${ovalSvgMaskUid}`
+  // Пока идёт засчёт прогресса, базовый пунктир не красим в «успех» на всю окружность —
+  // иначе весь овал в бледно-зелёном выглядит как почти заполненный при малом %.
+  const baseTrackStroke = showProgressBar ? 'rgba(211, 232, 244, 0.72)' : 'currentColor'
+
   return (
     <>
       {isLoading && <LoadingScreen text="Инициализация камеры..." />}
@@ -1840,7 +1848,7 @@ function Camera() {
                   />
                 </defs>
                 {/* Маска для "outer aligned" обводки: прячем внутреннюю часть овала */}
-                <mask id="outer-oval-mask" maskUnits="userSpaceOnUse" x="0" y="0" width="298" height="409">
+                <mask id={outerOvalMaskId} maskUnits="userSpaceOnUse" x="0" y="0" width="298" height="409">
                   <rect x="0" y="0" width="298" height="409" fill="white" />
                   <ellipse cx="149" cy="204.5" rx="143" ry="198.5" fill="black" />
                 </mask>
@@ -1849,7 +1857,7 @@ function Camera() {
                 {showProgressBar && scanProgress > 0 && (
                   <>
                     {/* Маска "длины" прогресса */}
-                    <mask id="progress-mask" maskUnits="userSpaceOnUse" x="0" y="0" width="298" height="409">
+                    <mask id={progressMaskId} maskUnits="userSpaceOnUse" x="0" y="0" width="298" height="409">
                       <path
                         d={ovalPath}
                         stroke="white"
@@ -1866,8 +1874,8 @@ function Camera() {
                     </mask>
 
                     {/* Пунктирный прогресс, обрезанный маской */}
-                    <g mask="url(#progress-mask)">
-                      <g mask="url(#outer-oval-mask)">
+                    <g mask={`url(#${progressMaskId})`}>
+                      <g mask={`url(#${outerOvalMaskId})`}>
                         <path
                           d={ovalPath}
                           stroke="#95DB6D"
@@ -1884,10 +1892,10 @@ function Camera() {
                 )}
                 {/* Базовый пунктирный овал рисуем тем же путем, что и прогресс,
                     чтобы пунктиры совпадали и не появлялась "линия" между ними. */}
-                <g mask="url(#outer-oval-mask)">
+                <g mask={`url(#${outerOvalMaskId})`}>
                   <path
                     d={ovalPath}
-                    stroke="currentColor"
+                    stroke={baseTrackStroke}
                     strokeWidth={outerAlignedStroke}
                     strokeLinecap="round"
                     strokeLinejoin="round"
