@@ -189,27 +189,43 @@ function pickDisplayScanValueFromEnvelope(envelope) {
   const row = Array.isArray(v.data) && v.data.length > 0 && typeof v.data[0] === 'object' ? v.data[0] : null
   const scoreOnValue = finiteHealthScore(v.healthScore, v.HealthScore)
   const scoreOnRow = row ? finiteHealthScore(row.healthScore, row.HealthScore) : null
+  const score = scoreOnValue ?? scoreOnRow
 
-  const topT = v.transcripts
-  if (Array.isArray(topT) && topT.length > 0) {
-    const score = scoreOnValue ?? scoreOnRow
+  const topT = Array.isArray(v.transcripts) ? v.transcripts : []
+  const rowT = row && Array.isArray(row.transcripts) ? row.transcripts : []
+
+  // GET /scan/get: актуальные transcripts часто на value.data[0]. Корневые value.transcripts
+  // иногда другой срез/кэш — не даём им перекрывать data[0], иначе на карточке «чужие» color/valueAlias/status.
+  if (row && rowT.length > 0) {
+    return {
+      ...v,
+      ...row,
+      transcripts: rowT,
+      ...(score != null ? { healthScore: score } : {}),
+    }
+  }
+
+  if (topT.length > 0) {
     if (score != null && scoreOnValue == null) {
       return { ...v, healthScore: score }
     }
     return v
   }
 
-  if (!row) return v
-  const rowT = row.transcripts
-  if (!Array.isArray(rowT) || rowT.length === 0) return v
+  return v
+}
 
-  const score = scoreOnValue ?? scoreOnRow
-  return {
-    ...v,
-    ...row,
-    transcripts: rowT,
-    ...(score != null ? { healthScore: score } : {}),
+/** Один ключ метрики — одна карточка; при дубликатах в массиве оставляем последнюю запись (часто самая свежая). */
+function dedupeNormalizedTranscriptsByKey(transcripts) {
+  if (!Array.isArray(transcripts) || transcripts.length === 0) return transcripts
+  const map = new Map()
+  for (const t of transcripts) {
+    if (!t?.key) continue
+    const k = String(t.key).trim()
+    if (!k) continue
+    map.set(k, t)
   }
+  return Array.from(map.values())
 }
 
 function normalizeTranscript(t) {
@@ -219,11 +235,19 @@ function normalizeTranscript(t) {
   const keyStr = String(key).trim()
   const valueAliasRaw = t.valueAlias ?? t.ValueAlias
   const valueAlias = valueAliasRaw == null ? '' : String(valueAliasRaw).trim()
+  const statusRaw = t.status ?? t.Status
+  const status =
+    statusRaw == null ||
+    statusRaw === '' ||
+    (typeof statusRaw !== 'string' && typeof statusRaw !== 'number' && typeof statusRaw !== 'boolean')
+      ? ''
+      : String(statusRaw).trim()
   return {
     key: keyStr,
     name: t.name || t.Name || keyStr,
     value: t.value ?? t.Value,
     valueAlias,
+    status,
     unit: t.unit || t.Unit || '',
     color: t.color || t.Color || '',
     description: t.descriptionUser || t.description || '',
@@ -273,13 +297,19 @@ function getCardsFromBackend(transcripts = []) {
         value: hasAlias ? tr.valueAlias : tr.value,
         hasValueAlias: hasAlias,
         unit: tr.unit,
-        statusText: tr.comment || '',
+        backendStatus: String(tr.status ?? '').trim(),
+        comment: tr.comment || '',
         description: tr.description || '',
         color: tr.color,
         confidenceLevel: tr.confidenceLevel,
         scaleMetadata: tr.scaleMetadata ?? null,
       }
     })
+}
+
+/** Текст плашки статуса только из бэкенда (`status`), без подстановок с фронта. */
+function cardStatusLabel(card) {
+  return String(card?.backendStatus ?? '').trim()
 }
 
 function getCardThemeByColor(color) {
@@ -322,14 +352,6 @@ function getCardThemeByColor(color) {
     statusBg: 'rgba(0, 0, 0, 0.08)',
     statusColor: '#555555',
   }
-}
-
-function getStatusByColor(color) {
-  const key = String(color || '').toLowerCase()
-  if (key === 'green') return 'В норме'
-  if (key === 'yellow' || key === 'orange') return 'Выше нормы'
-  if (key === 'red') return 'Требует внимания'
-  return ''
 }
 
 /** Для подсказки под заголовком: красный важнее жёлтого независимо от порядка карточек. */
@@ -623,9 +645,14 @@ function Results() {
     () => pickDisplayScanValueFromEnvelope(backendScanResponse),
     [backendScanResponse],
   )
-  const backendTranscripts = Array.isArray(backendValue?.transcripts)
-    ? backendValue.transcripts.map(normalizeTranscript).filter(Boolean).filter(isTranscriptVisibleInUi)
-    : []
+  const backendTranscripts = useMemo(() => {
+    if (!Array.isArray(backendValue?.transcripts)) return []
+    const list = backendValue.transcripts
+      .map(normalizeTranscript)
+      .filter(Boolean)
+      .filter(isTranscriptVisibleInUi)
+    return dedupeNormalizedTranscriptsByKey(list)
+  }, [backendValue?.transcripts])
 
   // Показываем показатели с key после фильтра «пустых» сырых метрик
   const cards = getCardsFromBackend(backendTranscripts.filter((t) => t?.key))
@@ -641,11 +668,11 @@ function Results() {
   const healthScoreColor = getGaugeColorByScore(healthScore)
   const healthBadgeText = getHealthBadgeText(healthScore)
 
-  // Подсказка: самая «тяжёлая» по цвету карточка; текст — комментарий или тот же бейдж, что на карточке.
+  // Подсказка: приоритетная карточка по color с бэка; текст только status + comment из ответа API.
   const priorityCard = pickPriorityHintCard(cards)
   const priorityHintBody =
     priorityCard &&
-    (String(priorityCard.statusText ?? '').trim() || getStatusByColor(priorityCard.color))
+    (String(priorityCard.backendStatus ?? '').trim() || String(priorityCard.comment ?? '').trim() || '')
 
   const priorityHintStyle =
     priorityCard && transcriptSeverityRank(priorityCard.color) >= 2
@@ -658,8 +685,10 @@ function Results() {
     ? 'Войдите в приложение, чтобы увидеть результаты сканирования.'
     : !hasAnyResults
       ? 'Пока нет данных для отображения. Вы можете пройти измерение заново.'
-      : priorityCard && priorityHintBody
-        ? `${priorityCard.title}: ${truncateText(priorityHintBody)}`
+      : priorityCard
+        ? priorityHintBody
+          ? `${priorityCard.title}: ${truncateText(priorityHintBody)}`
+          : String(priorityCard.title || '').trim() || 'Результаты сканирования'
         : 'Все показатели в пределах нормы. Продолжайте в том же духе.'
 
   if (hasAnyResults) {
@@ -692,13 +721,13 @@ function Results() {
         ) : null}
 
         <div className="results-grid">
-          {visibleCards.map((card) => {
+          {visibleCards.map((card, cardIndex) => {
             const theme = getCardThemeByColor(card.color)
-            const statusText = getStatusByColor(card.color)
+            const statusLabel = cardStatusLabel(card)
             const specialIconType = getSpecialIconType(card)
             return (
               <div
-                key={card.key}
+                key={`${card.key}-${cardIndex}`}
                 className="result-card result-card--backend"
                 style={{
                   '--card-bg': theme.cardBg,
@@ -713,8 +742,8 @@ function Results() {
                     title: card.title || card.key,
                     value: card.value ?? '—',
                     unit: card.unit || '',
-                    statusText,
-                    commentText: card.statusText || '',
+                    statusText: statusLabel,
+                    commentText: card.comment || '',
                     statusBg: theme.statusBg,
                     statusColor: theme.statusColor,
                     description: card.description || '',
@@ -735,10 +764,12 @@ function Results() {
                   <div className="result-label">{card.title || card.key}</div>
                 </div>
                 <div className="result-main">
-                  <div className={`result-value${card.hasValueAlias ? ' result-value--alias' : ''}`}>{card.value ?? '—'}</div>
+                  <div className={`result-value${card.hasValueAlias ? ' result-value--alias' : ''}`}>
+                    {card.value ?? '—'}
+                  </div>
                   {card.unit ? <div className="result-unit">{card.unit}</div> : null}
                 </div>
-                {statusText ? <div className="result-status-pill">{statusText}</div> : null}
+                {statusLabel ? <div className="result-status-pill">{statusLabel}</div> : null}
               </div>
             )
           })}

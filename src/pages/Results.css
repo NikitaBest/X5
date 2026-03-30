@@ -395,10 +395,11 @@
   color: var(--color-fg-primary, #000000);
 }
 
-.result-value--alias {
+/* valueAlias: только чёрный текст, без цвета темы карточки и без inline-стилей */
+.results-page .result-card .result-value.result-value--alias {
   font-size: clamp(14px, 4.3vw, 18px);
   line-height: 1.15;
-  color: var(--status-color, var(--color-fg-primary, #000000));
+  color: #000000;
 }
 
 .result-unit {
@@ -562,7 +563,7 @@
     gap: 2px;
   }
 
-  .result-value--alias {
+  .results-page .result-card .result-value.result-value--alias {
     font-size: 13px;
   }
 }
