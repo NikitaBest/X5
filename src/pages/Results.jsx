@@ -217,10 +217,13 @@ function normalizeTranscript(t) {
   const key = t.key ?? t.Key ?? t.metricKey ?? t.id
   if (key == null || String(key).trim() === '') return null
   const keyStr = String(key).trim()
+  const valueAliasRaw = t.valueAlias ?? t.ValueAlias
+  const valueAlias = valueAliasRaw == null ? '' : String(valueAliasRaw).trim()
   return {
     key: keyStr,
     name: t.name || t.Name || keyStr,
     value: t.value ?? t.Value,
+    valueAlias,
     unit: t.unit || t.Unit || '',
     color: t.color || t.Color || '',
     description: t.descriptionUser || t.description || '',
@@ -262,17 +265,21 @@ function isTranscriptVisibleInUi(t) {
 function getCardsFromBackend(transcripts = []) {
   return transcripts
     .filter((t) => t?.key)
-    .map((tr) => ({
-      key: tr.key,
-      title: tr.name,
-      value: tr.value,
-      unit: tr.unit,
-      statusText: tr.comment || '',
-      description: tr.description || '',
-      color: tr.color,
-      confidenceLevel: tr.confidenceLevel,
-      scaleMetadata: tr.scaleMetadata ?? null,
-    }))
+    .map((tr) => {
+      const hasAlias = Boolean(String(tr.valueAlias ?? '').trim())
+      return {
+        key: tr.key,
+        title: tr.name,
+        value: hasAlias ? tr.valueAlias : tr.value,
+        hasValueAlias: hasAlias,
+        unit: tr.unit,
+        statusText: tr.comment || '',
+        description: tr.description || '',
+        color: tr.color,
+        confidenceLevel: tr.confidenceLevel,
+        scaleMetadata: tr.scaleMetadata ?? null,
+      }
+    })
 }
 
 function getCardThemeByColor(color) {
@@ -728,7 +735,7 @@ function Results() {
                   <div className="result-label">{card.title || card.key}</div>
                 </div>
                 <div className="result-main">
-                  <div className="result-value">{card.value ?? '—'}</div>
+                  <div className={`result-value${card.hasValueAlias ? ' result-value--alias' : ''}`}>{card.value ?? '—'}</div>
                   {card.unit ? <div className="result-unit">{card.unit}</div> : null}
                 </div>
                 {statusText ? <div className="result-status-pill">{statusText}</div> : null}

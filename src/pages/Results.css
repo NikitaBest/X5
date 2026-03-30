@@ -395,6 +395,12 @@
   color: var(--color-fg-primary, #000000);
 }
 
+.result-value--alias {
+  font-size: clamp(14px, 4.3vw, 18px);
+  line-height: 1.15;
+  color: var(--status-color, var(--color-fg-primary, #000000));
+}
+
 .result-unit {
   font-size: clamp(10px, 2.8vw, 11px);
   color: var(--color-fg-secondary, #666666);
@@ -554,6 +560,10 @@
 
   .result-main {
     gap: 2px;
+  }
+
+  .result-value--alias {
+    font-size: 13px;
   }
 }
 
