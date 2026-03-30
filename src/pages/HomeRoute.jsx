@@ -9,6 +9,8 @@ import { writeLastScanId } from '../utils/lastScanId.js'
 import { writeCachedScanEnvelope } from '../utils/scanResultCache.js'
 import Welcome from './Welcome.jsx'
 
+const WELCOME_DELAY_FOR_AUTH_MS = 650
+
 /**
  * Корневой маршрут: без токена или без готового скана — экран целей.
  * Если пользователь уже авторизован и на сервере есть последний скан с результатами — сразу на результаты.
@@ -18,6 +20,7 @@ function HomeRoute() {
   const { userData } = useUserData()
   const navigate = useNavigate()
   const [welcomeVisible, setWelcomeVisible] = useState(true)
+  const [isCheckingRecentScan, setIsCheckingRecentScan] = useState(false)
 
   const allowResultsShortcut = useMemo(
     () => canAccessHealthScreens(hasServerProfileBasics, userData),
@@ -27,6 +30,7 @@ function HomeRoute() {
   useEffect(() => {
     if (!token) {
       setWelcomeVisible(true)
+      setIsCheckingRecentScan(false)
       return undefined
     }
 
@@ -35,9 +39,13 @@ function HomeRoute() {
     }
 
     let cancelled = false
-    // Не блокируем первый экран ожиданием сети: показываем Welcome сразу,
-    // а быстрый переход на результаты делаем в фоне по готовности ответа.
-    setWelcomeVisible(true)
+    setIsCheckingRecentScan(true)
+    setWelcomeVisible(false)
+    // Короткая задержка перед показом Welcome у авторизованного пользователя:
+    // если история сканов ответит быстро и есть результаты, уходим на /results без "мигания" Welcome.
+    const welcomeDelayTimer = setTimeout(() => {
+      if (!cancelled) setWelcomeVisible(true)
+    }, WELCOME_DELAY_FOR_AUTH_MS)
 
     getScanHistory(token, { pageNumber: 1, pageSize: 10 })
       .then((data) => {
@@ -56,13 +64,24 @@ function HomeRoute() {
           })
           return
         }
+        setWelcomeVisible(true)
       })
-      .catch(() => {})
+      .catch(() => {
+        if (!cancelled) setWelcomeVisible(true)
+      })
+      .finally(() => {
+        if (!cancelled) setIsCheckingRecentScan(false)
+      })
 
     return () => {
       cancelled = true
+      clearTimeout(welcomeDelayTimer)
     }
   }, [token, initialAuthFinished, navigate, allowResultsShortcut])
+
+  if (isCheckingRecentScan && !welcomeVisible) {
+    return null
+  }
 
   return welcomeVisible ? <Welcome /> : null
 }
