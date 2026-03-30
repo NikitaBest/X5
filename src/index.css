@@ -130,7 +130,7 @@ input:focus, textarea:focus, select:focus {
   }
 }
 
-/* Поддержка темной темы Telegram */
+/* Поддержка светлой темы */
 @media (prefers-color-scheme: light) {
   :root {
     color: #213547;

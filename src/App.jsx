@@ -1,4 +1,4 @@
-import { useState, useEffect, useLayoutEffect, useRef } from 'react'
+import { useState, useEffect, useLayoutEffect, useRef, lazy, Suspense } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { AuthProvider, useAuth, AUTH_TOKEN_STORAGE_KEY } from './contexts/AuthContext.jsx'
 import { UserDataProvider, useUserData } from './contexts/UserDataContext.jsx'
@@ -6,19 +6,20 @@ import { postAppStatEvent } from './api/client.js'
 import MobileAppShell from './layout/MobileAppShell.jsx'
 import LoadingScreen from './components/LoadingScreen.jsx'
 import HomeRoute from './pages/HomeRoute.jsx'
-import Welcome from './pages/Welcome.jsx'
-import PrioritySelection from './pages/PrioritySelection.jsx'
-import AlgorithmSettings from './pages/AlgorithmSettings.jsx'
-import Allergies from './pages/Allergies.jsx'
-import Preparation from './pages/Preparation.jsx'
-import Camera from './pages/Camera.jsx'
-import Results from './pages/Results.jsx'
-import NutritionPlan from './pages/NutritionPlan.jsx'
-import NutritionReportPage from './pages/NutritionReportPage.jsx'
-import Cart from './pages/Cart.jsx'
-import Survey from './pages/Survey.jsx'
 import { canAccessHealthScreens, profileResponseHasBasics } from './utils/userProfileGate.js'
 import './App.css'
+
+const Welcome = lazy(() => import('./pages/Welcome.jsx'))
+const PrioritySelection = lazy(() => import('./pages/PrioritySelection.jsx'))
+const AlgorithmSettings = lazy(() => import('./pages/AlgorithmSettings.jsx'))
+const Allergies = lazy(() => import('./pages/Allergies.jsx'))
+const Preparation = lazy(() => import('./pages/Preparation.jsx'))
+const Camera = lazy(() => import('./pages/Camera.jsx'))
+const Results = lazy(() => import('./pages/Results.jsx'))
+const NutritionPlan = lazy(() => import('./pages/NutritionPlan.jsx'))
+const NutritionReportPage = lazy(() => import('./pages/NutritionReportPage.jsx'))
+const Cart = lazy(() => import('./pages/Cart.jsx'))
+const Survey = lazy(() => import('./pages/Survey.jsx'))
 
 function App() {
   const [isInitialLoad, setIsInitialLoad] = useState(true)
@@ -35,23 +36,25 @@ function App() {
         <PersistedTokenDeepLinkGuard />
         <HealthScreensOnboardingGuard />
         <StatEventTracker />
-        <Routes>
-          <Route element={<MobileAppShell />}>
-            <Route path="/" element={<HomeRoute />} />
-            <Route path="/welcome" element={<Welcome />} />
-            <Route path="/recent-activity" element={<Navigate to="/algorithm-settings" replace />} />
-            <Route path="/priority" element={<PrioritySelection />} />
-            <Route path="/algorithm-settings" element={<AlgorithmSettings />} />
-            <Route path="/allergies" element={<Allergies />} />
-            <Route path="/preparation" element={<Preparation />} />
-            <Route path="/camera" element={<Camera />} />
-            <Route path="/results" element={<Results />} />
-            <Route path="/nutrition" element={<NutritionPlan />} />
-            <Route path="/cart" element={<Cart />} />
-            <Route path="/survey" element={<Survey />} />
-            <Route path="/nutrition-report" element={<NutritionReportPage />} />
-          </Route>
-        </Routes>
+        <Suspense fallback={<LoadingScreen text="Загрузка экрана..." />}>
+          <Routes>
+            <Route element={<MobileAppShell />}>
+              <Route path="/" element={<HomeRoute />} />
+              <Route path="/welcome" element={<Welcome />} />
+              <Route path="/recent-activity" element={<Navigate to="/algorithm-settings" replace />} />
+              <Route path="/priority" element={<PrioritySelection />} />
+              <Route path="/algorithm-settings" element={<AlgorithmSettings />} />
+              <Route path="/allergies" element={<Allergies />} />
+              <Route path="/preparation" element={<Preparation />} />
+              <Route path="/camera" element={<Camera />} />
+              <Route path="/results" element={<Results />} />
+              <Route path="/nutrition" element={<NutritionPlan />} />
+              <Route path="/cart" element={<Cart />} />
+              <Route path="/survey" element={<Survey />} />
+              <Route path="/nutrition-report" element={<NutritionReportPage />} />
+            </Route>
+          </Routes>
+        </Suspense>
       </BrowserRouter>
     </UserDataProvider>
     </AuthProvider>
