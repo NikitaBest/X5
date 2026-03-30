@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import Page from '../layout/Page.jsx'
 import HeartRateGauge from '../components/HeartRateGauge.jsx'
 import ResultDetailSheet from '../components/ResultDetailSheet.jsx'
+import Modal from '../ui/Modal.jsx'
 import {
   getScanHistory,
   extractScanIdFromEnvelope,
@@ -75,6 +76,9 @@ function mergeHealthScoreIfSameScan(prevEnvelope, nextEnvelope) {
 }
 
 const RATION_STATUS_POLL_MS = 2500
+
+/** Меньше этого числа показателей в ответе — показываем предупреждение о повторном сканировании. */
+const MIN_EXPECTED_METRIC_CARDS = 8
 
 /**
  * WeekRationGenerationStatus (бэкенд):
@@ -479,6 +483,7 @@ function Results() {
     const sid = location.state?.scanId ?? extractScanIdFromEnvelope(hydrated)
     return !sid
   })
+  const [lowMetricsNoticeDismissed, setLowMetricsNoticeDismissed] = useState(false)
 
   const truncateText = (text, maxLen = 90) => {
     const s = String(text ?? '').trim()
@@ -556,6 +561,10 @@ function Results() {
     [location.state?.scanId, backendScanResponse],
   )
   const allowAutoRegenerate = Boolean(location.state?.scanId)
+
+  useEffect(() => {
+    setLowMetricsNoticeDismissed(false)
+  }, [resolvedScanId])
 
   useEffect(() => {
     if (resolvedScanId) writeLastScanId(resolvedScanId)
@@ -698,6 +707,12 @@ function Results() {
     })
   }
 
+  const shouldShowLowMetricsNotice =
+    hasAnyResults &&
+    cards.length > 0 &&
+    cards.length < MIN_EXPECTED_METRIC_CARDS &&
+    !lowMetricsNoticeDismissed
+
   return (
     <Page>
       <div className="results-page">
@@ -837,6 +852,16 @@ function Results() {
           statusColor={activeDetail?.statusColor}
           description={activeDetail?.description}
           scaleMetadata={activeDetail?.scaleMetadata}
+        />
+
+        <Modal
+          isOpen={shouldShowLowMetricsNotice}
+          onClose={() => setLowMetricsNoticeDismissed(true)}
+          title="Условия прохождения сканирования были неудовлетворительны!"
+          titleClassName="modal-title--warning"
+          description="Рекомендуем пройти повторное сканирование, следуя инструкциям, для получения большего количества показателей."
+          singleButton
+          confirmText="Понятно"
         />
       </div>
     </Page>
