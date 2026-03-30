@@ -7,9 +7,7 @@ import { getScanHistory, extractScanIdFromEnvelope } from '../api/client.js'
 import { extractLastScanResponse, hasTranscriptsInResponse } from '../utils/scanHistory.js'
 import { writeLastScanId } from '../utils/lastScanId.js'
 import { writeCachedScanEnvelope } from '../utils/scanResultCache.js'
-import Page from '../layout/Page.jsx'
 import Welcome from './Welcome.jsx'
-import './Results.css'
 
 /**
  * Корневой маршрут: без токена или без готового скана — экран целей.
@@ -19,7 +17,7 @@ function HomeRoute() {
   const { token, initialAuthFinished, hasServerProfileBasics } = useAuth()
   const { userData } = useUserData()
   const navigate = useNavigate()
-  const [showWelcome, setShowWelcome] = useState(() => !token)
+  const [welcomeVisible, setWelcomeVisible] = useState(true)
 
   const allowResultsShortcut = useMemo(
     () => canAccessHealthScreens(hasServerProfileBasics, userData),
@@ -28,7 +26,7 @@ function HomeRoute() {
 
   useEffect(() => {
     if (!token) {
-      setShowWelcome(true)
+      setWelcomeVisible(true)
       return undefined
     }
 
@@ -37,7 +35,9 @@ function HomeRoute() {
     }
 
     let cancelled = false
-    setShowWelcome(false)
+    // Не блокируем первый экран ожиданием сети: показываем Welcome сразу,
+    // а быстрый переход на результаты делаем в фоне по готовности ответа.
+    setWelcomeVisible(true)
 
     getScanHistory(token, { pageNumber: 1, pageSize: 10 })
       .then((data) => {
@@ -56,29 +56,15 @@ function HomeRoute() {
           })
           return
         }
-        setShowWelcome(true)
       })
-      .catch(() => {
-        if (!cancelled) setShowWelcome(true)
-      })
+      .catch(() => {})
 
     return () => {
       cancelled = true
     }
   }, [token, initialAuthFinished, navigate, allowResultsShortcut])
 
-  if (!showWelcome) {
-    return (
-      <Page className="welcome-page">
-        <div className="nutrition-plan-loading" style={{ marginTop: '40px' }}>
-          <span className="nutrition-plan-loading-spinner" aria-hidden="true" />
-          Загрузка…
-        </div>
-      </Page>
-    )
-  }
-
-  return <Welcome />
+  return welcomeVisible ? <Welcome /> : null
 }
 
 export default HomeRoute

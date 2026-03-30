@@ -1,5 +1,6 @@
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || ''
 const IN_FLIGHT_REQUESTS = new Map()
+const STARTUP_REQUEST_TIMEOUT_MS = 10000
 
 function withInFlightDedupe(key, factory) {
   const k = String(key)
@@ -25,12 +26,17 @@ export async function postAuthLogin(body = { id: null, utm: null }) {
     if (import.meta.env.DEV) {
       console.log('[auth] POST', url, reqBody)
     }
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), STARTUP_REQUEST_TIMEOUT_MS)
     const res = await fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(reqBody),
+      signal: controller.signal,
+    }).finally(() => {
+      clearTimeout(timeoutId)
     })
     if (!res.ok) {
       const errText = await res.text()
@@ -301,11 +307,16 @@ export async function getScanHistory(token, params = {}) {
   url.searchParams.set('pageNumber', String(pageNumber))
   url.searchParams.set('pageSize', String(pageSize))
 
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), STARTUP_REQUEST_TIMEOUT_MS)
   const res = await fetch(url.toString(), {
     method: 'GET',
     headers: {
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
+    signal: controller.signal,
+  }).finally(() => {
+    clearTimeout(timeoutId)
   })
 
   if (!res.ok) {
