@@ -501,6 +501,7 @@ function getFriendlyCameraError(rawError) {
 
 const LAST_NON_CAMERA_PATH_KEY = 'x5_last_non_camera_path'
 const FORBIDDEN_RESUME_PATHS = new Set(['/camera'])
+const CAMERA_ENTRY_STATE_MAX_AGE_MS = 15000
 
 function Camera() {
   const navigate = useNavigate()
@@ -549,10 +550,12 @@ function Camera() {
   const navigationType = typeof performance !== 'undefined'
     ? performance.getEntriesByType?.('navigation')?.[0]?.type
     : undefined
+  const cameraEntryAtRaw = Number(location.state?.cameraEntryAt)
+  const isFreshCameraEntryState =
+    Number.isFinite(cameraEntryAtRaw) &&
+    Math.abs(Date.now() - cameraEntryAtRaw) <= CAMERA_ENTRY_STATE_MAX_AGE_MS
   const allowCameraEntryFromState =
-    location.state?.allowCameraEntry === true &&
-    navigationType !== 'reload' &&
-    navigationType !== 'back_forward'
+    location.state?.allowCameraEntry === true && isFreshCameraEntryState
   const hasOnboardingData = canAccessHealthScreens(hasServerProfileBasics, userData)
   const allowCameraEntry = allowCameraEntryFromState
 
@@ -577,6 +580,8 @@ function Camera() {
         from: location.pathname,
         hasState: !!location.state,
         allowCameraEntryFromState,
+        isFreshCameraEntryState,
+        cameraEntryAt: cameraEntryAtRaw || null,
         hasOnboardingData,
         navigationType,
         resumePath,
@@ -586,7 +591,9 @@ function Camera() {
   }, [
     allowCameraEntry,
     allowCameraEntryFromState,
+    cameraEntryAtRaw,
     hasOnboardingData,
+    isFreshCameraEntryState,
     location.pathname,
     location.state,
     navigate,

@@ -834,7 +834,12 @@ function Results() {
           ) : null}
           <button
             onClick={() => {
-              navigate('/camera', { state: { allowCameraEntry: true } })
+              navigate('/camera', {
+                state: {
+                  allowCameraEntry: true,
+                  cameraEntryAt: Date.now(),
+                },
+              })
             }}
             className="results-button secondary"
           >
