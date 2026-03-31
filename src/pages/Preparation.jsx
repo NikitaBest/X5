@@ -8,6 +8,7 @@ import './Preparation.css'
 function Preparation() {
   const navigate = useNavigate()
   const [isAcknowledged, setIsAcknowledged] = useState(false)
+  const handlePreparationBack = () => navigate('/allergies', { replace: true })
 
   const handleStartScan = () => {
     navigate('/camera', {
@@ -20,7 +21,7 @@ function Preparation() {
 
   return (
     <Page className="preparation-page">
-      <Header title="Подготовка" />
+      <Header title="Подготовка" showBack onBack={handlePreparationBack} />
 
       <div className="preparation-content">
         <h2 className="preparation-title">Подготовьтесь к сканированию</h2>

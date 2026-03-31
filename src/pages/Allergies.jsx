@@ -226,7 +226,7 @@ function Allergies() {
 
   const handleAllergiesBack = returnTarget
     ? () => navigate(returnTarget, { replace: true })
-    : undefined
+    : () => navigate('/algorithm-settings', { replace: true })
 
   return (
     <Page className="allergies-page">

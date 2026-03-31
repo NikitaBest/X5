@@ -188,7 +188,7 @@ function AlgorithmSettings() {
 
   return (
     <Page className="algorithm-settings-page">
-      <Header title="Настройка алгоритмов" />
+      <Header title="Настройка алгоритмов" showBack onBack={() => navigate('/welcome', { replace: true })} />
       <ProgressBar currentStep={2} totalSteps={3} />
       
       <div className="algorithm-settings-content">
