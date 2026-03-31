@@ -420,8 +420,9 @@ const SDK_ALERTS = {
   },
 }
 
-// Ошибки SDK с отдельной карточкой в UI (по «Список оповещений.MD», расширяется по мере необходимости)
-const SDK_USER_FACING_ERROR_CODES = new Set([8, 17, 18, 1001, 1002])
+// Ошибки SDK с отдельной карточкой в UI (по «Список оповещений.MD»).
+// DEVICE: 8, 17, 18, 2025 (2024 — отдельная ветка onError про интернет). CAMERA: 1001, 1002.
+const SDK_USER_FACING_ERROR_CODES = new Set([8, 17, 18, 2025, 1001, 1002])
 
 /** Префикс строки error — парсится в getFriendlyCameraError */
 function formatSdkUserFacingErrorPayload(code) {
@@ -436,6 +437,7 @@ function getUserFacingSdkErrorPresentation(code) {
     8: 'Требуется более новая версия ОС',
     17: 'Проверьте дату и время',
     18: 'Требуется более новая версия браузера',
+    2025: 'Проблема с защищённым подключением',
     1001: 'Камера не подходит для измерения',
     1002: 'Не удалось запустить камеру',
   }
@@ -1000,7 +1002,11 @@ function Camera() {
       if (SDK_USER_FACING_ERROR_CODES.has(errorCode)) {
         const alert = SDK_ALERTS[errorCode]
         errorMessage = alert?.solution || 'Неизвестная ошибка'
-        canRetry = errorCode === 1001 || errorCode === 1002 || errorCode === 17
+        canRetry =
+          errorCode === 1001 ||
+          errorCode === 1002 ||
+          errorCode === 17 ||
+          errorCode === 2025
       } else if (errorData.domain === 2000) {
         // Ошибки лицензирования (domain 2000)
         if (errorData.code === 1003) {
