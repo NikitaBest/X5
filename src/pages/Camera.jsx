@@ -547,15 +547,23 @@ function Camera() {
   const hasAutoStartScheduledRef = useRef(false)   // Не планировать start() дважды за один ACTIVE
   const saveScanPromiseRef = useRef(null)
   const friendlyError = getFriendlyCameraError(error)
-  const navigationType = typeof performance !== 'undefined'
-    ? performance.getEntriesByType?.('navigation')?.[0]?.type
-    : undefined
-  const cameraEntryAtRaw = Number(location.state?.cameraEntryAt)
-  const isFreshCameraEntryState =
-    Number.isFinite(cameraEntryAtRaw) &&
-    Math.abs(Date.now() - cameraEntryAtRaw) <= CAMERA_ENTRY_STATE_MAX_AGE_MS
-  const allowCameraEntryFromState =
-    location.state?.allowCameraEntry === true && isFreshCameraEntryState
+  const [cameraEntryGuardSnapshot] = useState(() => {
+    const navType = typeof performance !== 'undefined'
+      ? performance.getEntriesByType?.('navigation')?.[0]?.type
+      : undefined
+    const entryAtRaw = Number(location.state?.cameraEntryAt)
+    const isFresh =
+      Number.isFinite(entryAtRaw) &&
+      Math.abs(Date.now() - entryAtRaw) <= CAMERA_ENTRY_STATE_MAX_AGE_MS
+    return {
+      navigationType: navType,
+      cameraEntryAtRaw: entryAtRaw,
+      isFreshCameraEntryState: isFresh,
+      allowCameraEntryFromState: location.state?.allowCameraEntry === true && isFresh,
+    }
+  })
+  const { navigationType, cameraEntryAtRaw, isFreshCameraEntryState, allowCameraEntryFromState } =
+    cameraEntryGuardSnapshot
   const hasOnboardingData = canAccessHealthScreens(hasServerProfileBasics, userData)
   const allowCameraEntry = allowCameraEntryFromState
 
@@ -591,11 +599,8 @@ function Camera() {
   }, [
     allowCameraEntry,
     allowCameraEntryFromState,
-    cameraEntryAtRaw,
     hasOnboardingData,
-    isFreshCameraEntryState,
     location.pathname,
-    location.state,
     navigate,
     navigationType,
     token,
