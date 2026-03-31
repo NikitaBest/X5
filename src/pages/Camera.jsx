@@ -438,6 +438,8 @@ function getUserMessageForAlert(alertInfo) {
   return messages[alertInfo.code] || alertInfo.solution
 }
 
+const CAMERA_ERROR_ACTION = { actionLabel: 'Понятно', actionTarget: '/preparation' }
+
 function getFriendlyCameraError(rawError) {
   const text = String(rawError || '').trim()
   const lower = text.toLowerCase()
@@ -446,6 +448,7 @@ function getFriendlyCameraError(rawError) {
     return {
       title: 'Не удалось запустить камеру',
       description: 'Попробуйте открыть страницу заново.',
+      ...CAMERA_ERROR_ACTION,
     }
   }
 
@@ -453,6 +456,7 @@ function getFriendlyCameraError(rawError) {
     return {
       title: 'Нужна более новая версия Safari',
       description: 'Для сканирования обновите Safari до версии 16.7 или выше.',
+      ...CAMERA_ERROR_ACTION,
     }
   }
 
@@ -466,8 +470,28 @@ function getFriendlyCameraError(rawError) {
         'В разделе разрешений установите для камеры значение «Разрешить».',
         'Перезагрузите страницу и повторно запустите сканирование.',
       ],
-      actionLabel: 'Понятно',
-      actionTarget: '/preparation',
+      ...CAMERA_ERROR_ACTION,
+    }
+  }
+
+  if (lower.includes('интернет-соедин') || lower.includes('internet connection')) {
+    return {
+      title: 'Проблемы с интернет-соединением',
+      description: 'В связи с текущими проблемами с интернет-соединением, попробуйте снова.',
+      ...CAMERA_ERROR_ACTION,
+    }
+  }
+
+  if (
+    lower.includes('нет подключения к интернету') ||
+    lower.includes('network issues') ||
+    lower.includes('code: 2024') ||
+    lower.includes('код: 2024')
+  ) {
+    return {
+      title: 'Нет подключения к интернету',
+      description: 'Проверьте интернет-соединение и попробуйте снова.',
+      ...CAMERA_ERROR_ACTION,
     }
   }
 
@@ -476,6 +500,7 @@ function getFriendlyCameraError(rawError) {
       title: 'Сканирование временно недоступно',
       description:
         'Модуль измерения сейчас не запускается по техническим причинам. Откройте экран позже.',
+      ...CAMERA_ERROR_ACTION,
     }
   }
 
@@ -483,6 +508,7 @@ function getFriendlyCameraError(rawError) {
     return {
       title: 'Проблема с лицензией сервиса',
       description: 'Сканирование временно недоступно. Попробуйте позже или обратитесь в поддержку.',
+      ...CAMERA_ERROR_ACTION,
     }
   }
 
@@ -490,18 +516,22 @@ function getFriendlyCameraError(rawError) {
     return {
       title: 'Ошибка инициализации сканирования',
       description: 'Не удалось запустить модуль измерения. Попробуйте еще раз.',
+      ...CAMERA_ERROR_ACTION,
     }
   }
 
   return {
     title: 'Не удалось запустить камеру',
     description: 'Попробуйте снова через несколько секунд.',
+    ...CAMERA_ERROR_ACTION,
   }
 }
 
 const LAST_NON_CAMERA_PATH_KEY = 'x5_last_non_camera_path'
 const FORBIDDEN_RESUME_PATHS = new Set(['/camera'])
 const CAMERA_ENTRY_STATE_MAX_AGE_MS = 15000
+const TRANSIENT_LICENSE_RETRY_CODES = new Set([2003, 2042])
+const TRANSIENT_LICENSE_MAX_RETRIES = 5
 
 function Camera() {
   const navigate = useNavigate()
@@ -546,6 +576,9 @@ function Camera() {
   const sessionStateRef = useRef(SessionState.INIT) // Актуальное состояние сессии для проверки внутри таймера
   const hasAutoStartScheduledRef = useRef(false)   // Не планировать start() дважды за один ACTIVE
   const saveScanPromiseRef = useRef(null)
+  const resultsNavigateTimerRef = useRef(null)
+  const transientLicenseRetryRef = useRef(0)
+  const blockResultsNavigationRef = useRef(false)
   const friendlyError = getFriendlyCameraError(error)
   const [cameraEntryGuardSnapshot] = useState(() => {
     const navType = typeof performance !== 'undefined'
@@ -566,6 +599,10 @@ function Camera() {
     cameraEntryGuardSnapshot
   const hasOnboardingData = canAccessHealthScreens(hasServerProfileBasics, userData)
   const allowCameraEntry = allowCameraEntryFromState
+
+  useEffect(() => {
+    if (error) blockResultsNavigationRef.current = true
+  }, [error])
 
   useEffect(() => {
     if (!allowCameraEntry) {
@@ -733,6 +770,10 @@ function Camera() {
 
   // Callback для получения финальных результатов
   const onFinalResults = useCallback((vitalSignsResults) => {
+    if (blockResultsNavigationRef.current) {
+      logger.warn('onFinalResults пропущен: активен блок перехода на results')
+      return
+    }
     sdkDebug('SDK завершил измерение (onFinalResults):', {
       '→ Пользователю': 'переход на экран результатов',
       pulseRate: vitalSignsResults?.results?.pulseRate?.value,
@@ -827,7 +868,15 @@ function Camera() {
     }
     
     // Переход на страницу результатов через 1 с: UI только из GET /scan/get (как scan/get.md), POST лишь сохраняет скан.
-    setTimeout(async () => {
+    if (resultsNavigateTimerRef.current) {
+      clearTimeout(resultsNavigateTimerRef.current)
+      resultsNavigateTimerRef.current = null
+    }
+    resultsNavigateTimerRef.current = setTimeout(async () => {
+      if (blockResultsNavigationRef.current || !isMounted.current) {
+        resultsNavigateTimerRef.current = null
+        return
+      }
       let backendScanResponse = null
       let scanId = null
 
@@ -858,6 +907,10 @@ function Camera() {
         writeCachedScanEnvelope(backendScanResponse)
       }
 
+      if (blockResultsNavigationRef.current || !isMounted.current) {
+        resultsNavigateTimerRef.current = null
+        return
+      }
       navigate('/results', {
         state: {
           results: vitalSignsResults,
@@ -865,11 +918,16 @@ function Camera() {
           ...(scanId ? { scanId } : {}),
         },
       })
+      resultsNavigateTimerRef.current = null
     }, 1000)
   }, [navigate, token, userData])
 
   // Callback для обработки ошибок
   const onError = useCallback((errorData) => {
+    if (resultsNavigateTimerRef.current) {
+      clearTimeout(resultsNavigateTimerRef.current)
+      resultsNavigateTimerRef.current = null
+    }
     logger.error('SDK Error - получена ошибка от SDK', errorData)
     
     // Дополнительное логирование по карте оповещений SDK
@@ -895,6 +953,7 @@ function Camera() {
     let errorMessage = 'Неизвестная ошибка'
     let isCritical = false
     let canRetry = false // Можно ли повторить измерение
+    const errorCode = Number(errorData?.code)
     
     if (errorData.code) {
       // Ошибки лицензирования (domain 2000)
@@ -967,6 +1026,47 @@ function Camera() {
       isCreatingSessionRef.current = false
     }
     
+    // Временные сетевые/лицензионные ошибки: автоматически пробуем до 5 раз
+    if (TRANSIENT_LICENSE_RETRY_CODES.has(errorCode)) {
+      transientLicenseRetryRef.current += 1
+      const attempt = transientLicenseRetryRef.current
+      if (attempt < TRANSIENT_LICENSE_MAX_RETRIES) {
+        setIsMeasuring(false)
+        setScanProgress(0)
+        setError('')
+        setInstructionText(`Проблемы с сетью. Повторная попытка ${attempt}/${TRANSIENT_LICENSE_MAX_RETRIES}...`)
+        logger.warn('Автоповтор после временной ошибки лицензии', {
+          code: errorCode,
+          attempt,
+          maxAttempts: TRANSIENT_LICENSE_MAX_RETRIES,
+        })
+        return
+      }
+      // На 5-й ошибке показываем уведомление пользователю и сбрасываем счетчик.
+      transientLicenseRetryRef.current = 0
+      blockResultsNavigationRef.current = true
+      setIsMeasuring(false)
+      setScanProgress(0)
+      setError('В связи с текущими проблемами с интернет-соединением, попробуйте снова.')
+      setInstructionText('Проверьте интернет-соединение и попробуйте начать измерение заново.')
+      logger.error('Лимит автоповторов исчерпан для ошибки лицензии', {
+        code: errorCode,
+        maxAttempts: TRANSIENT_LICENSE_MAX_RETRIES,
+      })
+      return
+    }
+
+    // Нет подключения к интернету (DEVICE 2024): показываем понятное отдельное сообщение.
+    if (errorCode === 2024) {
+      blockResultsNavigationRef.current = true
+      setIsMeasuring(false)
+      setScanProgress(0)
+      setError('Нет подключения к интернету. Проверьте соединение и попробуйте снова.')
+      setInstructionText('Проверьте интернет-соединение и повторите попытку.')
+      logger.warn('Показано пользовательское сообщение для ошибки 2024 (нет интернета)')
+      return
+    }
+
     // Останавливаем измерение при любой ошибке
     setIsMeasuring(false)
     setScanProgress(0)
@@ -990,6 +1090,7 @@ function Camera() {
       })
     } else {
       // Критические ошибки показываем пользователю
+      blockResultsNavigationRef.current = true
       setError(`Ошибка SDK: ${errorMessage}`)
       if (canRetry) {
         setInstructionText('Попробуйте начать измерение заново.')
@@ -1106,6 +1207,8 @@ function Camera() {
         setInstructionText('Поместите лицо в овал. Измерение начнется через несколько секунд...')
       }
     } else if (state === SessionState.MEASURING) {
+      blockResultsNavigationRef.current = false
+      transientLicenseRetryRef.current = 0
       hasAutoStartScheduledRef.current = false
       lastInstructionValidityRef.current = null // чтобы первая подсказка от onImageData точно показалась
       logger.info('🔄 Сессия MEASURING - анализ начат', {
@@ -1767,6 +1870,10 @@ function Camera() {
     return () => {
       isMounted.current = false
       isCreatingSessionRef.current = false
+      if (resultsNavigateTimerRef.current) {
+        clearTimeout(resultsNavigateTimerRef.current)
+        resultsNavigateTimerRef.current = null
+      }
       logger.debug('Camera component unmounting - размонтирование компонента')
       if (stream) {
         stream.getTracks().forEach((track) => track.stop())
@@ -1915,15 +2022,13 @@ function Camera() {
               {friendlyError.details ? (
                 <p className="camera-error-details">{friendlyError.details}</p>
               ) : null}
-              {friendlyError.actionLabel && friendlyError.actionTarget ? (
-                <button
-                  type="button"
-                  className="camera-error-action-button"
-                  onClick={() => navigate(friendlyError.actionTarget)}
-                >
-                  {friendlyError.actionLabel}
-                </button>
-              ) : null}
+              <button
+                type="button"
+                className="camera-error-action-button"
+                onClick={() => navigate('/preparation', { replace: true })}
+              >
+                {friendlyError.actionLabel || 'Понятно'}
+              </button>
             </div>
           )}
         <video
