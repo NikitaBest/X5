@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useCallback, useId } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import healthMonitorManager, {
   SessionState,
   ImageValidity,
@@ -500,6 +500,7 @@ function getFriendlyCameraError(rawError) {
 
 function Camera() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { userData } = useUserData()
   const { token } = useAuth()
   const videoRef = useRef(null)
@@ -541,6 +542,17 @@ function Camera() {
   const hasAutoStartScheduledRef = useRef(false)   // Не планировать start() дважды за один ACTIVE
   const saveScanPromiseRef = useRef(null)
   const friendlyError = getFriendlyCameraError(error)
+  const allowCameraEntry = location.state?.allowCameraEntry === true
+
+  useEffect(() => {
+    if (!allowCameraEntry) {
+      logger.warn('Прямой вход на /camera без разрешенного перехода — редирект на welcome', {
+        from: location.pathname,
+        hasState: !!location.state,
+      })
+      navigate('/welcome', { replace: true })
+    }
+  }, [allowCameraEntry, location.pathname, location.state, navigate])
 
   const getMetricValue = (item) => {
     if (item === null || item === undefined) return null
@@ -1331,6 +1343,8 @@ function Camera() {
 
   // Инициализация SDK и создание сессии
   useEffect(() => {
+    if (!allowCameraEntry) return undefined
+
     let stream = null
     const streamRef = { current: null } // Ref для доступа к stream из callbacks
     isMounted.current = true

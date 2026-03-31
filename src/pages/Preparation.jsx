@@ -10,7 +10,7 @@ function Preparation() {
   const [isAcknowledged, setIsAcknowledged] = useState(false)
 
   const handleStartScan = () => {
-    navigate('/camera')
+    navigate('/camera', { state: { allowCameraEntry: true } })
   }
 
   return (
