@@ -28,6 +28,56 @@ function sdkDebug(label, data) {
   }
 }
 
+function getRuntimeDeviceContext() {
+  const nav = typeof navigator !== 'undefined' ? navigator : null
+  const uaData = nav?.userAgentData
+  const scr = typeof window !== 'undefined' ? window.screen : null
+  const vv = typeof window !== 'undefined' ? window.visualViewport : null
+
+  return {
+    userAgent: nav?.userAgent,
+    platform: nav?.platform,
+    language: nav?.language,
+    languages: nav?.languages,
+    vendor: nav?.vendor,
+    isSecureContext: typeof window !== 'undefined' ? window.isSecureContext : undefined,
+    crossOriginIsolated: typeof self !== 'undefined' ? self.crossOriginIsolated : undefined,
+    location: typeof window !== 'undefined' ? window.location?.href : undefined,
+    topLevelWindow: typeof window !== 'undefined' && typeof window.top !== 'undefined' ? window.top === window.self : undefined,
+    viewport: {
+      innerWidth: typeof window !== 'undefined' ? window.innerWidth : undefined,
+      innerHeight: typeof window !== 'undefined' ? window.innerHeight : undefined,
+      devicePixelRatio: typeof window !== 'undefined' ? window.devicePixelRatio : undefined,
+      visualViewportWidth: vv?.width,
+      visualViewportHeight: vv?.height,
+    },
+    screen: {
+      width: scr?.width,
+      height: scr?.height,
+      availWidth: scr?.availWidth,
+      availHeight: scr?.availHeight,
+      colorDepth: scr?.colorDepth,
+    },
+    uaData: uaData
+      ? {
+          mobile: uaData.mobile,
+          platform: uaData.platform,
+          brands: uaData.brands,
+        }
+      : null,
+  }
+}
+
+async function getCameraPermissionState() {
+  try {
+    if (!navigator?.permissions?.query) return 'unsupported'
+    const status = await navigator.permissions.query({ name: 'camera' })
+    return status?.state || 'unknown'
+  } catch {
+    return 'unavailable'
+  }
+}
+
 // Карта оповещений SDK (основные коды из "Список оповещений.MD")
 // Используется только для красивого логирования в консоль.
 const SDK_ALERTS = {
@@ -1291,9 +1341,8 @@ function Camera() {
         if (typeof self !== 'undefined' && !self.crossOriginIsolated) {
           const errorMsg = 'ОШИБКА: Заголовки COOP/COEP не установлены. SDK требует cross-origin isolation для работы SharedArrayBuffer. Проверьте конфигурацию сервера (vercel.json для Vercel).'
           logger.error('crossOriginIsolated === false', {
-            userAgent: navigator.userAgent,
-            location: window.location.href,
             hint: 'Убедитесь, что заголовки Cross-Origin-Opener-Policy: same-origin и Cross-Origin-Embedder-Policy: require-corp установлены на сервере',
+            ...getRuntimeDeviceContext(),
           })
           setError(errorMsg)
           setIsLoading(false)
@@ -1629,7 +1678,14 @@ function Camera() {
             }
           }
         } catch (err) {
-          logger.error('Не удалось получить доступ к камере', err)
+          const permissionState = await getCameraPermissionState()
+          logger.error('Не удалось получить доступ к камере', {
+            name: err?.name,
+            message: err?.message,
+            stack: err?.stack,
+            permissionState,
+            ...getRuntimeDeviceContext(),
+          })
           setError('Не удалось получить доступ к камере. Проверьте разрешения.')
           setIsLoading(false)
         }
