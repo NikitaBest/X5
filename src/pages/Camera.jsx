@@ -542,17 +542,48 @@ function Camera() {
   const hasAutoStartScheduledRef = useRef(false)   // Не планировать start() дважды за один ACTIVE
   const saveScanPromiseRef = useRef(null)
   const friendlyError = getFriendlyCameraError(error)
-  const allowCameraEntry = location.state?.allowCameraEntry === true
+  const allowCameraEntryFromState = location.state?.allowCameraEntry === true
+  const referrer = typeof document !== 'undefined' ? document.referrer : ''
+  const referrerPath = (() => {
+    if (!referrer) return ''
+    try {
+      const currentOrigin = typeof window !== 'undefined' ? window.location.origin : ''
+      const parsed = new URL(referrer)
+      return parsed.origin === currentOrigin ? parsed.pathname : ''
+    } catch {
+      return ''
+    }
+  })()
+  const allowCameraEntryFromReferrer = referrerPath === '/preparation' || referrerPath === '/results'
+  const allowCameraEntry = allowCameraEntryFromState || allowCameraEntryFromReferrer
 
   useEffect(() => {
     if (!allowCameraEntry) {
+      const navigationType = typeof performance !== 'undefined'
+        ? performance.getEntriesByType?.('navigation')?.[0]?.type
+        : undefined
       logger.warn('Прямой вход на /camera без разрешенного перехода — редирект на welcome', {
+        camera_guard_redirected: true,
         from: location.pathname,
         hasState: !!location.state,
+        allowCameraEntryFromState,
+        allowCameraEntryFromReferrer,
+        referrer,
+        referrerPath,
+        navigationType,
       })
       navigate('/welcome', { replace: true })
     }
-  }, [allowCameraEntry, location.pathname, location.state, navigate])
+  }, [
+    allowCameraEntry,
+    allowCameraEntryFromReferrer,
+    allowCameraEntryFromState,
+    location.pathname,
+    location.state,
+    navigate,
+    referrer,
+    referrerPath,
+  ])
 
   const getMetricValue = (item) => {
     if (item === null || item === undefined) return null
