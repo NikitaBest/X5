@@ -9,6 +9,8 @@ import Header from '../layout/Header.jsx'
 import PrimaryButton from '../components/PrimaryButton.jsx'
 import './Preparation.css'
 
+const CAMERA_ENTRY_GUARD_KEY = 'x5_camera_entry_guard'
+
 function Preparation() {
   const navigate = useNavigate()
   const { hasServerProfileBasics } = useAuth()
@@ -26,6 +28,11 @@ function Preparation() {
   }, [hasOnboardingData, navigate])
 
   const handleStartScan = () => {
+    try {
+      sessionStorage.setItem(CAMERA_ENTRY_GUARD_KEY, String(Date.now()))
+    } catch {
+      // ignore
+    }
     navigate('/camera', { state: { allowCameraEntry: true } })
   }
 

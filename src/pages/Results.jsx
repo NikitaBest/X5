@@ -833,7 +833,14 @@ function Results() {
             <p className="results-ration-pending-hint">Ваш рацион будет готов примерно через 1 минуту</p>
           ) : null}
           <button
-            onClick={() => navigate('/camera', { state: { allowCameraEntry: true } })}
+            onClick={() => {
+              try {
+                sessionStorage.setItem('x5_camera_entry_guard', String(Date.now()))
+              } catch {
+                // ignore
+              }
+              navigate('/camera', { state: { allowCameraEntry: true } })
+            }}
             className="results-button secondary"
           >
             Измерить снова

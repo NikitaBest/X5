@@ -498,6 +498,27 @@ function getFriendlyCameraError(rawError) {
   }
 }
 
+const CAMERA_ENTRY_GUARD_KEY = 'x5_camera_entry_guard'
+
+function armCameraEntryGuard() {
+  try {
+    sessionStorage.setItem(CAMERA_ENTRY_GUARD_KEY, String(Date.now()))
+  } catch {
+    // ignore
+  }
+}
+
+function consumeCameraEntryGuard() {
+  try {
+    const value = sessionStorage.getItem(CAMERA_ENTRY_GUARD_KEY)
+    if (!value) return false
+    sessionStorage.removeItem(CAMERA_ENTRY_GUARD_KEY)
+    return true
+  } catch {
+    return false
+  }
+}
+
 function Camera() {
   const navigate = useNavigate()
   const location = useLocation()
@@ -541,6 +562,7 @@ function Camera() {
   const sessionStateRef = useRef(SessionState.INIT) // Актуальное состояние сессии для проверки внутри таймера
   const hasAutoStartScheduledRef = useRef(false)   // Не планировать start() дважды за один ACTIVE
   const saveScanPromiseRef = useRef(null)
+  const [allowCameraEntryFromStorage] = useState(() => consumeCameraEntryGuard())
   const friendlyError = getFriendlyCameraError(error)
   const allowCameraEntryFromState = location.state?.allowCameraEntry === true
   const referrer = typeof document !== 'undefined' ? document.referrer : ''
@@ -555,7 +577,8 @@ function Camera() {
     }
   })()
   const allowCameraEntryFromReferrer = referrerPath === '/preparation' || referrerPath === '/results'
-  const allowCameraEntry = allowCameraEntryFromState || allowCameraEntryFromReferrer
+  const allowCameraEntry =
+    allowCameraEntryFromStorage || allowCameraEntryFromState || allowCameraEntryFromReferrer
 
   useEffect(() => {
     if (!allowCameraEntry) {
@@ -567,6 +590,7 @@ function Camera() {
         from: location.pathname,
         hasState: !!location.state,
         allowCameraEntryFromState,
+        allowCameraEntryFromStorage,
         allowCameraEntryFromReferrer,
         referrer,
         referrerPath,
@@ -577,6 +601,7 @@ function Camera() {
   }, [
     allowCameraEntry,
     allowCameraEntryFromReferrer,
+    allowCameraEntryFromStorage,
     allowCameraEntryFromState,
     location.pathname,
     location.state,
