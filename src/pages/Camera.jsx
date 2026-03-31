@@ -647,7 +647,7 @@ function Camera() {
       }
     }
     setShowCancelModal(false)
-    navigate(-1)
+    navigate('/preparation', { replace: true })
   }
 
   // Callback для получения жизненных показателей во время измерения
