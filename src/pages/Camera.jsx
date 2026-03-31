@@ -420,6 +420,32 @@ const SDK_ALERTS = {
   },
 }
 
+// Ошибки SDK с отдельной карточкой в UI (по «Список оповещений.MD», расширяется по мере необходимости)
+const SDK_USER_FACING_ERROR_CODES = new Set([8, 17, 18, 1001, 1002])
+
+/** Префикс строки error — парсится в getFriendlyCameraError */
+function formatSdkUserFacingErrorPayload(code) {
+  return `SDKUX:${code}`
+}
+
+function getUserFacingSdkErrorPresentation(code) {
+  if (!SDK_USER_FACING_ERROR_CODES.has(code)) return null
+  const a = SDK_ALERTS[code]
+  if (!a?.solution) return null
+  const titles = {
+    8: 'Требуется более новая версия ОС',
+    17: 'Проверьте дату и время',
+    18: 'Требуется более новая версия браузера',
+    1001: 'Камера не подходит для измерения',
+    1002: 'Не удалось запустить камеру',
+  }
+  return {
+    title: titles[code] || 'Ошибка сканирования',
+    description: a.solution,
+    ...(a.cause && a.cause !== a.solution ? { details: a.cause } : {}),
+  }
+}
+
 const SCAN_PROGRESS_HINTS = [
   'Не двигайте головой',
   'Не разговаривайте',
@@ -448,6 +474,20 @@ function getFriendlyCameraError(rawError) {
     return {
       title: 'Не удалось запустить камеру',
       description: 'Попробуйте открыть страницу заново.',
+      ...CAMERA_ERROR_ACTION,
+    }
+  }
+
+  const sdkUxMatch = /^SDKUX:(\d+)$/.exec(text)
+  if (sdkUxMatch) {
+    const code = Number(sdkUxMatch[1])
+    const presentation = getUserFacingSdkErrorPresentation(code)
+    if (presentation) {
+      return { ...presentation, ...CAMERA_ERROR_ACTION }
+    }
+    return {
+      title: 'Ошибка сканирования',
+      description: `Код ${code}. Попробуйте снова или обратитесь в поддержку.`,
       ...CAMERA_ERROR_ACTION,
     }
   }
@@ -956,13 +996,14 @@ function Camera() {
     const errorCode = Number(errorData?.code)
     
     if (errorData.code) {
-      // Ошибки лицензирования (domain 2000)
-      if (errorData.domain === 2000) {
-        // Коды ошибок лицензирования
-        if (errorData.code === 1001 || errorData.code === 1002) {
-          errorMessage = 'Ошибка лицензии. Проверьте license key или обратитесь в поддержку BiosenseSignal.'
-          isCritical = true
-        } else if (errorData.code === 1003) {
+      // Известные коды DEVICE/CAMERA из справочника — не смешивать с доменом лицензии (1001/1002 — камера)
+      if (SDK_USER_FACING_ERROR_CODES.has(errorCode)) {
+        const alert = SDK_ALERTS[errorCode]
+        errorMessage = alert?.solution || 'Неизвестная ошибка'
+        canRetry = errorCode === 1001 || errorCode === 1002 || errorCode === 17
+      } else if (errorData.domain === 2000) {
+        // Ошибки лицензирования (domain 2000)
+        if (errorData.code === 1003) {
           errorMessage = 'Лицензия истекла. Обратитесь в поддержку BiosenseSignal.'
           isCritical = true
         } else if (errorData.code === 2007) {
@@ -1091,7 +1132,15 @@ function Camera() {
     } else {
       // Критические ошибки показываем пользователю
       blockResultsNavigationRef.current = true
-      setError(`Ошибка SDK: ${errorMessage}`)
+      if (SDK_USER_FACING_ERROR_CODES.has(errorCode) && getUserFacingSdkErrorPresentation(errorCode)) {
+        setError(formatSdkUserFacingErrorPayload(errorCode))
+        sdkDebug('SDK ошибка (текст из справочника):', {
+          code: errorCode,
+          ...getUserFacingSdkErrorPresentation(errorCode),
+        })
+      } else {
+        setError(`Ошибка SDK: ${errorMessage}`)
+      }
       if (canRetry) {
         setInstructionText('Попробуйте начать измерение заново.')
       }
