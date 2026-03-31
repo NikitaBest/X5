@@ -22,6 +22,18 @@ const Cart = lazy(() => import('./pages/Cart.jsx'))
 const Survey = lazy(() => import('./pages/Survey.jsx'))
 const LAST_VISITED_PATH_KEY = 'x5_last_visited_path'
 const LAST_NON_CAMERA_PATH_KEY = 'x5_last_non_camera_path'
+const RESUME_ALLOWED_PATHS = new Set([
+  '/welcome',
+  '/priority',
+  '/algorithm-settings',
+  '/allergies',
+  '/preparation',
+  '/results',
+  '/nutrition',
+  '/cart',
+  '/survey',
+  '/nutrition-report',
+])
 
 function App() {
   const [isInitialLoad, setIsInitialLoad] = useState(true)
@@ -213,7 +225,7 @@ function InitialDeepLinkResumeGuard() {
       return
     }
 
-    if (lastNonCameraPath && lastNonCameraPath !== path && guardedPaths.includes(lastNonCameraPath)) {
+    if (lastNonCameraPath && lastNonCameraPath !== path && RESUME_ALLOWED_PATHS.has(lastNonCameraPath)) {
       navigate(lastNonCameraPath, { replace: true })
     }
   }, [hasOnboardingData, initialAuthFinished, location.pathname, navigate, token])

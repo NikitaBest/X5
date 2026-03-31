@@ -500,6 +500,7 @@ function getFriendlyCameraError(rawError) {
 }
 
 const LAST_NON_CAMERA_PATH_KEY = 'x5_last_non_camera_path'
+const FORBIDDEN_RESUME_PATHS = new Set(['/camera'])
 
 function Camera() {
   const navigate = useNavigate()
@@ -545,7 +546,13 @@ function Camera() {
   const hasAutoStartScheduledRef = useRef(false)   // Не планировать start() дважды за один ACTIVE
   const saveScanPromiseRef = useRef(null)
   const friendlyError = getFriendlyCameraError(error)
-  const allowCameraEntryFromState = location.state?.allowCameraEntry === true
+  const navigationType = typeof performance !== 'undefined'
+    ? performance.getEntriesByType?.('navigation')?.[0]?.type
+    : undefined
+  const allowCameraEntryFromState =
+    location.state?.allowCameraEntry === true &&
+    navigationType !== 'reload' &&
+    navigationType !== 'back_forward'
   const hasOnboardingData = canAccessHealthScreens(hasServerProfileBasics, userData)
   const allowCameraEntry = allowCameraEntryFromState
 
@@ -554,7 +561,12 @@ function Camera() {
       let resumePath = '/welcome'
       try {
         const lastNonCameraPath = localStorage.getItem(LAST_NON_CAMERA_PATH_KEY)
-        if (token && hasOnboardingData && lastNonCameraPath && lastNonCameraPath !== '/camera') {
+        if (
+          token &&
+          hasOnboardingData &&
+          lastNonCameraPath &&
+          !FORBIDDEN_RESUME_PATHS.has(lastNonCameraPath)
+        ) {
           resumePath = lastNonCameraPath
         }
       } catch {
@@ -566,6 +578,7 @@ function Camera() {
         hasState: !!location.state,
         allowCameraEntryFromState,
         hasOnboardingData,
+        navigationType,
         resumePath,
       })
       navigate(resumePath, { replace: true })
@@ -577,6 +590,7 @@ function Camera() {
     location.pathname,
     location.state,
     navigate,
+    navigationType,
     token,
   ])
 
