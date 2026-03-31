@@ -20,6 +20,8 @@ const NutritionPlan = lazy(() => import('./pages/NutritionPlan.jsx'))
 const NutritionReportPage = lazy(() => import('./pages/NutritionReportPage.jsx'))
 const Cart = lazy(() => import('./pages/Cart.jsx'))
 const Survey = lazy(() => import('./pages/Survey.jsx'))
+const LAST_VISITED_PATH_KEY = 'x5_last_visited_path'
+const LAST_NON_CAMERA_PATH_KEY = 'x5_last_non_camera_path'
 
 function App() {
   const [isInitialLoad, setIsInitialLoad] = useState(true)
@@ -33,6 +35,8 @@ function App() {
       <UserDataProvider>
         <AuthInit />
         <BrowserRouter>
+        <LastVisitedPathTracker />
+        <InitialDeepLinkResumeGuard />
         <PersistedTokenDeepLinkGuard />
         <HealthScreensOnboardingGuard />
         <StatEventTracker />
@@ -160,6 +164,61 @@ function normalizePathToType(pathname) {
     .replace(/[^a-zA-Z0-9_]/g, '')
     .toLowerCase()
   return normalized || 'home'
+}
+
+function LastVisitedPathTracker() {
+  const location = useLocation()
+
+  useEffect(() => {
+    const path = String(location.pathname || '/')
+    try {
+      localStorage.setItem(LAST_VISITED_PATH_KEY, path)
+      if (path !== '/camera') {
+        localStorage.setItem(LAST_NON_CAMERA_PATH_KEY, path)
+      }
+    } catch {
+      // ignore
+    }
+  }, [location.pathname])
+
+  return null
+}
+
+function InitialDeepLinkResumeGuard() {
+  const location = useLocation()
+  const navigate = useNavigate()
+  const { token, hasServerProfileBasics, initialAuthFinished } = useAuth()
+  const { userData } = useUserData()
+  const checkedRef = useRef(false)
+  const hasOnboardingData = canAccessHealthScreens(hasServerProfileBasics, userData)
+
+  useLayoutEffect(() => {
+    if (checkedRef.current) return
+    if (!initialAuthFinished) return
+    checkedRef.current = true
+
+    const path = location.pathname
+    const guardedPaths = ['/algorithm-settings', '/allergies', '/preparation', '/camera']
+    if (!guardedPaths.includes(path)) return
+
+    let lastNonCameraPath = ''
+    try {
+      lastNonCameraPath = String(localStorage.getItem(LAST_NON_CAMERA_PATH_KEY) || '').trim()
+    } catch {
+      // ignore
+    }
+
+    if (!token || !hasOnboardingData) {
+      navigate('/welcome', { replace: true })
+      return
+    }
+
+    if (lastNonCameraPath && lastNonCameraPath !== path && guardedPaths.includes(lastNonCameraPath)) {
+      navigate(lastNonCameraPath, { replace: true })
+    }
+  }, [hasOnboardingData, initialAuthFinished, location.pathname, navigate, token])
+
+  return null
 }
 
 function buildActionLabel(target) {

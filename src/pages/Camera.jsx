@@ -15,6 +15,7 @@ import { SDK_CONFIG } from '../config/sdkConfig.js'
 import logger from '../utils/logger.js'
 import { writeLastScanId } from '../utils/lastScanId.js'
 import { writeCachedScanEnvelope } from '../utils/scanResultCache.js'
+import { canAccessHealthScreens } from '../utils/userProfileGate.js'
 import Page from '../layout/Page.jsx'
 import Modal from '../ui/Modal.jsx'
 import LoadingScreen from '../components/LoadingScreen.jsx'
@@ -498,32 +499,13 @@ function getFriendlyCameraError(rawError) {
   }
 }
 
-const CAMERA_ENTRY_GUARD_KEY = 'x5_camera_entry_guard'
-
-function armCameraEntryGuard() {
-  try {
-    sessionStorage.setItem(CAMERA_ENTRY_GUARD_KEY, String(Date.now()))
-  } catch {
-    // ignore
-  }
-}
-
-function consumeCameraEntryGuard() {
-  try {
-    const value = sessionStorage.getItem(CAMERA_ENTRY_GUARD_KEY)
-    if (!value) return false
-    sessionStorage.removeItem(CAMERA_ENTRY_GUARD_KEY)
-    return true
-  } catch {
-    return false
-  }
-}
+const LAST_NON_CAMERA_PATH_KEY = 'x5_last_non_camera_path'
 
 function Camera() {
   const navigate = useNavigate()
   const location = useLocation()
   const { userData } = useUserData()
-  const { token } = useAuth()
+  const { token, hasServerProfileBasics } = useAuth()
   const videoRef = useRef(null)
   const ovalRef = useRef(null)
   const ovalSvgMaskUid = useId().replace(/:/g, '')
@@ -562,52 +544,40 @@ function Camera() {
   const sessionStateRef = useRef(SessionState.INIT) // Актуальное состояние сессии для проверки внутри таймера
   const hasAutoStartScheduledRef = useRef(false)   // Не планировать start() дважды за один ACTIVE
   const saveScanPromiseRef = useRef(null)
-  const [allowCameraEntryFromStorage] = useState(() => consumeCameraEntryGuard())
   const friendlyError = getFriendlyCameraError(error)
   const allowCameraEntryFromState = location.state?.allowCameraEntry === true
-  const referrer = typeof document !== 'undefined' ? document.referrer : ''
-  const referrerPath = (() => {
-    if (!referrer) return ''
-    try {
-      const currentOrigin = typeof window !== 'undefined' ? window.location.origin : ''
-      const parsed = new URL(referrer)
-      return parsed.origin === currentOrigin ? parsed.pathname : ''
-    } catch {
-      return ''
-    }
-  })()
-  const allowCameraEntryFromReferrer = referrerPath === '/preparation' || referrerPath === '/results'
-  const allowCameraEntry =
-    allowCameraEntryFromStorage || allowCameraEntryFromState || allowCameraEntryFromReferrer
+  const hasOnboardingData = canAccessHealthScreens(hasServerProfileBasics, userData)
+  const allowCameraEntry = allowCameraEntryFromState
 
   useEffect(() => {
     if (!allowCameraEntry) {
-      const navigationType = typeof performance !== 'undefined'
-        ? performance.getEntriesByType?.('navigation')?.[0]?.type
-        : undefined
-      logger.warn('Прямой вход на /camera без разрешенного перехода — редирект на welcome', {
+      let resumePath = '/welcome'
+      try {
+        const lastNonCameraPath = localStorage.getItem(LAST_NON_CAMERA_PATH_KEY)
+        if (token && hasOnboardingData && lastNonCameraPath && lastNonCameraPath !== '/camera') {
+          resumePath = lastNonCameraPath
+        }
+      } catch {
+        // ignore
+      }
+      logger.warn('Прямой вход на /camera без разрешенного перехода — редирект на последний валидный шаг', {
         camera_guard_redirected: true,
         from: location.pathname,
         hasState: !!location.state,
         allowCameraEntryFromState,
-        allowCameraEntryFromStorage,
-        allowCameraEntryFromReferrer,
-        referrer,
-        referrerPath,
-        navigationType,
+        hasOnboardingData,
+        resumePath,
       })
-      navigate('/welcome', { replace: true })
+      navigate(resumePath, { replace: true })
     }
   }, [
     allowCameraEntry,
-    allowCameraEntryFromReferrer,
-    allowCameraEntryFromStorage,
     allowCameraEntryFromState,
+    hasOnboardingData,
     location.pathname,
     location.state,
     navigate,
-    referrer,
-    referrerPath,
+    token,
   ])
 
   const getMetricValue = (item) => {

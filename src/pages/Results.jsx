@@ -834,11 +834,6 @@ function Results() {
           ) : null}
           <button
             onClick={() => {
-              try {
-                sessionStorage.setItem('x5_camera_entry_guard', String(Date.now()))
-              } catch {
-                // ignore
-              }
               navigate('/camera', { state: { allowCameraEntry: true } })
             }}
             className="results-button secondary"

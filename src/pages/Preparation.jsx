@@ -1,38 +1,15 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useAuth } from '../contexts/AuthContext.jsx'
-import { useUserData } from '../contexts/UserDataContext.jsx'
-import { canAccessHealthScreens } from '../utils/userProfileGate.js'
-import logger from '../utils/logger.js'
 import Page from '../layout/Page.jsx'
 import Header from '../layout/Header.jsx'
 import PrimaryButton from '../components/PrimaryButton.jsx'
 import './Preparation.css'
 
-const CAMERA_ENTRY_GUARD_KEY = 'x5_camera_entry_guard'
-
 function Preparation() {
   const navigate = useNavigate()
-  const { hasServerProfileBasics } = useAuth()
-  const { userData } = useUserData()
   const [isAcknowledged, setIsAcknowledged] = useState(false)
-  const hasOnboardingData = canAccessHealthScreens(hasServerProfileBasics, userData)
-
-  useEffect(() => {
-    if (hasOnboardingData) return
-    logger.warn('Прямой вход на /preparation без заполненных данных — редирект на welcome', {
-      preparation_guard_redirected: true,
-      path: '/preparation',
-    })
-    navigate('/welcome', { replace: true })
-  }, [hasOnboardingData, navigate])
 
   const handleStartScan = () => {
-    try {
-      sessionStorage.setItem(CAMERA_ENTRY_GUARD_KEY, String(Date.now()))
-    } catch {
-      // ignore
-    }
     navigate('/camera', { state: { allowCameraEntry: true } })
   }
 
