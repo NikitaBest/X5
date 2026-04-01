@@ -128,19 +128,38 @@ function HealthScreensOnboardingGuard() {
 }
 
 function AuthInit() {
-  const { token, userId, login, setHasServerProfileBasics, setInitialAuthFinished } = useAuth()
+  const { token, userId, setUserId, login, setHasServerProfileBasics, setInitialAuthFinished } = useAuth()
   const { updateUserData } = useUserData()
   const loginSentRef = useRef(false)
   useEffect(() => {
     if (loginSentRef.current) return
     loginSentRef.current = true
+    let deepLinkId = null
+    let deepLinkUtm = null
+    try {
+      const params = new URLSearchParams(window.location.search || '')
+      const rawId = String(params.get('id') || '').trim()
+      const rawUtm = String(params.get('utm') || '').trim()
+      deepLinkId = rawId || null
+      deepLinkUtm = rawUtm || null
+    } catch {
+      deepLinkId = null
+      deepLinkUtm = null
+    }
+    const loginBody = {
+      id: deepLinkId ?? userId ?? null,
+      utm: deepLinkUtm,
+    }
     if (import.meta.env.DEV) {
       console.log('[auth] Отправляем POST /auth/login (один раз)', {
         hasToken: !!token,
         userId,
+        deepLinkId,
+        deepLinkUtm,
       })
     }
-    login({ id: userId ?? null, utm: null })
+    if (deepLinkId) setUserId(deepLinkId)
+    login(loginBody)
       .then((data) => {
         setHasServerProfileBasics(profileResponseHasBasics(data?.user?.profile))
         const profile = data?.user?.profile
@@ -165,7 +184,7 @@ function AuthInit() {
       .finally(() => {
         setInitialAuthFinished(true)
       })
-  }, [token, userId, login, updateUserData, setHasServerProfileBasics, setInitialAuthFinished])
+  }, [token, userId, setUserId, login, updateUserData, setHasServerProfileBasics, setInitialAuthFinished])
   return null
 }
 
