@@ -516,10 +516,13 @@ function getFriendlyCameraError(rawError) {
     }
   }
 
-  if (lower.includes('safari version must be at least 16.7')) {
+  if (
+    lower.includes('safari version must be at least 16.7') ||
+    lower.includes('os version must be at least 16.7')
+  ) {
     return {
-      title: 'Нужна более новая версия Safari',
-      description: 'Для сканирования обновите Safari до версии 16.7 или выше.',
+      title: 'Нужна более новая версия iOS/Safari',
+      description: 'Для сканирования обновите iOS и Safari до версии 16.7 или выше.',
       ...CAMERA_ERROR_ACTION,
     }
   }
