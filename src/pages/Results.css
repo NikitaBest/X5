@@ -914,3 +914,33 @@
   opacity: 0.9;
 }
 
+/* Страница рациона: закрепляем верхний хедер при скролле */
+.page.results-page {
+  /* Компенсируем, что хедер становится fixed и перестаёт занимать место в потоке */
+  padding-top: calc(53px - 24px + 8px);
+}
+
+.page.results-page .page-header {
+  position: fixed !important;
+  top: 0;
+  left: 0;
+  right: 0;
+  transform: none;
+  z-index: 60;
+  width: 100%;
+  max-width: none;
+  padding: 0 24px;
+  box-sizing: border-box;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.page.results-page .page-header .back-button {
+  left: 8px;
+}
+
+.page.results-page .page-header .page-header-end {
+  right: 8px;
+}
+
