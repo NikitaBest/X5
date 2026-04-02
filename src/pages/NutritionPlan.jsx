@@ -614,6 +614,7 @@ function NutritionPlan() {
   const activeMeal = activeSlot != null ? mealEntries[activeSlot]?.meal : null
   const mealType = activeSlot != null ? mealEntries[activeSlot]?.label : null
   const activeAlternatives = activeSlot != null ? mealEntries[activeSlot]?.alternatives ?? [] : []
+  const isMealSheetOpen = activeSlot != null
   const dayTotals = useMemo(() => {
     const totals = mealEntries.reduce(
       (acc, entry) => {
@@ -671,7 +672,7 @@ function NutritionPlan() {
   }
 
   return (
-    <Page className="results-page">
+    <Page className={`results-page${isMealSheetOpen ? ' nutrition-plan--sheet-open' : ''}`.trim()}>
       <Header title="Ваш рацион" showBack onBack={handleNutritionBack} endSlot={allergiesHeaderSlot} />
       <div className="nutrition-plan-intro">
         <p className="nutrition-plan-intro-title">Рацион подобран на основе ваших показателей, целей и данных профиля</p>
@@ -790,7 +791,7 @@ function NutritionPlan() {
       ) : null}
 
       <MealDetailSheet
-        open={activeSlot != null}
+        open={isMealSheetOpen}
         onClose={handleCloseSheet}
         meal={activeMeal}
         mealType={mealType}
