@@ -25,6 +25,10 @@ function Modal({
   const titleClasses = ['modal-title', titleClassName].filter(Boolean).join(' ')
   const descriptionClasses = ['modal-description', descriptionClassName].filter(Boolean).join(' ')
   const confirmBtnClass = ['modal-button', 'modal-button-confirm', confirmClassName].filter(Boolean).join(' ')
+  const handleSinglePrimaryClick = () => {
+    if (typeof onConfirm === 'function') onConfirm()
+    else onClose()
+  }
 
   return (
     <div className="modal-overlay" onClick={onClose}>
@@ -43,7 +47,11 @@ function Modal({
                   {topButtonText}
                 </button>
               ) : null}
-              <button className={`${confirmBtnClass} modal-button--full`.trim()} onClick={onClose} type="button">
+              <button
+                className={`${confirmBtnClass} modal-button--full`.trim()}
+                onClick={handleSinglePrimaryClick}
+                type="button"
+              >
                 {confirmText}
               </button>
             </>

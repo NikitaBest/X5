@@ -487,6 +487,7 @@ function Results() {
     return !sid
   })
   const [lowMetricsNoticeDismissed, setLowMetricsNoticeDismissed] = useState(false)
+  const [zeroMetricsNoticeDismissed, setZeroMetricsNoticeDismissed] = useState(false)
 
   const truncateText = (text, maxLen = 90) => {
     const s = String(text ?? '').trim()
@@ -567,6 +568,7 @@ function Results() {
 
   useEffect(() => {
     setLowMetricsNoticeDismissed(false)
+    setZeroMetricsNoticeDismissed(false)
   }, [resolvedScanId])
 
   useEffect(() => {
@@ -715,6 +717,18 @@ function Results() {
     cards.length > 0 &&
     cards.length < MIN_EXPECTED_METRIC_CARDS &&
     !lowMetricsNoticeDismissed
+
+  const shouldShowZeroMetricsNotice =
+    Boolean(token) &&
+    cards.length === 0 &&
+    !zeroMetricsNoticeDismissed &&
+    (hasAnyResults || resolvedScanId != null)
+
+  const goToPreparationFromResultsModal = () => {
+    setLowMetricsNoticeDismissed(true)
+    setZeroMetricsNoticeDismissed(true)
+    navigate('/preparation')
+  }
 
   return (
     <Page>
@@ -868,6 +882,16 @@ function Results() {
         />
 
         <Modal
+          isOpen={shouldShowZeroMetricsNotice}
+          onClose={() => setZeroMetricsNoticeDismissed(true)}
+          title="Данных недостаточно"
+          description="Не удалось получить достаточно данных для результата. Повторите сканирование."
+          singleButton
+          confirmText="Повторить сканирование"
+          onConfirm={goToPreparationFromResultsModal}
+        />
+
+        <Modal
           isOpen={shouldShowLowMetricsNotice}
           onClose={() => setLowMetricsNoticeDismissed(true)}
           title="Неполный результат"
@@ -876,10 +900,7 @@ function Results() {
           confirmClassName="modal-button-confirm--outline"
           singleButton
           topButtonText="Повторить сканирование"
-          onTopButtonClick={() => {
-            setLowMetricsNoticeDismissed(true)
-            navigate('/preparation')
-          }}
+          onTopButtonClick={goToPreparationFromResultsModal}
           confirmText="Показать текущий результат"
         />
       </div>
