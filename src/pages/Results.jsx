@@ -80,6 +80,9 @@ const RATION_STATUS_POLL_MS = 2500
 /** Меньше этого числа показателей в ответе — показываем предупреждение о повторном сканировании. */
 const MIN_EXPECTED_METRIC_CARDS = 8
 
+/** Полный набор показателей при удачном скане — для текста модалки «X из N». */
+const FULL_SCAN_METRIC_TOTAL = 20
+
 /**
  * WeekRationGenerationStatus (бэкенд):
  * None=0, Pending=1, InProgress=2, Completed=3, Failed=4
@@ -867,11 +870,17 @@ function Results() {
         <Modal
           isOpen={shouldShowLowMetricsNotice}
           onClose={() => setLowMetricsNoticeDismissed(true)}
-          title="Условия прохождения сканирования были неудовлетворительны!"
-          titleClassName="modal-title--warning"
-          description="Рекомендуем пройти повторное сканирование, следуя инструкциям, для получения большего количества показателей."
+          title="Неполный результат"
+          description={`Определено ${cards.length} из ${FULL_SCAN_METRIC_TOTAL} показателей. Чтобы получить более полный результат, повторите сканирование.`}
+          descriptionClassName="modal-description--low-metrics"
+          confirmClassName="modal-button-confirm--outline"
           singleButton
-          confirmText="Понятно"
+          topButtonText="Повторить сканирование"
+          onTopButtonClick={() => {
+            setLowMetricsNoticeDismissed(true)
+            navigate('/preparation')
+          }}
+          confirmText="Показать текущий результат"
         />
       </div>
     </Page>
