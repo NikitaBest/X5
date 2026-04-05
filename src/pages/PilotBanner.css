@@ -1,0 +1,160 @@
+.pilot-banner-page {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding-bottom: 0;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+  box-sizing: border-box;
+  font-family: 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, 'Roboto', sans-serif;
+}
+
+.pilot-banner-body {
+  flex: 1;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  padding-top: 88px;
+  gap: 20px;
+}
+
+.pilot-banner-hero-wrap {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.pilot-banner-hero {
+  width: min(72%, 280px);
+  max-width: 100%;
+  height: auto;
+  display: block;
+  object-fit: contain;
+}
+
+.pilot-banner-lead {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+}
+
+.pilot-banner-title-wrap {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  padding: 0 4px;
+  box-sizing: border-box;
+}
+
+/* Перебиваем .page h1 из App.css (2rem) и globals — нужна большая специфичность */
+.pilot-banner-page h1.pilot-banner-title {
+  margin: 0;
+  font-weight: 700;
+  line-height: 1.25;
+  text-align: center;
+  color: var(--color-fg-primary);
+  white-space: nowrap;
+  letter-spacing: -0.03em;
+  /* max 22px; на узких экранах уменьшается, чтобы строка влезала */
+  font-size: clamp(11px, 4.25vw + 6px, 22px);
+}
+
+.pilot-banner-subtitle {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.45;
+  text-align: center;
+  color: #8e8e8e;
+}
+
+.pilot-banner-card {
+  border: 1.5px solid #5daf2e;
+  border-radius: var(--radius-md, 12px);
+  background: rgba(93, 175, 46, 0.06);
+  padding: 16px 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 14px;
+  text-align: left;
+}
+
+.pilot-banner-card-heading {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.35;
+  color: var(--color-fg-primary);
+  text-align: left;
+}
+
+.pilot-banner-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.pilot-banner-list-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.pilot-banner-list-icon {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  margin-top: 2px;
+}
+
+.pilot-banner-list-text {
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.4;
+  color: #6d6d6d;
+  text-align: left;
+}
+
+.pilot-banner-footer {
+  flex-shrink: 0;
+  width: 100%;
+  padding: 16px 0;
+  padding-bottom: max(16px, env(safe-area-inset-bottom, 0px));
+  background: var(--color-bg-main);
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.pilot-banner-footer .primary-button {
+  width: 100%;
+}
+
+:root[data-theme='dark'] .pilot-banner-footer {
+  border-top-color: rgba(255, 255, 255, 0.08);
+}
+
+:root[data-theme='dark'] .pilot-banner-card {
+  background: rgba(93, 175, 46, 0.1);
+}
+
+:root[data-theme='dark'] .pilot-banner-list-text {
+  color: var(--color-fg-secondary);
+}
