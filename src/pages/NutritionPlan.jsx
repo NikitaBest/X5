@@ -785,7 +785,7 @@ function NutritionPlan() {
               })
             }
           >
-            Добавить в корзину
+            Сформировать список для покупки
           </button>
         </div>
       ) : null}
