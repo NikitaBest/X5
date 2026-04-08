@@ -11,7 +11,6 @@ import './App.css'
 
 const Welcome = lazy(() => import('./pages/Welcome.jsx'))
 const PrioritySelection = lazy(() => import('./pages/PrioritySelection.jsx'))
-const PilotBanner = lazy(() => import('./pages/PilotBanner.jsx'))
 const AlgorithmSettings = lazy(() => import('./pages/AlgorithmSettings.jsx'))
 const Allergies = lazy(() => import('./pages/Allergies.jsx'))
 const Preparation = lazy(() => import('./pages/Preparation.jsx'))
@@ -26,7 +25,6 @@ const LAST_NON_CAMERA_PATH_KEY = 'x5_last_non_camera_path'
 const RESUME_ALLOWED_PATHS = new Set([
   '/welcome',
   '/priority',
-  '/pilot-banner',
   '/algorithm-settings',
   '/allergies',
   '/preparation',
@@ -61,7 +59,7 @@ function App() {
               <Route path="/welcome" element={<Welcome />} />
               <Route path="/recent-activity" element={<Navigate to="/algorithm-settings" replace />} />
               <Route path="/priority" element={<PrioritySelection />} />
-              <Route path="/pilot-banner" element={<PilotBanner />} />
+              <Route path="/pilot-banner" element={<Navigate to="/algorithm-settings" replace />} />
               <Route path="/algorithm-settings" element={<AlgorithmSettings />} />
               <Route path="/allergies" element={<Allergies />} />
               <Route path="/preparation" element={<Preparation />} />

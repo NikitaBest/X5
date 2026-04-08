@@ -67,7 +67,7 @@ function PrioritySelection() {
 
   const handleNext = () => {
     // Информационный баннер пилота → настройка алгоритма → далее подготовка к сканированию
-    navigate('/pilot-banner')
+    navigate('/algorithm-settings')
   }
 
   return (

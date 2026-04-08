@@ -95,7 +95,7 @@ function Welcome() {
       goals: selectedGoals,
       confirmedPolicyAndDocuments: true,
     })
-    navigate('/pilot-banner')
+    navigate('/algorithm-settings')
   }
 
   const selectedCount = selectedGoals.length
