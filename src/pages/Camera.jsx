@@ -564,10 +564,11 @@ function getFriendlyCameraError(rawError) {
 
   if (lower.includes('cross-origin') || lower.includes('coop') || lower.includes('coep')) {
     return {
-      title: 'Сканирование временно недоступно',
+      title: 'Произошла ошибка',
       description:
-        'Модуль измерения сейчас не запускается по техническим причинам. Откройте экран позже.',
+        'Во время запуска сканирования произошла техническая ошибка. Попробуйте еще раз.',
       ...CAMERA_ERROR_ACTION,
+      actionLabel: 'Попробовать еще раз',
     }
   }
 
