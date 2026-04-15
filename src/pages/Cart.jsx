@@ -9,12 +9,13 @@ import { getRationById, getRationOwnerById } from '../api/client.js'
 import { useAuth } from '../contexts/AuthContext.jsx'
 import { mapRationToNutritionReport } from '../utils/rationReportMapper.js'
 import { readLastRationIdFromStorage } from '../utils/lastRationIdStorage.js'
+import { buildUtmByKind } from '../utils/deepLinkUtm.js'
 import './Cart.css'
 
 function Cart() {
   const navigate = useNavigate()
   const location = useLocation()
-  const { token } = useAuth()
+  const { token, userId } = useAuth()
   const reportRef = useRef(null)
   const [isGenerating, setIsGenerating] = useState(false)
   const [toastMessage, setToastMessage] = useState('')
@@ -121,6 +122,9 @@ function Cart() {
     const q = new URLSearchParams()
     q.set('public', '1')
     if (resolvedRationId) q.set('rationId', String(resolvedRationId))
+    if (userId) q.set('id', String(userId))
+    const rationShareUtm = buildUtmByKind('share_ration', userId)
+    if (rationShareUtm) q.set('utm', rationShareUtm)
     const url = `${window.location.origin}/nutrition-report?${q.toString()}`
 
     try {

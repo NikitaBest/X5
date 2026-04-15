@@ -7,6 +7,7 @@ import MobileAppShell from './layout/MobileAppShell.jsx'
 import LoadingScreen from './components/LoadingScreen.jsx'
 import HomeRoute from './pages/HomeRoute.jsx'
 import { canAccessHealthScreens, profileResponseHasBasics } from './utils/userProfileGate.js'
+import { buildLandingUrl, getRouteUtmForPath } from './utils/deepLinkUtm.js'
 import './App.css'
 
 const Welcome = lazy(() => import('./pages/Welcome.jsx'))
@@ -47,6 +48,7 @@ function App() {
       <UserDataProvider>
         <AuthInit />
         <BrowserRouter>
+        <UtmQuerySync />
         <LastVisitedPathTracker />
         <InitialDeepLinkResumeGuard />
         <PersistedTokenDeepLinkGuard />
@@ -151,6 +153,7 @@ function AuthInit() {
       id: deepLinkId ?? userId ?? null,
       utm: deepLinkUtm,
     }
+    const hasKnownUserIdBeforeLogin = Boolean(deepLinkId ?? userId)
     if (import.meta.env.DEV) {
       console.log('[auth] Отправляем POST /auth/login (один раз)', {
         hasToken: !!token,
@@ -162,6 +165,13 @@ function AuthInit() {
     if (deepLinkId) setUserId(deepLinkId)
     login(loginBody)
       .then((data) => {
+        const returnedUserId = String(data?.user?.id ?? '').trim() || null
+        if (!hasKnownUserIdBeforeLogin && returnedUserId) {
+          const redirectUtm = getRouteUtmForPath(window.location.pathname, returnedUserId)
+          const landingUrl = buildLandingUrl({ id: null, utm: redirectUtm })
+          window.location.replace(landingUrl)
+          return
+        }
         setHasServerProfileBasics(profileResponseHasBasics(data?.user?.profile))
         const profile = data?.user?.profile
         if (profile) {
@@ -186,6 +196,35 @@ function AuthInit() {
         setInitialAuthFinished(true)
       })
   }, [token, userId, setUserId, login, updateUserData, setHasServerProfileBasics, setInitialAuthFinished])
+  return null
+}
+
+function UtmQuerySync() {
+  const location = useLocation()
+  const navigate = useNavigate()
+  const { userId } = useAuth()
+
+  useEffect(() => {
+    if (!userId) return
+    const expectedUtm = getRouteUtmForPath(location.pathname, userId)
+    if (!expectedUtm) return
+
+    const params = new URLSearchParams(location.search || '')
+    const currentUtm = String(params.get('utm') || '').trim()
+    if (currentUtm === expectedUtm) return
+
+    params.set('utm', expectedUtm)
+    const nextSearch = params.toString()
+    navigate(
+      {
+        pathname: location.pathname,
+        search: nextSearch ? `?${nextSearch}` : '',
+        hash: location.hash || '',
+      },
+      { replace: true },
+    )
+  }, [location.pathname, location.search, location.hash, navigate, userId])
+
   return null
 }
 
