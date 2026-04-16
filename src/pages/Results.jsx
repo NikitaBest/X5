@@ -76,6 +76,8 @@ function mergeHealthScoreIfSameScan(prevEnvelope, nextEnvelope) {
 }
 
 const RATION_STATUS_POLL_MS = 2500
+const RATION_PROGRESS_DURATION_MS = 60000
+const RATION_PROGRESS_HOLD_PCT = 90
 
 /** Меньше этого числа показателей в ответе — показываем предупреждение о повторном сканировании. */
 const MIN_EXPECTED_METRIC_CARDS = 8
@@ -478,6 +480,8 @@ function Results() {
   const [tapHintActive, setTapHintActive] = useState(false)
   const tapHintShownRef = useRef(false)
   const tapHintTimerRef = useRef(null)
+  const rationProgressStartedAtRef = useRef(null)
+  const [rationButtonProgressPct, setRationButtonProgressPct] = useState(100)
   const [activeDetail, setActiveDetail] = useState(null)
   const [backendScanResponse, setBackendScanResponse] = useState(
     () => location.state?.backendScanResponse ?? readCachedScanEnvelope() ?? null,
@@ -697,6 +701,32 @@ function Results() {
 
   const rationNavigateEnabled = !resolvedScanId || isRationReady
 
+  useEffect(() => {
+    rationProgressStartedAtRef.current = null
+    setRationButtonProgressPct(resolvedScanId ? 0 : 100)
+  }, [resolvedScanId])
+
+  useEffect(() => {
+    if (rationNavigateEnabled) {
+      rationProgressStartedAtRef.current = null
+      setRationButtonProgressPct((prev) => (prev < 100 ? 100 : prev))
+      return undefined
+    }
+
+    if (!rationProgressStartedAtRef.current) rationProgressStartedAtRef.current = Date.now()
+
+    const update = () => {
+      const startedAt = rationProgressStartedAtRef.current || Date.now()
+      const elapsed = Math.max(0, Date.now() - startedAt)
+      const nextPct = Math.min(RATION_PROGRESS_HOLD_PCT, (elapsed / RATION_PROGRESS_DURATION_MS) * RATION_PROGRESS_HOLD_PCT)
+      setRationButtonProgressPct(nextPct)
+    }
+
+    update()
+    const timer = window.setInterval(update, 200)
+    return () => window.clearInterval(timer)
+  }, [rationNavigateEnabled])
+
   const headerHint = !token
     ? 'Войдите в приложение, чтобы увидеть результаты сканирования.'
     : !hasAnyResults
@@ -870,14 +900,14 @@ function Results() {
                 },
               })
             }
-            className={`results-button ${!rationNavigateEnabled ? 'results-button--ration-pending' : ''}`.trim()}
+            className={`results-button ${
+              !rationNavigateEnabled || rationButtonProgressPct < 100 ? 'results-button--ration-progress' : ''
+            }`.trim()}
+            style={{ '--ration-progress': `${Math.round(rationButtonProgressPct)}%` }}
             disabled={!token || !hasAnyResults || !rationNavigateEnabled}
           >
             {!rationNavigateEnabled ? (
-              <span className="results-button-ration-pending-inner">
-                <span className="results-button-spinner" aria-hidden="true" />
-                Рацион ещё генерируется…
-              </span>
+              <span className="results-button-ration-pending-inner">Рацион ещё генерируется…</span>
             ) : (
               'Подобрать рацион'
             )}

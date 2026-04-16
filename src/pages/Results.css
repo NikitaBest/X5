@@ -721,14 +721,28 @@
   background: var(--color-bg-accent-soft, rgba(0, 0, 0, 0.05));
 }
 
-.results-button--ration-pending {
+.results-button--ration-progress {
+  position: relative;
+  overflow: hidden;
   background: #b0b0b0;
   color: #ffffff;
-  cursor: not-allowed;
   opacity: 1;
 }
 
-.results-button--ration-pending:hover {
+.results-button--ration-progress::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  width: var(--ration-progress, 0%);
+  background: #5daf2e;
+  transition: width 280ms linear;
+}
+
+.results-button--ration-progress:disabled {
+  cursor: not-allowed;
+}
+
+.results-button--ration-progress:hover {
   opacity: 1;
 }
 
@@ -737,6 +751,8 @@
   align-items: center;
   justify-content: center;
   gap: 10px;
+  position: relative;
+  z-index: 1;
 }
 
 .results-ration-pending-hint {
