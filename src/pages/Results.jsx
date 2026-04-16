@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import Page from '../layout/Page.jsx'
 import HeartRateGauge from '../components/HeartRateGauge.jsx'
@@ -475,7 +475,9 @@ function Results() {
   /** { scanId, healthScore } из state при входе на результаты — подмешиваем, если повторный GET обрезал балл */
   const trustedHealthFromSaveRef = useRef(null)
 
-  const [showAllMetricsCards, setShowAllMetricsCards] = useState(false)
+  const [tapHintActive, setTapHintActive] = useState(false)
+  const tapHintShownRef = useRef(false)
+  const tapHintTimerRef = useRef(null)
   const [activeDetail, setActiveDetail] = useState(null)
   const [backendScanResponse, setBackendScanResponse] = useState(
     () => location.state?.backendScanResponse ?? readCachedScanEnvelope() ?? null,
@@ -670,7 +672,7 @@ function Results() {
 
   // Показываем показатели с key после фильтра «пустых» сырых метрик
   const cards = getCardsFromBackend(backendTranscripts.filter((t) => t?.key))
-  const visibleCards = showAllMetricsCards ? cards : cards.slice(0, 4)
+  const visibleCards = cards
   const healthScore = useMemo(() => {
     const raw = backendValue?.healthScore
     if (raw != null && Number.isFinite(Number(raw))) return Number(raw)
@@ -730,9 +732,39 @@ function Results() {
     navigate('/preparation')
   }
 
+  const stopTapHint = useCallback(() => {
+    setTapHintActive(false)
+    if (tapHintTimerRef.current != null) {
+      window.clearTimeout(tapHintTimerRef.current)
+      tapHintTimerRef.current = null
+    }
+  }, [])
+
+  useEffect(() => {
+    if (tapHintShownRef.current) return
+    if (!hasAnyResults || cards.length === 0) return
+    tapHintShownRef.current = true
+    setTapHintActive(true)
+    // Два пульса по 1.2s (см. Results.css) + небольшой запас
+    tapHintTimerRef.current = window.setTimeout(() => {
+      tapHintTimerRef.current = null
+      setTapHintActive(false)
+    }, 2500)
+  }, [hasAnyResults, cards.length])
+
+  // Чистим таймер только при размонтировании страницы результатов
+  useEffect(() => {
+    return () => {
+      if (tapHintTimerRef.current != null) {
+        window.clearTimeout(tapHintTimerRef.current)
+        tapHintTimerRef.current = null
+      }
+    }
+  }, [])
+
   return (
     <Page>
-      <div className="results-page">
+      <div className={`results-page${tapHintActive ? ' results-page--tap-hint-active' : ''}`.trim()}>
         <div className="results-header">
           <h1 className="results-title">Результаты</h1>
           <div className="results-subtitle">rPPG-сканирование и анализ показателей по шкалам</div>
@@ -752,7 +784,7 @@ function Results() {
           </>
         ) : null}
 
-        <div className="results-grid">
+        <div className={`results-grid${tapHintActive ? ' results-grid--tap-hint-active' : ''}`.trim()}>
           {visibleCards.map((card, cardIndex) => {
             const theme = getCardThemeByColor(card.color)
             const statusLabel = cardStatusLabel(card)
@@ -760,7 +792,12 @@ function Results() {
             return (
               <div
                 key={`${card.key}-${cardIndex}`}
-                className="result-card result-card--backend"
+                className={`result-card result-card--backend${
+                  tapHintActive && cardIndex === 0 ? ' result-card--tap-hint' : ''
+                }`.trim()}
+                onAnimationEnd={() => {
+                  if (tapHintActive && cardIndex === 0) stopTapHint()
+                }}
                 style={{
                   '--card-bg': theme.cardBg,
                   '--border-color': theme.cardBorder,
@@ -783,6 +820,15 @@ function Results() {
                   })
                 }
               >
+                {cardIndex === 0 ? (
+                  <div
+                    className={`result-card-tap-hint-bubble${tapHintActive ? ' is-active' : ''}`.trim()}
+                    role="status"
+                    aria-live="polite"
+                  >
+                    Нажмите, чтобы узнать больше
+                  </div>
+                ) : null}
                 <div className="result-card-top">
                   <div className="result-card-icon" aria-hidden="true">
                     {specialIconType ? (
@@ -806,19 +852,6 @@ function Results() {
             )
           })}
         </div>
-
-        {hasAnyResults && (
-          <button
-            type="button"
-            className="results-toggle-all"
-            onClick={() => setShowAllMetricsCards((prev) => !prev)}
-          >
-            <span>{showAllMetricsCards ? 'Скрыть все показатели' : 'Показать все показатели'}</span>
-            <span className={`results-toggle-all-arrow ${showAllMetricsCards ? 'open' : ''}`} aria-hidden="true">
-              ▾
-            </span>
-          </button>
-        )}
 
         <div className="results-actions">
           <p className="results-actions-disclaimer">
