@@ -854,6 +854,9 @@ function Results() {
         </div>
 
         <div className="results-actions">
+          <div className="results-actions-note">
+            Мы формируем рацион на основе ваших данных
+          </div>
           <p className="results-actions-disclaimer">
             Данный анализ не заменяет медицинскую консультацию.
           </p>
