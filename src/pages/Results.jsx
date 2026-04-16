@@ -882,22 +882,26 @@ function Results() {
           {!rationNavigateEnabled ? (
             <p className="results-ration-pending-hint">Ваш рацион будет готов примерно через 1 минуту</p>
           ) : null}
-          <button
-            onClick={() => {
-              navigate('/camera', {
-                state: {
-                  allowCameraEntry: true,
-                  cameraEntryAt: Date.now(),
-                },
-              })
-            }}
-            className="results-button secondary"
-          >
-            Измерить снова
-          </button>
-          <button type="button" onClick={() => navigate('/welcome')} className="results-button secondary">
-            На главную
-          </button>
+          {rationNavigateEnabled ? (
+            <>
+              <button
+                onClick={() => {
+                  navigate('/camera', {
+                    state: {
+                      allowCameraEntry: true,
+                      cameraEntryAt: Date.now(),
+                    },
+                  })
+                }}
+                className="results-button secondary"
+              >
+                Измерить снова
+              </button>
+              <button type="button" onClick={() => navigate('/welcome')} className="results-button secondary">
+                На главную
+              </button>
+            </>
+          ) : null}
         </div>
 
         <ResultDetailSheet
