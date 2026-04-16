@@ -134,26 +134,49 @@ function AuthInit() {
   const { token, userId, setUserId, login, setHasServerProfileBasics, setInitialAuthFinished } = useAuth()
   const { updateUserData } = useUserData()
   const loginSentRef = useRef(false)
+  const initialLocationRef = useRef(null)
+  if (!initialLocationRef.current) {
+    initialLocationRef.current = {
+      search: String(window.location.search || ''),
+      pathname: String(window.location.pathname || '/'),
+    }
+  }
   useEffect(() => {
     if (loginSentRef.current) return
     loginSentRef.current = true
     let deepLinkId = null
     let deepLinkUtm = null
     try {
-      const params = new URLSearchParams(window.location.search || '')
+      const initialSearch = initialLocationRef.current?.search || ''
+      const initialPathname = initialLocationRef.current?.pathname || '/'
+      const params = new URLSearchParams(initialSearch)
       const rawId = String(params.get('id') || '').trim()
       const rawUtm = String(params.get('utm') || '').trim()
       deepLinkId = rawId || null
       deepLinkUtm = rawUtm || null
+      // Fallback для share-ссылок: если utm не дошла, но есть публичный ration-link c id,
+      // восстанавливаем utm отправителя, чтобы корректно пробросить ее на лендинг.
+      if (!deepLinkUtm && deepLinkId) {
+        const isPublicRationShare =
+          initialPathname === '/nutrition-report' && String(params.get('public') || '').trim() === '1'
+        if (isPublicRationShare) {
+          deepLinkUtm = `share_ration_by_${deepLinkId}`
+        } else {
+          deepLinkUtm = `ref_link_app_${deepLinkId}`
+        }
+      }
     } catch {
       deepLinkId = null
       deepLinkUtm = null
     }
+    // Только для действительно нового пользователя (нет токена и userId в localStorage)
+    // не подставляем локальный id при ссылке с utm без явного id.
+    const isFreshUser = !token && !userId
+    const requestUserId = deepLinkId ?? (deepLinkUtm && isFreshUser ? null : userId ?? null)
     const loginBody = {
-      id: deepLinkId ?? userId ?? null,
+      id: requestUserId,
       utm: deepLinkUtm,
     }
-    const hasKnownUserIdBeforeLogin = Boolean(deepLinkId ?? userId)
     if (import.meta.env.DEV) {
       console.log('[auth] Отправляем POST /auth/login (один раз)', {
         hasToken: !!token,
@@ -166,9 +189,13 @@ function AuthInit() {
     login(loginBody)
       .then((data) => {
         const returnedUserId = String(data?.user?.id ?? '').trim() || null
-        if (!hasKnownUserIdBeforeLogin && returnedUserId) {
-          const redirectUtm = getRouteUtmForPath(window.location.pathname, returnedUserId)
-          const landingUrl = buildLandingUrl({ id: null, utm: redirectUtm })
+        const requestedUserId = String(requestUserId ?? '').trim() || null
+        const shouldRedirectToLanding = Boolean(
+          returnedUserId && deepLinkUtm && (isFreshUser || returnedUserId !== requestedUserId),
+        )
+        if (shouldRedirectToLanding) {
+          const redirectUtm = deepLinkUtm || getRouteUtmForPath(window.location.pathname, returnedUserId)
+          const landingUrl = buildLandingUrl({ id: returnedUserId, utm: redirectUtm })
           window.location.replace(landingUrl)
           return
         }
@@ -202,9 +229,10 @@ function AuthInit() {
 function UtmQuerySync() {
   const location = useLocation()
   const navigate = useNavigate()
-  const { userId } = useAuth()
+  const { userId, initialAuthFinished } = useAuth()
 
   useEffect(() => {
+    if (!initialAuthFinished) return
     if (!userId) return
     const expectedUtm = getRouteUtmForPath(location.pathname, userId)
     if (!expectedUtm) return
@@ -223,7 +251,7 @@ function UtmQuerySync() {
       },
       { replace: true },
     )
-  }, [location.pathname, location.search, location.hash, navigate, userId])
+  }, [initialAuthFinished, location.pathname, location.search, location.hash, navigate, userId])
 
   return null
 }
