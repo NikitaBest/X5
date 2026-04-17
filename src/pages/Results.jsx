@@ -887,9 +887,6 @@ function Results() {
           <div className="results-actions-note">
             Мы формируем рацион на основе ваших данных
           </div>
-          <p className="results-actions-disclaimer">
-            Данный анализ не заменяет медицинскую консультацию.
-          </p>
           <button
             type="button"
             onClick={() =>
@@ -909,7 +906,7 @@ function Results() {
             {!rationNavigateEnabled ? (
               <span className="results-button-ration-pending-inner">Рацион ещё генерируется…</span>
             ) : (
-              'Подобрать рацион'
+              'Получить план питания'
             )}
           </button>
           {!rationNavigateEnabled ? (
@@ -930,6 +927,9 @@ function Results() {
               >
                 Измерить снова
               </button>
+              <p className="results-actions-disclaimer">
+                Данный анализ не заменяет медицинскую консультацию.
+              </p>
             </>
           ) : null}
         </div>
