@@ -930,9 +930,6 @@ function Results() {
               >
                 Измерить снова
               </button>
-              <button type="button" onClick={() => navigate('/welcome')} className="results-button secondary">
-                На главную
-              </button>
             </>
           ) : null}
         </div>
