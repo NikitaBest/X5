@@ -797,9 +797,10 @@ function Results() {
       <div className={`results-page${tapHintActive ? ' results-page--tap-hint-active' : ''}`.trim()}>
         <div className="results-header">
           <h1 className="results-title">Результаты</h1>
-          <div className="results-subtitle">rPPG-сканирование и анализ показателей по шкалам</div>
-          <div className="results-first-red-hint" style={priorityHintStyle}>
-            {headerHint}
+          <div className="results-subtitle">
+            Персональный анализ
+            <br />
+            состояния организма
           </div>
         </div>
 
@@ -813,6 +814,10 @@ function Results() {
             </div>
           </>
         ) : null}
+
+        <div className="results-first-red-hint" style={priorityHintStyle}>
+          {headerHint}
+        </div>
 
         <div className={`results-grid${tapHintActive ? ' results-grid--tap-hint-active' : ''}`.trim()}>
           {visibleCards.map((card, cardIndex) => {
