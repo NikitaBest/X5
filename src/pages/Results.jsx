@@ -883,10 +883,11 @@ function Results() {
           })}
         </div>
 
+        <div className="results-actions-note">
+          Мы формируем рацион на основе ваших данных
+        </div>
+
         <div className="results-actions">
-          <div className="results-actions-note">
-            Мы формируем рацион на основе ваших данных
-          </div>
           <button
             type="button"
             onClick={() =>
