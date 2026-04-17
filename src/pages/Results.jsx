@@ -884,7 +884,10 @@ function Results() {
         </div>
 
         <div className="results-actions-note">
-          Мы формируем рацион на основе ваших данных
+          <img src="/mingcute_ai-fill.svg" alt="" className="results-actions-note-icon" aria-hidden="true" />
+          <span className="results-actions-note-text">
+            Учитываем ваши результаты сканирования и формируем план питания.
+          </span>
         </div>
 
         <div className="results-actions">
