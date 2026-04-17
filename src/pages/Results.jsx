@@ -908,7 +908,9 @@ function Results() {
             disabled={!token || !hasAnyResults || !rationNavigateEnabled}
           >
             {!rationNavigateEnabled ? (
-              <span className="results-button-ration-pending-inner">Рацион ещё генерируется…</span>
+              <span className="results-button-ration-pending-inner">
+                {`Формируем план питания… ${Math.round(rationButtonProgressPct)}%`}
+              </span>
             ) : (
               'Получить план питания'
             )}
