@@ -64,7 +64,7 @@ function goalCodeToRu(goal) {
     lightness: 'Дополнительные витамины',
     energy: 'Получить заряд бодрости',
     immunity: 'Укрепить иммунитет',
-    shopping: 'Быстрое восстановление',
+    shopping: 'Бюджетно покупать полезное',
   }
   return map[key] || String(goal).trim()
 }

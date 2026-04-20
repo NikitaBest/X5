@@ -14,10 +14,11 @@ const RU_TO_CODE = {
   'укрепить иммунитет': 'immunity',
   'быстрое восстановление': 'shopping',
   'выгодно покупать полезное': 'shopping',
+  'бюджетно покупать полезное': 'shopping',
 }
 
 /**
- * Приводит сохранённые цели к массиву кодов (макс. 2), без дубликатов.
+ * Приводит сохранённые цели к массиву кодов (макс. 3), без дубликатов.
  * Поддерживает коды и русские строки с бэка / из профиля.
  */
 export function normalizeGoalsToCodes(raw) {
@@ -34,7 +35,7 @@ export function normalizeGoalsToCodes(raw) {
       code = RU_TO_CODE[lower] ?? null
     }
     if (code && !out.includes(code)) out.push(code)
-    if (out.length >= 2) break
+    if (out.length >= 3) break
   }
   return out
 }
