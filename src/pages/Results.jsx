@@ -694,11 +694,6 @@ function Results() {
     priorityCard &&
     (String(priorityCard.backendStatus ?? '').trim() || String(priorityCard.comment ?? '').trim() || '')
 
-  const priorityHintStyle =
-    priorityCard && transcriptSeverityRank(priorityCard.color) >= 2
-      ? { color: getCardThemeByColor(priorityCard.color).statusColor }
-      : undefined
-
   const rationNavigateEnabled = !resolvedScanId || isRationReady
 
   useEffect(() => {
@@ -815,7 +810,7 @@ function Results() {
           </>
         ) : null}
 
-        <div className="results-first-red-hint" style={priorityHintStyle}>
+        <div className="results-first-red-hint">
           {headerHint}
         </div>
 
