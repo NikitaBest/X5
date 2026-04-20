@@ -785,7 +785,8 @@ function NutritionPlan() {
               })
             }
           >
-            Перейти к списку покупок
+            <img src="/mdi_cart-outline.svg" alt="" aria-hidden="true" />
+            <span>Перейти к списку покупок</span>
           </button>
         </div>
       ) : null}
