@@ -51,7 +51,7 @@ const GOAL_OPTIONS = [
   },
   {
     value: 'shopping',
-    label: 'Быстрое восстановление',
+    label: 'Бюджетно покупать полезное',
     icon: welcomeGoalIcon('/vossta.svg'),
   },
 ]
@@ -78,14 +78,14 @@ function Welcome() {
         return prev.filter((goal) => goal !== value)
       }
 
-      // если выбрано меньше 2 целей — просто добавляем
-      if (prev.length < 2) {
+      // если выбрано меньше 3 целей — просто добавляем
+      if (prev.length < 3) {
         return [...prev, value]
       }
 
-      // если уже выбраны 2 цели и пользователь выбирает третью —
-      // заменяем последнюю выбранную новой (сохраняем первую)
-      return [prev[0], value]
+      // если уже выбраны 3 цели и пользователь выбирает ещё одну —
+      // заменяем последнюю выбранную новой (сохраняем первые две)
+      return [prev[0], prev[1], value]
     })
   }
 
@@ -99,7 +99,7 @@ function Welcome() {
   }
 
   const selectedCount = selectedGoals.length
-  const hasValidGoals = selectedCount >= 1 && selectedCount <= 2
+  const hasValidGoals = selectedCount >= 1 && selectedCount <= 3
   const canProceed = hasValidGoals && acceptTerms
 
   return (
@@ -110,7 +110,7 @@ function Welcome() {
       <div className="welcome-content">
         <h1 className="welcome-heading">Что для Вас сейчас важнее?</h1>
         <p className="welcome-subtitle">
-        Выберите одну или две цели и мы подберем рацион питания
+        Выберите от одной до трёх целей и мы подберем рацион питания
         </p>
 
         <div className="welcome-goals">
@@ -163,7 +163,7 @@ function Welcome() {
           <div className="welcome-success-message">
             <img src="/cel.svg" alt="" className="welcome-success-icon" aria-hidden="true" />
             <span>
-              Отлично! Сфокусируемся на {selectedCount === 1 ? 'этой цели' : 'этих двух целях'}.
+              Отлично! Сфокусируемся на {selectedCount === 1 ? 'этой цели' : 'этих целях'}.
             </span>
           </div>
         )}
