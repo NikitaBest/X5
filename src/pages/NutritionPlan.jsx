@@ -307,25 +307,6 @@ function NutritionPlan() {
     }
   }, [navigate, location.state, scanId])
 
-  const allergiesHeaderSlot = token ? (
-    <button
-      type="button"
-      className="header-allergies-btn"
-      aria-label="Аллергии и исключения"
-      onClick={() => {
-        const sid = (scanId && String(scanId).trim()) || readLastScanId()
-        navigate('/allergies', {
-          state: {
-            returnTo: '/nutrition',
-            ...(sid ? { scanId: String(sid).trim() } : {}),
-          },
-        })
-      }}
-    >
-      <img src="/allerg.svg" alt="" width={28} height={28} />
-    </button>
-  ) : null
-
   useEffect(() => {
     const sid = location.state?.scanId
     if (sid == null || !String(sid).trim()) return
@@ -641,7 +622,7 @@ function NutritionPlan() {
   if (!token) {
     return (
       <Page className="results-page">
-        <Header title="Ваш рацион" showBack onBack={handleNutritionBack} endSlot={allergiesHeaderSlot} />
+        <Header title="Ваш рацион" showBack onBack={handleNutritionBack} />
         <div className="nutrition-plan-empty">
           <p className="nutrition-plan-empty-text">Требуется авторизация для загрузки рациона.</p>
         </div>
@@ -658,7 +639,7 @@ function NutritionPlan() {
   ) {
     return (
       <Page className="results-page">
-        <Header title="Ваш рацион" showBack onBack={handleNutritionBack} endSlot={allergiesHeaderSlot} />
+        <Header title="Ваш рацион" showBack onBack={handleNutritionBack} />
         <div className="nutrition-plan-empty">
           <p className="nutrition-plan-empty-text">
             Чтобы увидеть персональный рацион, сначала пройдите сканирование и откройте эту страницу из блока результатов.
@@ -673,7 +654,7 @@ function NutritionPlan() {
 
   return (
     <Page className={`results-page${isMealSheetOpen ? ' nutrition-plan--sheet-open' : ''}`.trim()}>
-      <Header title="Ваш рацион" showBack onBack={handleNutritionBack} endSlot={allergiesHeaderSlot} />
+      <Header title="Ваш рацион" showBack onBack={handleNutritionBack} />
       <div className="nutrition-plan-intro">
         <p className="nutrition-plan-intro-title">Рацион подобран на основе ваших показателей, целей и данных профиля</p>
       </div>
