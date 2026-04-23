@@ -23,6 +23,7 @@ import './Camera.css'
 
 // Отладка SDK в консоль: что приходит от SDK и что показываем пользователю
 const SDK_DEBUG = true
+const COI_AUTO_RETRY_KEY = 'x5_camera_coi_auto_retry_once'
 function sdkDebug(label, data) {
   if (SDK_DEBUG && typeof console !== 'undefined') {
     console.log('[SDK отладка]', label, data !== undefined ? data : '')
@@ -80,6 +81,30 @@ function getRuntimeNavigationContext() {
     referrer: doc?.referrer || '',
     navigationType: navEntry?.type || 'unknown',
     redirectCount: Number.isFinite(Number(navEntry?.redirectCount)) ? Number(navEntry.redirectCount) : 0,
+  }
+}
+
+function canRunCoiAutoRetry() {
+  try {
+    return window.sessionStorage.getItem(COI_AUTO_RETRY_KEY) !== '1'
+  } catch {
+    return true
+  }
+}
+
+function markCoiAutoRetryDone() {
+  try {
+    window.sessionStorage.setItem(COI_AUTO_RETRY_KEY, '1')
+  } catch {
+    // ignore
+  }
+}
+
+function clearCoiAutoRetryFlag() {
+  try {
+    window.sessionStorage.removeItem(COI_AUTO_RETRY_KEY)
+  } catch {
+    // ignore
   }
 }
 
@@ -1604,6 +1629,16 @@ function Camera() {
 
         // КРИТИЧЕСКАЯ ПРОВЕРКА: cross-origin isolation для SharedArrayBuffer
         if (typeof self !== 'undefined' && !self.crossOriginIsolated) {
+          if (canRunCoiAutoRetry()) {
+            markCoiAutoRetryDone()
+            logger.warn('crossOriginIsolated === false: выполняем одноразовый auto-reload', {
+              reason: 'coi_recovery_attempt',
+              ...getRuntimeDeviceContext(),
+              ...getRuntimeNavigationContext(),
+            })
+            window.location.reload()
+            return
+          }
           const errorMsg = 'ОШИБКА: Заголовки COOP/COEP не установлены. SDK требует cross-origin isolation для работы SharedArrayBuffer. Проверьте конфигурацию сервера (vercel.json для Vercel).'
           logger.error('crossOriginIsolated === false', {
             hint: 'Убедитесь, что заголовки Cross-Origin-Opener-Policy: same-origin и Cross-Origin-Embedder-Policy: require-corp установлены на сервере',
@@ -1615,6 +1650,7 @@ function Camera() {
           return
         }
         
+        clearCoiAutoRetryFlag()
         logger.info('crossOriginIsolated проверка пройдена', { crossOriginIsolated: self.crossOriginIsolated })
         
         // Проверяем наличие license key
@@ -2119,6 +2155,13 @@ function Camera() {
               {friendlyError.details ? (
                 <p className="camera-error-details">{friendlyError.details}</p>
               ) : null}
+              <button
+                type="button"
+                className="camera-error-action-button camera-error-action-button--secondary"
+                onClick={() => window.location.reload()}
+              >
+                Попробовать еще раз
+              </button>
               <button
                 type="button"
                 className="camera-error-action-button"

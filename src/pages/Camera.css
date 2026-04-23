@@ -186,6 +186,17 @@
   transform: scale(0.98);
 }
 
+.camera-error-action-button--secondary {
+  background: #ffffff;
+  color: #5daf2e;
+  border: 1px solid #5daf2e;
+  margin-top: 12px;
+}
+
+.camera-error-action-button--secondary:hover {
+  background: rgba(93, 175, 46, 0.08);
+}
+
 /* Уведомление «Готово» при 100% — компактная плашка, затем переход на результаты */
 .camera-completion-notification {
   position: absolute;
