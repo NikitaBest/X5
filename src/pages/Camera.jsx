@@ -69,6 +69,20 @@ function getRuntimeDeviceContext() {
   }
 }
 
+function getRuntimeNavigationContext() {
+  const doc = typeof document !== 'undefined' ? document : null
+  const perf = typeof performance !== 'undefined' ? performance : null
+  const navEntry =
+    perf && typeof perf.getEntriesByType === 'function'
+      ? perf.getEntriesByType('navigation')?.[0]
+      : null
+  return {
+    referrer: doc?.referrer || '',
+    navigationType: navEntry?.type || 'unknown',
+    redirectCount: Number.isFinite(Number(navEntry?.redirectCount)) ? Number(navEntry.redirectCount) : 0,
+  }
+}
+
 async function getCameraPermissionState() {
   try {
     if (!navigator?.permissions?.query) return 'unsupported'
@@ -1583,12 +1597,18 @@ function Camera() {
 
     async function initSDK() {
       try {
+        logger.info('Camera init: runtime security context', {
+          ...getRuntimeDeviceContext(),
+          ...getRuntimeNavigationContext(),
+        })
+
         // КРИТИЧЕСКАЯ ПРОВЕРКА: cross-origin isolation для SharedArrayBuffer
         if (typeof self !== 'undefined' && !self.crossOriginIsolated) {
           const errorMsg = 'ОШИБКА: Заголовки COOP/COEP не установлены. SDK требует cross-origin isolation для работы SharedArrayBuffer. Проверьте конфигурацию сервера (vercel.json для Vercel).'
           logger.error('crossOriginIsolated === false', {
             hint: 'Убедитесь, что заголовки Cross-Origin-Opener-Policy: same-origin и Cross-Origin-Embedder-Policy: require-corp установлены на сервере',
             ...getRuntimeDeviceContext(),
+            ...getRuntimeNavigationContext(),
           })
           setError(errorMsg)
           setIsLoading(false)
