@@ -2155,13 +2155,17 @@ function Camera() {
               {friendlyError.details ? (
                 <p className="camera-error-details">{friendlyError.details}</p>
               ) : null}
-              <button
-                type="button"
-                className="camera-error-action-button camera-error-action-button--secondary"
-                onClick={() => window.location.reload()}
-              >
-                Попробовать еще раз
-              </button>
+              {String(friendlyError.actionLabel || '')
+                .trim()
+                .toLowerCase() !== 'попробовать еще раз' ? (
+                <button
+                  type="button"
+                  className="camera-error-action-button camera-error-action-button--secondary"
+                  onClick={() => window.location.reload()}
+                >
+                  Попробовать еще раз
+                </button>
+              ) : null}
               <button
                 type="button"
                 className="camera-error-action-button"
