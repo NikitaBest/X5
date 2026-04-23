@@ -13,6 +13,27 @@
   </head>
   <body>
     <div id="root"></div>
+    <script>
+      (function () {
+        if (!('serviceWorker' in navigator)) return
+        var RELOAD_KEY = 'x5_coi_sw_reload_once'
+        navigator.serviceWorker
+          .register('/coi-sw.js')
+          .then(function () {
+            if (!navigator.serviceWorker.controller) {
+              if (sessionStorage.getItem(RELOAD_KEY) !== '1') {
+                sessionStorage.setItem(RELOAD_KEY, '1')
+                location.reload()
+              }
+            } else {
+              sessionStorage.removeItem(RELOAD_KEY)
+            }
+          })
+          .catch(function (err) {
+            console.warn('COI SW registration failed:', err)
+          })
+      })()
+    </script>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
