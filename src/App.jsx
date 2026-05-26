@@ -207,13 +207,11 @@ function AuthInit() {
       .then((data) => {
         const returnedUserId = String(data?.user?.id ?? '').trim() || null
         const requestedUserId = String(requestUserId ?? '').trim() || null
-        // Редирект на лендинг только если:
-        // 1) utm была явно в URL (не автосгенерирована)
-        // 2) пользователь НЕ пришёл с лендинга (иначе получится бумеранг)
-        // 3) это новый пользователь или id не совпал
+        // Редирект на лендинг если:
+        // 1) пользователь НЕ пришёл с лендинга (иначе получится бумеранг)
+        // 2) это новый пользователь (нет токена/userId) или id не совпал с запрошенным
         const shouldRedirectToLanding = Boolean(
           returnedUserId &&
-          isExplicitUtm &&
           !comingFromLanding &&
           (isFreshUser || returnedUserId !== requestedUserId),
         )
