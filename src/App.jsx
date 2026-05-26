@@ -146,6 +146,7 @@ function AuthInit() {
     loginSentRef.current = true
     let deepLinkId = null
     let deepLinkUtm = null
+    let isExplicitUtm = false
     try {
       const initialSearch = initialLocationRef.current?.search || ''
       const initialPathname = initialLocationRef.current?.pathname || '/'
@@ -154,8 +155,9 @@ function AuthInit() {
       const rawUtm = String(params.get('utm') || '').trim()
       deepLinkId = rawId || null
       deepLinkUtm = rawUtm || null
+      isExplicitUtm = Boolean(deepLinkUtm)
       // Fallback для share-ссылок: если utm не дошла, но есть публичный ration-link c id,
-      // восстанавливаем utm отправителя, чтобы корректно пробросить ее на лендинг.
+      // восстанавливаем utm отправителя для трекинга в login body (но НЕ для редиректа на лендинг).
       if (!deepLinkUtm && deepLinkId) {
         const isPublicRationShare =
           initialPathname === '/nutrition-report' && String(params.get('public') || '').trim() === '1'
@@ -168,7 +170,20 @@ function AuthInit() {
     } catch {
       deepLinkId = null
       deepLinkUtm = null
+      isExplicitUtm = false
     }
+
+    // Проверяем, пришёл ли пользователь с лендинга — не отправляем его обратно.
+    const comingFromLanding = (() => {
+      try {
+        const ref = document.referrer
+        if (!ref) return false
+        return new URL(ref).hostname.includes('scan.mobilemed.ai')
+      } catch {
+        return false
+      }
+    })()
+
     // Только для действительно нового пользователя (нет токена и userId в localStorage)
     // не подставляем локальный id при ссылке с utm без явного id.
     const isFreshUser = !token && !userId
@@ -183,6 +198,8 @@ function AuthInit() {
         userId,
         deepLinkId,
         deepLinkUtm,
+        isExplicitUtm,
+        comingFromLanding,
       })
     }
     if (deepLinkId) setUserId(deepLinkId)
@@ -190,8 +207,15 @@ function AuthInit() {
       .then((data) => {
         const returnedUserId = String(data?.user?.id ?? '').trim() || null
         const requestedUserId = String(requestUserId ?? '').trim() || null
+        // Редирект на лендинг только если:
+        // 1) utm была явно в URL (не автосгенерирована)
+        // 2) пользователь НЕ пришёл с лендинга (иначе получится бумеранг)
+        // 3) это новый пользователь или id не совпал
         const shouldRedirectToLanding = Boolean(
-          returnedUserId && deepLinkUtm && (isFreshUser || returnedUserId !== requestedUserId),
+          returnedUserId &&
+          isExplicitUtm &&
+          !comingFromLanding &&
+          (isFreshUser || returnedUserId !== requestedUserId),
         )
         if (shouldRedirectToLanding) {
           const redirectUtm = deepLinkUtm || getRouteUtmForPath(window.location.pathname, returnedUserId)
