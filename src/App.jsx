@@ -173,15 +173,18 @@ function AuthInit() {
       isExplicitUtm = false
     }
 
-    // Проверяем, пришёл ли пользователь с лендинга — не отправляем его обратно.
+    // Защита от бумеранга: не отправляем на лендинг повторно.
+    // 1) referrer с лендинга  2) localStorage-флаг (страховка для Telegram WebView, где referrer пустой)
+    const LANDING_REDIRECT_KEY = 'x5_landing_redirect_done'
     const comingFromLanding = (() => {
       try {
         const ref = document.referrer
-        if (!ref) return false
-        return new URL(ref).hostname.includes('scan.mobilemed.ai')
-      } catch {
-        return false
-      }
+        if (ref && new URL(ref).hostname.includes('scan.mobilemed.ai')) return true
+      } catch {}
+      try {
+        return localStorage.getItem(LANDING_REDIRECT_KEY) === '1'
+      } catch {}
+      return false
     })()
 
     // Только для действительно нового пользователя (нет токена и userId в localStorage)
@@ -216,6 +219,7 @@ function AuthInit() {
           (isFreshUser || returnedUserId !== requestedUserId),
         )
         if (shouldRedirectToLanding) {
+          try { localStorage.setItem(LANDING_REDIRECT_KEY, '1') } catch {}
           const redirectUtm = deepLinkUtm || getRouteUtmForPath(window.location.pathname, returnedUserId)
           const landingUrl = buildLandingUrl({ id: returnedUserId, utm: redirectUtm })
           window.location.replace(landingUrl)
